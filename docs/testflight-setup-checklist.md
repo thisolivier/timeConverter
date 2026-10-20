@@ -27,7 +27,7 @@ Source docs (read these for depth; this file is just the checklist):
 2. [x] **Create the app record** — done 2026-10-20: store name
        **"Time Converter 3000"**, ASC app id **6825044484**
        (bundle id `dev.thisolivier.timeconverter`).
-3. [ ] **Create an App Store distribution provisioning profile** for the bundle
+3. [x] **Create an App Store distribution provisioning profile** for the bundle
        id against the existing Apple Distribution cert. Download it to
        `~/sites/navidromClient/spike/.signing/` (naming pattern:
        `Spike_TimeConverter_App_Store.mobileprovision`) AND install it at
