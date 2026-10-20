@@ -53,12 +53,10 @@ Source docs (read these for depth; this file is just the checklist):
        — hard failures beat silent portal round-trips) → export → `xcrun altool
        --upload-app` → print Delivery UUID. Keep NaviAdmin's PlistBuddy check
        that the archive really contains the bumped build number.
-7. [ ] **Decide the Mac story.** We're Catalyst (`TARGETED_DEVICE_FAMILY`
-       includes Mac). iOS TestFlight is the above; TestFlight **for Mac** needs
-       a separate Mac App Store provisioning profile and upload — none of the
-       music apps have done this yet, so it's unmapped territory. Suggest: ship
-       iOS TestFlight first, Mac via direct .app copy (`xattr -cr` on the
-       receiving machine clears Gatekeeper quarantine of ad-hoc builds).
+7. [x] ~~Decide the Mac story~~ — **resolved 2026-10-20**: no separate Mac
+       pipeline needed. iOS TestFlight builds install and run via TestFlight on
+       the Mac too (Olivier runs Amperfy from TestFlight on his Mac), so the
+       iOS pipeline above captures the Mac for free.
 
 ## Every session that ships
 
