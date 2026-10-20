@@ -32,6 +32,11 @@ Implementation is item 3; UI wiring is item 4.
   The parsed interpretation is always echoed back in canonical form with the
   space (`12:00 pm`).
 - `12 am` = 00:00, `12 pm` = 12:00 (standard convention).
+- **Redundant-but-consistent am/pm is accepted; contradictory am/pm is
+  rejected** (amended 2026-10-20): an hour of 13–23 with `pm` is valid and
+  means the 24-hour time (`13:00 pm` = 13:00, `18pm` = 18:00); the same hour
+  with `am` is a contradiction → P1. Symmetrically, hour 0 with `am`
+  (`0:30 am` = 00:30) is accepted; hour 0 with `pm` is rejected.
 - No date in the grammar: the time is "today" in the source zone.
 
 ## Tokenization
