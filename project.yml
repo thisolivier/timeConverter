@@ -14,7 +14,12 @@ targets:
     type: application
     platform: iOS
     sources:
-      - TimeConvertor
+      # Module readme.md files are docs, not app resources — and because the
+      # glob flattens copied resources, two readme.md files in different
+      # modules would collide in the bundle without this exclude.
+      - path: TimeConvertor
+        excludes:
+          - "**/readme.md"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.thisolivier.timeconvertor

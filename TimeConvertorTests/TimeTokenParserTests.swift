@@ -57,6 +57,59 @@ struct TimeTokenParserTests {
         #expect(match.time == ParsedTime(hour: expectedHour, minute: expectedMinute))
     }
 
+    // MARK: Redundant meridiems
+
+    /// A meridiem that merely agrees with an out-of-12-hour-range hour is
+    /// accepted and means the 24-hour time it already named.
+    @Test(arguments: [
+        ("13:00 pm", 13, 0),
+        ("13:00pm", 13, 0),
+        ("18pm", 18, 0),
+        ("23:59 pm", 23, 59),
+        ("0:30 am", 0, 30),
+        ("0am", 0, 0),
+    ])
+    func redundantButConsistentMeridiemsAreAccepted(
+        input: String,
+        expectedHour: Int,
+        expectedMinute: Int
+    ) throws {
+        let match = try #require(TimeTokenParser.match(atStartOf: input))
+        #expect(match.time == ParsedTime(hour: expectedHour, minute: expectedMinute))
+    }
+
+    /// A meridiem that contradicts its hour fails outright. It must *not* fall
+    /// through to the 24-hour pattern, which would parse the time and quietly
+    /// push the stray `am`/`pm` into the zone token.
+    @Test(arguments: ["13:00 am", "13am", "18 am", "23:59 am", "0:30 pm", "0 pm"])
+    func contradictoryMeridiemsAreRejected(input: String) {
+        #expect(TimeTokenParser.match(atStartOf: input) == nil)
+        #expect(TimeTokenParser.match(atStartOf: "\(input) et in london") == nil)
+    }
+
+    /// Hours 1–12 keep the ordinary 12-hour meaning either way.
+    @Test(arguments: [
+        ("11 am", 11, 0),
+        ("11 pm", 23, 0),
+        ("1 am", 1, 0),
+        ("1 pm", 13, 0),
+    ])
+    func hoursWithinTheClockFaceAreUnaffected(
+        input: String,
+        expectedHour: Int,
+        expectedMinute: Int
+    ) throws {
+        let match = try #require(TimeTokenParser.match(atStartOf: input))
+        #expect(match.time == ParsedTime(hour: expectedHour, minute: expectedMinute))
+    }
+
+    /// `13:00 pm` and `13:00` are the same time, typed differently.
+    @Test func aRedundantMeridiemAgreesWithThePlainTwentyFourHourForm() throws {
+        let withMeridiem = try #require(TimeTokenParser.match(atStartOf: "13:00 pm"))
+        let without = try #require(TimeTokenParser.match(atStartOf: "13:00"))
+        #expect(withMeridiem.time == without.time)
+    }
+
     // MARK: Precedence
 
     /// `9:30 am ...` must not be read as the 24-hour `9:30` followed by a zone
@@ -79,10 +132,10 @@ struct TimeTokenParserTests {
         "hello there",      // no digits
         "6 et in london",   // bare hour: 24-hour form needs minutes
         "25:00 et",         // hour out of range
+        "25:00 pm et",      // out of range with a meridiem too
         "06:60 et",         // minute out of range
-        "13:00 pm et",      // explicit 12-hour intent with an impossible hour
-        "0 am et",          // 12-hour clock has no hour 0
-        "13pm et",          // ditto
+        "13:00 am et",      // meridiem contradicts the hour
+        "0 pm et",          // ditto
         "12pmet in london", // meridiem must end on a word boundary
         "et in london",     // zone first, no time
     ])

@@ -9,7 +9,12 @@ struct PromptTests {
 
     // MARK: P1 — no parseable time
 
-    @Test(arguments: ["", "   ", "hello there", "london to paris", "6 et in london"])
+    @Test(arguments: [
+        "", "   ", "hello there", "london to paris",
+        "6 et in london",       // 24-hour form needs minutes
+        "13:00 am et in london", // meridiem contradicts the hour
+        "0:30 pm et in london",  // ditto
+    ])
     func missingTimeTriggersP1(input: String) throws {
         let prompt = try #require(parser.parse(input, now: FixedDates.winterMidday).promptValue)
         #expect(prompt.specIdentifier == "P1")

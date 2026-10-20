@@ -58,6 +58,34 @@ struct InputParserTests {
         #expect(result.summary == "6:34 am Lisbon (UTC+0) → 10:34 pm Los Angeles (UTC-8) -1d")
     }
 
+    /// A redundant-but-consistent meridiem survives the whole pipeline: the
+    /// zone token must not end up holding a stray `pm`.
+    @Test(arguments: [
+        ("13:00 pm et in london", 13, 0),
+        ("18pm et in london", 18, 0),
+        ("0:30 am et in london", 0, 30),
+    ])
+    func redundantMeridiemsConvertNormally(
+        input: String,
+        expectedHour: Int,
+        expectedMinute: Int
+    ) throws {
+        let request = try #require(parser.parse(input, now: FixedDates.winterMidday).requestValue)
+        #expect(request.time == ParsedTime(hour: expectedHour, minute: expectedMinute))
+        #expect(request.sourceZone.timeZone.identifier == "America/New_York")
+        #expect(request.targetZone.timeZone.identifier == "Europe/London")
+    }
+
+    @Test func aRedundantMeridiemMatchesThePlainTwentyFourHourInput() throws {
+        let withMeridiem = try #require(
+            parser.parse("13:00 pm et in london", now: FixedDates.winterMidday).requestValue
+        )
+        let without = try #require(
+            parser.parse("13:00 et in london", now: FixedDates.winterMidday).requestValue
+        )
+        #expect(withMeridiem == without)
+    }
+
     /// H:mm and HH:mm are the same time; only the typing differs.
     @Test func singleDigitAndPaddedTwentyFourHourHoursAgree() throws {
         let padded = try #require(

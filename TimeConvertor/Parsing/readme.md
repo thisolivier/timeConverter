@@ -46,7 +46,7 @@ ConversionEngine    wall clock → instant (DST policy) → two zone readings,
 |---|---|
 | `InputParser.swift` | Entry point. `parse(_:now:) -> ParseOutcome`, plus `parseAndConvert` for callers that want the rendered result. |
 | `InputTokenizer.swift` | Normalisation and the first-standalone-conjunction split. |
-| `TimeTokenParser.swift` | The `<time>` grammar: `H[H]:mm` 24-hour and `H[H][:mm] [space] am/pm` 12-hour, with lenient spacing. |
+| `TimeTokenParser.swift` | The `<time>` grammar: `H[H]:mm` 24-hour and `H[H][:mm] [space] am/pm`, with lenient spacing and the redundant-meridiem rule. |
 | `ParsingModels.swift` | `ParsedTime`, `ZoneCandidate`, `ResolvedZone`, `ConversionRequest`, `ParseOutcome`, `Prompt`, `ZoneChoice`. |
 | `PromptMessages.swift` | The spec's P1–P5 copy. |
 | `ZoneResolver.swift` | The `ZoneResolver` protocol, `ZoneResolution`, and the ordered `ZoneResolverChain`. |
@@ -82,6 +82,12 @@ ConversionEngine    wall clock → instant (DST policy) → two zone readings,
   keep the original intent available.
 - **Time-of-day canonical form is always 12-hour**, even for 24-hour input, per
   the spec's output examples. `23:15` echoes as `11:15 pm`.
+- **A redundant meridiem is accepted, a contradictory one is not.** On hours
+  outside 1–12 the `am`/`pm` adds nothing, so it is honoured when it agrees
+  (`13:00 pm` = 13:00, `18pm` = 18:00, `0:30 am` = 00:30) and rejected as P1
+  when it conflicts (`13:00 am`, `0:30 pm`). A contradictory meridiem must fail
+  outright rather than fall through to the 24-hour pattern, which would parse
+  the time and push the stray `am`/`pm` into the zone token.
 - **Regex patterns are computed, not stored.** `Regex` is not `Sendable`, so
   Swift 6 forbids it as static stored state; two tiny patterns are rebuilt per
   parse, which is immeasurable against a keystroke.
@@ -89,7 +95,10 @@ ConversionEngine    wall clock → instant (DST policy) → two zone readings,
 ## Tests
 
 `TimeConvertorTests/` covers the spec's full fixture list — every example
-string, each P1–P5 trigger, lenient spacing, `12 am`/`12 pm`, CST/IST
-ambiguity, Porto through the real bundled file (which is also how resource
-bundling is verified), both DST-transition branches and day rollover both ways.
-Run with `scripts/test.sh --platform all`.
+string, each P1–P5 trigger, lenient spacing, `12 am`/`12 pm`, redundant and
+contradictory meridiems, CST/IST ambiguity, Porto through the real bundled file
+(which is also how resource bundling is verified), both DST-transition branches
+and day rollover both ways. Run with `scripts/test.sh --platform all`.
+
+The UI layer that consumes this module is documented in the repo-root
+`README.md`.
