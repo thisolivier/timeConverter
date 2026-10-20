@@ -4,7 +4,7 @@
 
 **TimeConvertor** — a small universal macOS/iOS app (SwiftUI) for freeform timezone conversion. The user types a natural-language expression like "12pm ET in London" or "06:34 Portugal in PST" and the app parses it and shows the converted time. The core deliverables are: the universal app itself, a freeform input parser (spec to be defined in a dedicated session — backlog item 2), and a simple conversion UI with disambiguation prompts where the input is ambiguous.
 
-Core tooling: Swift / SwiftUI, a single universal target for macOS and iOS, Xcode command-line builds. Dev-environment conventions are borrowed from the music-library iOS projects in `../iOSnative/` (read access only — never modify those repos).
+Core tooling: Swift / SwiftUI, a single universal target for macOS and iOS, Xcode command-line builds. Dev-environment conventions are borrowed from the music-library iOS projects in `../musicLibrary/iOSnative/` (read access only — never modify those repos).
 
 ## General Directives
 - Keep code readable with verbose variable names — never abbreviate to a single letter
@@ -40,5 +40,5 @@ Your work is deeply appreciated.
 
 ## Paths Not to Modify
 - Do not modify files managed by package managers.
-- Never modify anything under `../iOSnative/` or other sibling project directories — read access only.
+- Never modify anything under `../musicLibrary/iOSnative/` or other sibling project directories — read access only.
 - ALWAYS ask for permission before editing this file
