@@ -37,6 +37,23 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
+      configs:
+        # Release (archive/TestFlight) only — Debug keeps the ad-hoc, no-team
+        # settings above so local dev and `scripts/test.sh` stay headless.
+        #
+        # Automatic signing (base config, above) cannot resolve an archive
+        # identity here: team CNHB9B5GX6 has no Apple Development certificate,
+        # only the Apple Distribution one. So the archive step signs manually,
+        # straight to the App Store distribution profile. Mirrors NaviAdmin.
+        #
+        # These stay scoped to the app target: passing provisioning settings
+        # command-line-wide leaks them into dependency targets, which reject
+        # them.
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: "Apple Distribution"
+          PROVISIONING_PROFILE_SPECIFIER: "TimeConvertor App Store"
+          DEVELOPMENT_TEAM: CNHB9B5GX6
     info:
       path: TimeConvertor/Info.plist
       properties:

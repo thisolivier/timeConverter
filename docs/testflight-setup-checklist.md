@@ -35,9 +35,9 @@ Source docs (read these for depth; this file is just the checklist):
        `Spike_TimeConvertor_App_Store.mobileprovision`) AND install it at
        `~/Library/MobileDevice/Provisioning Profiles/<UUID>.mobileprovision`
        where xcodebuild looks.
-4. [ ] **ExportOptions.plist** in this repo — copy NaviAdmin's (manual signing,
+4. [x] **ExportOptions.plist** in this repo — copy NaviAdmin's (manual signing,
        team `CNHB9B5GX6`, the new profile name).
-5. [ ] **project.yml Release config**: keep Debug on the current ad-hoc
+5. [x] **project.yml Release config**: keep Debug on the current ad-hoc
        settings; add a `configs.Release` block with `CODE_SIGN_STYLE: Manual`,
        `CODE_SIGN_IDENTITY: "Apple Distribution"`,
        `PROVISIONING_PROFILE_SPECIFIER: <profile name>` — exactly NaviAdmin's
@@ -45,7 +45,7 @@ Source docs (read these for depth; this file is just the checklist):
        Development cert, only Distribution). Keep signing settings scoped to
        the app target only — command-line-wide provisioning args leak into SPM
        dependency targets and fail the build.
-6. [ ] **Ship script**: adapt `iOSnative/scripts/ship-naviadmin.sh` to
+6. [x] **Ship script**: adapt `iOSnative/scripts/ship-naviadmin.sh` to
        `scripts/ship.sh` here. Flow: source `api-key.env` → unlock keychain →
        bump `CURRENT_PROJECT_VERSION` in `project.yml` → `xcodegen generate` →
        archive (`Release`, `generic/platform=iOS`,
