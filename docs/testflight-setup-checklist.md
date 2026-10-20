@@ -1,4 +1,4 @@
-# TestFlight / App Store Connect setup checklist — TimeConvertor
+# TestFlight / App Store Connect setup checklist — TimeConverter
 
 Synthesized 2026-10-20 from the music library project's three shipping rounds.
 Source docs (read these for depth; this file is just the checklist):
@@ -21,10 +21,10 @@ Source docs (read these for depth; this file is just the checklist):
 - WWDR G3 intermediate imported (if `security find-identity` ever shows 0
   identities, re-import — recipe in testflight-pipeline.md).
 
-## One-time, per new app (the actual TimeConvertor to-do)
+## One-time, per new app (the actual TimeConverter to-do)
 
 1. [ ] **Register the App ID** in the developer portal:
-       `dev.thisolivier.timeconvertor`, no special capabilities.
+       `dev.thisolivier.timeconverter`, no special capabilities.
        (Personal team cannot issue CarPlay/Siri entitlements — not needed here.)
 2. [ ] **Create the app record** in App Store Connect: name, primary language,
        bundle id from step 1, SKU. Note the ASC app id it assigns (needed for
@@ -32,7 +32,7 @@ Source docs (read these for depth; this file is just the checklist):
 3. [ ] **Create an App Store distribution provisioning profile** for the bundle
        id against the existing Apple Distribution cert. Download it to
        `~/sites/navidromClient/spike/.signing/` (naming pattern:
-       `Spike_TimeConvertor_App_Store.mobileprovision`) AND install it at
+       `Spike_TimeConverter_App_Store.mobileprovision`) AND install it at
        `~/Library/MobileDevice/Provisioning Profiles/<UUID>.mobileprovision`
        where xcodebuild looks.
 4. [x] **ExportOptions.plist** in this repo — copy NaviAdmin's (manual signing,

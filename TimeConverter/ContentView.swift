@@ -19,7 +19,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("TimeConvertor")
+            Text("TimeConverter")
                 .font(.largeTitle.bold())
 
             TextField("e.g. 12pm ET in London", text: $freeformInput)

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# ship.sh — archive, export, and upload TimeConvertor to TestFlight.
+# ship.sh — archive, export, and upload TimeConverter to TestFlight.
 #
 # Adapted from musicLibrary/iOSnative/scripts/ship-naviadmin.sh, the shared
 # template for xcodegen-managed projects: project.yml is the source of truth
-# and TimeConvertor.xcodeproj is gitignored, regenerated fresh before every
+# and TimeConverter.xcodeproj is gitignored, regenerated fresh before every
 # build.
 #
 # One iOS archive covers everything: iOS TestFlight builds install and run via
@@ -19,7 +19,7 @@
 # This script:
 #   1. Sources api-key.env and unlocks the build keychain
 #   2. Bumps CURRENT_PROJECT_VERSION in project.yml and regenerates
-#      TimeConvertor.xcodeproj via `xcodegen generate`
+#      TimeConverter.xcodeproj via `xcodegen generate`
 #   3. Archives (xcodebuild archive, Release config, generic iOS destination)
 #      and asserts the archive really embeds the bumped build number
 #   4. Exports to .ipa (xcodebuild -exportArchive, ExportOptions.plist)
@@ -36,9 +36,9 @@ PROJECT_YML="$REPO_DIR/project.yml"
 BUILD_DIR="$REPO_DIR/build"
 SIGNING_DIR="$HOME/sites/navidromClient/spike/.signing"
 KEYCHAIN="$HOME/Library/Keychains/spike-build.keychain-db"
-SCHEME="TimeConvertor"
-PRODUCT_NAME="TimeConvertor"
-BUNDLE_ID="dev.thisolivier.timeconvertor"
+SCHEME="TimeConverter"
+PRODUCT_NAME="TimeConverter"
+BUNDLE_ID="dev.thisolivier.timeconverter"
 ARCHIVE_PATH="$BUILD_DIR/$PRODUCT_NAME.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 IPA_PATH="$EXPORT_DIR/$PRODUCT_NAME.ipa"
@@ -46,14 +46,14 @@ IPA_PATH="$EXPORT_DIR/$PRODUCT_NAME.ipa"
 usage() {
   echo "Usage: $0 <new-build-number> [--skip-upload]"
   echo ""
-  echo "Bumps CURRENT_PROJECT_VERSION, archives TimeConvertor, exports .ipa,"
+  echo "Bumps CURRENT_PROJECT_VERSION, archives TimeConverter, exports .ipa,"
   echo "and uploads to TestFlight via altool."
   echo ""
   echo "Prerequisites:"
   echo "  - Xcode installed with iOS SDK, xcodegen installed"
   echo "  - $SIGNING_DIR populated (api-key.env, keychain.password)"
   echo "  - Build keychain created at $KEYCHAIN"
-  echo "  - 'TimeConvertor App Store' profile installed in"
+  echo "  - 'TimeConverter App Store' profile installed in"
   echo "    ~/Library/MobileDevice/Provisioning Profiles/"
   echo ""
   echo "  --skip-upload   Run steps 1-4 (and print what step 5 would do) but"
@@ -150,7 +150,7 @@ fi
 echo "Bumped CURRENT_PROJECT_VERSION: $CURRENT_BUILD_NUMBER → $NEW_BUILD_NUMBER (in project.yml)"
 
 ( cd "$REPO_DIR" && xcodegen generate ) || fail "xcodegen generate"
-echo "xcodegen generate complete — TimeConvertor.xcodeproj regenerated from project.yml"
+echo "xcodegen generate complete — TimeConverter.xcodeproj regenerated from project.yml"
 
 # ------------------------------------------------------------------
 step "3/6 Archive"

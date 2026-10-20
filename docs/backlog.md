@@ -1,4 +1,4 @@
-# TimeConvertor Backlog
+# TimeConverter Backlog
 
 Working structure: this file is the backlog and plan of record. Each item gets a short spec in `docs/` when it needs one (item 2 will get `docs/input-parsing-spec.md`). Stable decisions and findings land in docs; code lands via small commits after each major change.
 

@@ -1,4 +1,4 @@
-# TimeConvertor
+# TimeConverter
 
 A small universal macOS/iOS app (SwiftUI, Mac Catalyst) for freeform timezone
 conversion: type something like `12pm ET in London` or `06:34 Portugal in PST`
@@ -6,8 +6,8 @@ and see the converted time.
 
 ## Dev environment
 
-The Xcode project is **generated** — `TimeConvertor.xcodeproj` and
-`TimeConvertor/Info.plist` are not tracked in git. `project.yml` is the single
+The Xcode project is **generated** — `TimeConverter.xcodeproj` and
+`TimeConverter/Info.plist` are not tracked in git. `project.yml` is the single
 source of truth (including version numbers); regenerate with `xcodegen
 generate` (the scripts do this for you). Requires Xcode 26+ and
 [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
@@ -29,17 +29,17 @@ iOS lane stayed green.
 
 ## Layout
 
-- `TimeConvertor/` — app source. `ContentView.swift` is the whole interface;
+- `TimeConverter/` — app source. `ContentView.swift` is the whole interface;
   `ConverterPresenter.swift` turns parse output into display strings;
   `Parsing/` is the headless parser and conversion engine (see
-  `TimeConvertor/Parsing/readme.md`)
-- `TimeConvertorTests/` — test suite (Swift Testing)
+  `TimeConverter/Parsing/readme.md`)
+- `TimeConverterTests/` — test suite (Swift Testing)
 - `docs/` — backlog (`docs/backlog.md`) and specs
 - `scripts/` — build/run/test helpers
 
-Note: the target's `sources` glob copies non-Swift files in `TimeConvertor/`
+Note: the target's `sources` glob copies non-Swift files in `TimeConverter/`
 into the bundle, flattened. Only one `readme.md` can therefore live under
-`TimeConvertor/` (currently `Parsing/readme.md`) — a second one collides at
+`TimeConverter/` (currently `Parsing/readme.md`) — a second one collides at
 build time. The UI layer is documented below instead.
 
 ## UI layer
@@ -71,6 +71,6 @@ screenshotted without typing. The argument is compiled out of Release builds.
 
 ```bash
 scripts/run-mac.sh    # build once, then launch with a prefilled field:
-open -n build/DerivedData/Build/Products/Debug-maccatalyst/TimeConvertor.app \
+open -n build/DerivedData/Build/Products/Debug-maccatalyst/TimeConverter.app \
   --args -initialInput "12pm ET in London"
 ```

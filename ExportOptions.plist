@@ -16,8 +16,8 @@
 	<string>app-store-connect</string>
 	<key>provisioningProfiles</key>
 	<dict>
-		<key>dev.thisolivier.timeconvertor</key>
-		<string>TimeConvertor App Store</string>
+		<key>dev.thisolivier.timeconverter</key>
+		<string>TimeConverter App Store</string>
 	</dict>
 	<key>signingCertificate</key>
 	<string>Apple Distribution</string>

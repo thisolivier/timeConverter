@@ -7,8 +7,8 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SCHEME="TimeConvertor"
-BUNDLE_ID="dev.thisolivier.timeconvertor"
+SCHEME="TimeConverter"
+BUNDLE_ID="dev.thisolivier.timeconverter"
 DEFAULT_SIMULATOR="iPhone 17"
 DERIVED_DATA="$REPO_DIR/build/DerivedData"
 
@@ -26,13 +26,13 @@ if [[ -z "$BOOTED_UDID" ]]; then
 fi
 
 xcodebuild build \
-  -project "$REPO_DIR/TimeConvertor.xcodeproj" \
+  -project "$REPO_DIR/TimeConverter.xcodeproj" \
   -scheme "$SCHEME" \
   -destination "platform=iOS Simulator,id=$BOOTED_UDID" \
   -derivedDataPath "$DERIVED_DATA" \
   2>&1 | tail -5
 
-APP_PATH="$DERIVED_DATA/Build/Products/Debug-iphonesimulator/TimeConvertor.app"
+APP_PATH="$DERIVED_DATA/Build/Products/Debug-iphonesimulator/TimeConverter.app"
 xcrun simctl install "$BOOTED_UDID" "$APP_PATH"
 open -a Simulator
 xcrun simctl launch "$BOOTED_UDID" "$BUNDLE_ID"

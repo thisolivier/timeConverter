@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// One suite per spec requirement: each of the five prompts, its trigger, and
 /// the copy the spec's prompt table specifies.

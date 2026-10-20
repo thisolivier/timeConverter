@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct TimeConvertorApp: App {
+struct TimeConverterApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

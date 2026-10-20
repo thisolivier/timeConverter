@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// Normalisation and the first-standalone-conjunction split.
 struct InputTokenizerTests {

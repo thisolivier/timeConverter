@@ -6,13 +6,13 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SCHEME="TimeConvertor"
+SCHEME="TimeConverter"
 DERIVED_DATA="$REPO_DIR/build/DerivedData"
 
 (cd "$REPO_DIR" && xcodegen generate --quiet)
 
 xcodebuild build \
-  -project "$REPO_DIR/TimeConvertor.xcodeproj" \
+  -project "$REPO_DIR/TimeConverter.xcodeproj" \
   -scheme "$SCHEME" \
   -destination 'platform=macOS,variant=Mac Catalyst,arch=arm64' \
   -derivedDataPath "$DERIVED_DATA" \
@@ -20,6 +20,6 @@ xcodebuild build \
   CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
   2>&1 | tail -5
 
-APP_PATH="$DERIVED_DATA/Build/Products/Debug-maccatalyst/TimeConvertor.app"
+APP_PATH="$DERIVED_DATA/Build/Products/Debug-maccatalyst/TimeConverter.app"
 echo "Launching $APP_PATH"
 open "$APP_PATH"

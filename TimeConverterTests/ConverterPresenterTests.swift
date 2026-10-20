@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// The UI glue. These are unit tests on the presenter's strings, not UI tests:
 /// the view is a dumb switch over `ConverterDisplayState`, so covering the

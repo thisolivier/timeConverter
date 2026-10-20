@@ -94,7 +94,7 @@ ConversionEngine    wall clock → instant (DST policy) → two zone readings,
 
 ## Tests
 
-`TimeConvertorTests/` covers the spec's full fixture list — every example
+`TimeConverterTests/` covers the spec's full fixture list — every example
 string, each P1–P5 trigger, lenient spacing, `12 am`/`12 pm`, redundant and
 contradictory meridiems, CST/IST ambiguity, Porto through the real bundled file
 (which is also how resource bundling is verified), both DST-transition branches

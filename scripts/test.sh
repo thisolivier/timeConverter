@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test.sh — run TimeConvertor's xcodebuild tests.
+# test.sh — run TimeConverter's xcodebuild tests.
 #
 # Adapted from musicLibrary/iOSnative/scripts/test.sh. By default tests run on
 # the iOS simulator. The Mac (Catalyst) lane exists because in the sibling
@@ -18,7 +18,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SCHEME="TimeConvertor"
+SCHEME="TimeConverter"
 IOS_DESTINATION="platform=iOS Simulator,name=iPhone 17"
 MAC_DESTINATION="platform=macOS,variant=Mac Catalyst,arch=arm64"
 
@@ -42,7 +42,7 @@ done
 
 ONLY_TESTING=""
 if [[ ${#POSITIONAL[@]} -ge 1 ]]; then
-  ONLY_TESTING="-only-testing:TimeConvertorTests/${POSITIONAL[0]}"
+  ONLY_TESTING="-only-testing:TimeConverterTests/${POSITIONAL[0]}"
 fi
 
 # The .xcodeproj is not tracked in git — regenerate it from project.yml.
@@ -51,7 +51,7 @@ fi
 run_tests_on() {
   local platform_label="$1"
   local destination="$2"
-  local log_file="/tmp/timeconvertor-test-output-${platform_label}.log"
+  local log_file="/tmp/timeconverter-test-output-${platform_label}.log"
 
   echo ""
   echo "Running tests (scheme=$SCHEME, platform=$platform_label)..."
@@ -74,7 +74,7 @@ run_tests_on() {
 
   # shellcheck disable=SC2086
   xcodebuild test \
-    -project "$REPO_DIR/TimeConvertor.xcodeproj" \
+    -project "$REPO_DIR/TimeConverter.xcodeproj" \
     -scheme "$SCHEME" \
     -destination "$destination" \
     $ONLY_TESTING \

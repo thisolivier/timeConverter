@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// Step 5 of the chain, and — importantly — proof that the data file it reads
 /// is actually bundled into the built product. That is a project-generation

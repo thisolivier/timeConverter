@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// The `<time>` half of the grammar, including the spec's lenient-spacing rule
 /// and the 12 am / 12 pm convention.

@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// Conversion, echo formatting and day rollover. The DST-edge policy has its
 /// own suite in `DaylightSavingTransitionTests`.

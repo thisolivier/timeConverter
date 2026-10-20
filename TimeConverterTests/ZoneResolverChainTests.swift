@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// The five-step resolution chain: which resolver answers, and what happens
 /// when more than one meaning comes back.

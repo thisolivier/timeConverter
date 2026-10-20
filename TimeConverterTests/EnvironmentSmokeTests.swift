@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// Smoke tests proving the test harness and the system timezone database the
 /// app will depend on are both working. Real parser tests arrive with item 3.

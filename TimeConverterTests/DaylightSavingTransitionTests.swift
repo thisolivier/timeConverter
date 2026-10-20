@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// The spec's DST-edge policy, exercised on real transition days with fixed
 /// injected dates:

@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// End-to-end parsing of the spec's example strings and the grammar rules
 /// around them. The five prompt triggers live in `PromptTests`.

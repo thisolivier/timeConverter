@@ -1,5 +1,5 @@
 import Foundation
-@testable import TimeConvertor
+@testable import TimeConverter
 
 /// Shared fixtures and pattern-matching sugar for the parsing tests.
 ///
