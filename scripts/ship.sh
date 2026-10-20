@@ -213,11 +213,16 @@ if [[ "$SKIP_UPLOAD" == "1" ]]; then
   echo "  xcrun altool --upload-app -f \"$IPA_PATH\" -t ios --apiKey \"\$APPSTORE_KEY_ID\" --apiIssuer \"\$APPSTORE_ISSUER_ID\""
   DELIVERY_UUID="(skipped)"
 else
+  # `|| true` so a nonzero altool exit reaches the grep check below instead of
+  # silently killing the script inside the command substitution (set -e would
+  # abort the assignment itself, eating altool's error output entirely —
+  # observed on the first TimeConverter upload, where Apple's 90023/90474
+  # validation rejections vanished without a trace).
   UPLOAD_OUTPUT=$(xcrun altool --upload-app \
     -f "$IPA_PATH" \
     -t ios \
     --apiKey "$APPSTORE_KEY_ID" \
-    --apiIssuer "$APPSTORE_ISSUER_ID" 2>&1)
+    --apiIssuer "$APPSTORE_ISSUER_ID" 2>&1) || true
 
   echo "$UPLOAD_OUTPUT"
 

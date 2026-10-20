@@ -51,7 +51,9 @@ CarPlay/Siri entitlements — strip them if the app declares any.
    → App Store), selecting the existing Apple Distribution cert. Name it
    `<App> App Store`. Download it.
 
-Verify: user confirms each; profile file exists in Downloads.
+Verify: user confirms each; profile file exists. If the user browses from a
+different machine, give them an scp push command targeting the `.signing/`
+dir directly (this server's Tailscale IP works) instead of assuming Downloads.
 
 ## Phase 2 — install the profile (yours)
 
@@ -79,8 +81,16 @@ For an **xcodegen project** (preferred; mirror NaviAdmin's `project.yml`):
   properties (avoids the "Missing compliance" processing rejection).
 - Ensure `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` live in `project.yml`
   and reach Info.plist via `$(VAR)` placeholders.
-- `ExportOptions.plist` in the repo: method `app-store`, manual signing, team
+- `ExportOptions.plist` in the repo: method `app-store-connect` (the
+  `app-store` spelling was renamed in Xcode 15.3), manual signing, team
   `CNHB9B5GX6`, the profile mapping. Copy NaviAdmin's as the template.
+- **Pre-flight the bundle for App Store validation** — Apple rejects at the
+  altool stage, after a long archive+export: the app must have an asset-catalog
+  app icon (90023; a single-size 1024px `AppIcon` suffices —
+  `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon` — and a placeholder PNG can be
+  generated with a short AppKit/swift script) and `UISupportedInterfaceOrientations`
+  with all four orientations for iPad multitasking (90474). Bare SwiftUI
+  scaffolds have neither.
 
 ## Phase 4 — ship script (yours)
 
@@ -93,6 +103,12 @@ source `api-key.env` → unlock keychain → bump `CURRENT_PROJECT_VERSION` in
 round-trips) → PlistBuddy-assert the archive contains the bumped build number
 → export via ExportOptions.plist → `xcrun altool --upload-app` → print the
 Delivery UUID.
+
+Two script traps seen in practice: never capture altool via `VAR=$(...)` under
+`set -e` without `|| true` — a nonzero altool exit aborts the assignment itself
+and the validation errors vanish without a trace; and when running the ship
+script, don't pipe it through `tail`/`grep` without `pipefail` — the pipe
+masks the script's exit code.
 
 ## Phase 5 — first upload + verify (yours, user confirms in browser)
 
