@@ -1,7 +1,9 @@
 # macOS
 .DS_Store
 
-# Xcode
+# Xcode — the project is generated from project.yml (xcodegen generate)
+*.xcodeproj/
+TimeConvertor/Info.plist
 build/
 DerivedData/
 *.xcuserstate
