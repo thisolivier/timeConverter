@@ -23,12 +23,10 @@ Source docs (read these for depth; this file is just the checklist):
 
 ## One-time, per new app (the actual TimeConverter to-do)
 
-1. [ ] **Register the App ID** in the developer portal:
-       `dev.thisolivier.timeconverter`, no special capabilities.
-       (Personal team cannot issue CarPlay/Siri entitlements — not needed here.)
-2. [ ] **Create the app record** in App Store Connect: name, primary language,
-       bundle id from step 1, SKU. Note the ASC app id it assigns (needed for
-       build-status checks later).
+1. [x] **Register the App ID** — done 2026-10-20: `dev.thisolivier.timeconverter`.
+2. [x] **Create the app record** — done 2026-10-20: store name
+       **"Time Converter 3000"**, ASC app id **6825044484**
+       (bundle id `dev.thisolivier.timeconverter`).
 3. [ ] **Create an App Store distribution provisioning profile** for the bundle
        id against the existing Apple Distribution cert. Download it to
        `~/sites/navidromClient/spike/.signing/` (naming pattern:
