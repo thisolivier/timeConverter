@@ -8,7 +8,7 @@ Implementation is item 3; UI wiring is item 4.
 
 ```
 <input>       := <time> <source-zone> <conjunction> <target-zone>
-<time>        := HH:mm                      (24-hour assumed)
+<time>        := H[H]:mm                    (24-hour assumed)
                | H[H][:mm] [space] am|pm    (12-hour; space optional on input)
 <conjunction> := "in" | "to"                (closed list, case-insensitive)
 <zone>        := abbreviation | city | country   (one or more words)
@@ -61,20 +61,31 @@ chain stops at the **first resolver with ≥1 candidate**.
 3. **tz-database city match** — token against the final component of every
    `TimeZone.knownTimeZoneIdentifiers` entry, underscores→spaces
    (`new york` → `America/New_York`, `london` → `Europe/London`).
-4. **Country table** (hand-rolled). Country names/common forms → zone list.
-   Multi-zone countries return all their zones: `portugal→[Europe/Lisbon,
-   Atlantic/Azores]`, `usa→[the six primary US zones]`. Single-zone countries
-   resolve directly (`japan→Asia/Tokyo`).
+4. **Country table** (hand-rolled). Country names/common forms → zone list,
+   with an optional **canonical zone** per entry. Single-zone countries resolve
+   directly (`japan→Asia/Tokyo`). Multi-zone countries with a dominant national
+   clock resolve to their designated canonical zone — the zone a clock on the
+   mainland street shows: `portugal→Europe/Lisbon` (not Azores),
+   `spain→Europe/Madrid` (not Canaries). DST is automatic via the IANA zone.
+   Countries with **no** single national clock (`usa`, `canada`, `australia`,
+   `brazil`, `russia`, `mexico`) return all candidates → P4 prompt.
+   (Amended 2026-10-20: canonical defaults replace always-prompt for countries;
+   abbreviations like CST/IST keep the always-prompt rule — no canonical pick.)
 5. **Offline fallback list** (bundled data file, not code). Cities absent from
    the tz db. Seeded with a handful of QA entries only (e.g.
    `porto→Europe/Lisbon`, `manchester→Europe/London`); architected so a larger
    gazetteer can replace the file later without touching the resolver chain.
 
 Outcomes per token:
-- **1 candidate** → resolved.
-- **>1 candidate** → **always prompt** (disambiguation picker). No silent
-  defaults, ever.
+- **1 candidate** (including a country's canonical zone) → resolved; the echoed
+  interpretation always names the zone actually used, so the Lisbon-not-Azores
+  choice is visible.
+- **>1 candidate** → prompt (disambiguation picker). Applies to ambiguous
+  abbreviations (CST, IST) and no-canonical-clock countries.
 - **0 candidates** from every resolver → unknown-token prompt.
+- tz-db legacy country identifiers (`Portugal`, `Japan`, `GB`) must NOT be
+  matched by the city resolver (step 3) — country handling belongs to step 4
+  so the canonical/prompt policy applies.
 
 ## Prompts
 
