@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "comment": "Offline fallback gazetteer — step 5 of the zone-resolution chain. Cities the tz database has no entry for. Seeded with QA entries only; replace this file with a larger gazetteer in the same shape and the resolver chain needs no code changes. Names must be lowercase. timeZoneIdentifiers may list more than one zone, in which case the chain prompts.",
+  "entries": [
+    {
+      "name": "porto",
+      "timeZoneIdentifiers": ["Europe/Lisbon"]
+    },
+    {
+      "name": "manchester",
+      "timeZoneIdentifiers": ["Europe/London"]
+    }
+  ]
+}
