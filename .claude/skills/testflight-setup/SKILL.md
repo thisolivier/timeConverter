@@ -130,6 +130,9 @@ TestFlight **on the Mac** too. Verified in practice twice: Amperfy from
 TestFlight runs on the user's Mac, and TimeConverter — a Mac Catalyst app
 shipped through exactly this skill's iOS-only pipeline — was confirmed working
 from TestFlight on both iPhone and Mac (2026-10-21). Ship iOS; the Mac comes
-for free. First-time
+for free. One nuance (verified 2026-10-21): what TestFlight delivers on the
+Mac is the iOS binary in compatibility mode, NOT a Catalyst build — identical
+for plain SwiftUI apps, but Catalyst/macOS-only features (AppKit bundles,
+menu-bar items) will not ride this lane and need their own Mac delivery story. First-time
 `xcodebuild` archive may hang on `builtin-RegisterExecutionPolicyException`
 (Gatekeeper registration) — let it finish once.
