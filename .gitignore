@@ -4,6 +4,7 @@
 # Xcode — the project is generated from project.yml (xcodegen generate)
 *.xcodeproj/
 TimeConverter/Info.plist
+TimeConverterControls/Info.plist
 build/
 DerivedData/
 *.xcuserstate

@@ -6,8 +6,12 @@
 # and TimeConverter.xcodeproj is gitignored, regenerated fresh before every
 # build.
 #
-# One iOS archive covers everything: iOS TestFlight builds install and run via
-# TestFlight on the Mac too, so there is no separate Mac/Catalyst ship lane.
+# One iOS archive covers current needs: the iOS TestFlight build installs and
+# runs via TestFlight on the Mac too (user-verified, builds 3 and 4). Nuance
+# from the item-12 research: what TestFlight delivers on the Mac is the iOS
+# binary, NOT the local Catalyst product — so any Catalyst/macOS-only feature
+# (e.g. a menu-bar AppKit bundle) will not ride this lane; shipping such
+# features needs a separate Catalyst delivery lane (backlog item 12b).
 #
 # Usage:
 #   scripts/ship.sh <new-build-number> [--skip-upload]
@@ -55,6 +59,11 @@ usage() {
   echo "  - Build keychain created at $KEYCHAIN"
   echo "  - 'TimeConverter App Store' profile installed in"
   echo "    ~/Library/MobileDevice/Provisioning Profiles/"
+  echo "  - 'TimeConverter Controls App Store' profile, likewise, for the"
+  echo "    embedded Control Center extension (bundle id"
+  echo "    dev.thisolivier.timeconverter.controls). It does NOT exist yet:"
+  echo "    until it is created, step 3 (archive) fails signing the extension."
+  echo "    Portal steps are in the README's shipping note."
   echo ""
   echo "  --skip-upload   Run steps 1-4 (and print what step 5 would do) but"
   echo "                  do not call 'xcrun altool --upload-app'. Useful for"

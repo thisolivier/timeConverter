@@ -27,6 +27,40 @@ Run `--platform all` before shipping anything that touches startup wiring or
 storage — in the sibling music projects the Mac build broke twice while the
 iOS lane stayed green.
 
+## Shipping
+
+`scripts/ship.sh <build>` archives, exports and uploads to TestFlight. Release
+signing is **manual**, against named provisioning profiles — the app's is
+`TimeConverter App Store`.
+
+> **⚠️ `ship.sh` cannot complete right now.** Since backlog item 11 the app
+> embeds a second target, the `TimeConverterControls` extension, and an
+> extension needs its *own* App ID and its *own* distribution profile — the
+> app's profile cannot cover it. The build expects a profile named
+> **`TimeConverter Controls App Store`**, which does not exist yet, so the run
+> fails at **step 3/6 (archive)** while signing the extension (and would fail
+> again at step 4/6, export). Everything else — Debug builds, both test lanes,
+> `run-ios.sh`, `run-mac.sh` — works without it, because Debug signs ad-hoc with
+> no team.
+>
+> Olivier, before the next ship, in the Apple Developer portal (team
+> `CNHB9B5GX6`):
+>
+> 1. **Identifiers → App IDs → +** → App → Description
+>    "Time Converter 3000 Controls", Bundle ID **explicit**
+>    `dev.thisolivier.timeconverter.controls`. No capabilities needed.
+> 2. **Profiles → +** → *App Store Connect* (distribution) → select that App ID
+>    → certificate **Apple Distribution** (the team's existing one) → name it
+>    exactly **`TimeConverter Controls App Store`**.
+> 3. Download it and double-click, or drop it in
+>    `~/Library/MobileDevice/Provisioning Profiles/`, on this build machine —
+>    the same place `TimeConverter App Store` lives.
+> 4. Run `scripts/ship.sh <build> --skip-upload` once to prove archive and
+>    export both pass before a real upload.
+>
+> No change to `project.yml` or `ExportOptions.plist` is needed afterwards; both
+> already name the profile.
+
 ## Layout
 
 - `TimeConverter/` — app source. `ContentView.swift` is the whole interface;
@@ -34,15 +68,18 @@ iOS lane stayed green.
   `ConverterDisplayDriver.swift` owns *when* the output area changes;
   `PromptChipRow.swift` renders the correction chips; `Parsing/` is the
   headless parser and conversion engine (see
-  `TimeConverter/Parsing/readme.md`)
+  `TimeConverter/Parsing/readme.md`); `Launchers/` is the App Shortcut, the
+  intent and the URL route (see `TimeConverter/Launchers/readme.md`)
+- `TimeConverterControls/` — the Control Center widget extension, the project's
+  only second target (see `TimeConverterControls/readme.md`)
 - `TimeConverterTests/` — test suite (Swift Testing)
 - `docs/` — backlog (`docs/backlog.md`) and specs
 - `scripts/` — build/run/test helpers
 
-Note: the target's `sources` glob copies non-Swift files in `TimeConverter/`
-into the bundle, flattened. Only one `readme.md` can therefore live under
-`TimeConverter/` (currently `Parsing/readme.md`) — a second one collides at
-build time. The UI layer is documented below instead.
+Note: the targets' `sources` globs copy non-Swift files into the bundle,
+flattened, so every module `readme.md` is excluded in `project.yml` — without
+that exclude two readmes in different modules collide at build time. The UI
+layer has no module of its own and is documented below instead.
 
 ## UI layer
 
@@ -86,11 +123,59 @@ selection somewhere.
   background, so launch-to-typing is zero taps and the Mac window arrives ready
   to type. It never takes focus mid-session: `InputFocusPolicy` distinguishes
   returning from `.background` (focus) from merely regaining key status via
-  `.inactive` (don't), which is the case that matters on Catalyst.
+  `.inactive` (don't), which is the case that matters on Catalyst. A launcher
+  (below) is the one thing that may take focus mid-session — it is a button
+  whose entire meaning is "let me type a time".
 - **Styling is interim and knowingly so.** Prompt copy stays verbose, the text
   stays red, messages stay broken onto their own lines; a design sprint comes
   later. P4 also still lists its candidates inline above the chips, which is
   redundant but is the agreed interim copy.
+
+## Getting into the app (iOS launchers)
+
+Both are *launchers only* — they open the app with an **empty, focused** field
+and nothing else. No launcher can accept a typed sentence, so this is the honest
+best iOS can do for a typed-input tool: the keyboard, one tap sooner. See
+`TimeConverter/Launchers/readme.md` and `TimeConverterControls/readme.md`.
+
+- **App Shortcut** — "Convert a time in Time Converter" to Siri, or the row in
+  Spotlight and in Shortcuts → App Shortcuts. No setup; it appears when the app
+  installs. Needs no second target, which is why it shipped as its own slice.
+- **Control Center control** — a "Convert a time" button the user adds to
+  Control Center or the lock screen, from the `TimeConverterControls` extension.
+  No home-screen real estate required.
+
+Both run the same `ConvertATimeIntent`, and pressing either mid-session clears
+whatever was typed: the button means *start* a conversion.
+
+### QA: the launchers by hand
+
+The App Shortcut and the control cannot be driven from a script, so they are
+checked by hand. On a simulator (`scripts/run-ios.sh` installs the app *and* the
+embedded extension) or a device:
+
+1. **The control.** Settings → Control Center → scroll to "More Controls" (or
+   pull down Control Center, long-press, "Add a Control") → search "Convert" →
+   the `Convert a time` button with a globe-and-clock glyph should be listed
+   under *Time Converter 3000* → add it. Tap it: the app comes forward with an
+   empty field and the keyboard already up. Type `12pm ET in London` to confirm
+   it is the ordinary app.
+2. **The control, mid-session.** Open the app, type half a sentence, go back to
+   the home screen, tap the control again — the field must come back **empty**,
+   not half-typed.
+3. **The App Shortcut.** Shortcuts app → *App Shortcuts* → *Time Converter 3000*
+   → "Convert a time" should be listed; run it. Then pull down for Spotlight,
+   type "Convert a time", and run the row. With Siri enabled on a device:
+   "Convert a time in Time Converter".
+4. **The URL route** (the only scriptable one, and the fallback path):
+
+   ```bash
+   xcrun simctl openurl booted timeconverter://convert
+   ```
+
+   iOS 26 shows an *"Open in TimeConverter?"* confirmation for any custom-scheme
+   open from outside an app — tap **Open**. That prompt is a property of the URL
+   route alone; the control and the App Shortcut never show it.
 
 ### QA: prefilling the input headlessly
 

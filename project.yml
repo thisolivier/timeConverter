@@ -9,6 +9,13 @@ options:
   bundleIdPrefix: dev.thisolivier
   deploymentTarget:
     iOS: "26.0"
+# Project-level, so the app and the TimeConverterControls extension always carry
+# the *same* version — the App Store rejects a bundle whose extension disagrees
+# with it — and so `scripts/ship.sh` has exactly one line to bump.
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "4"
 targets:
   TimeConverter:
     type: application
@@ -35,8 +42,6 @@ targets:
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
         TARGETED_DEVICE_FAMILY: "1,2,6"
         MACOSX_DEPLOYMENT_TARGET: "26.0"
-        MARKETING_VERSION: "0.1.0"
-        CURRENT_PROJECT_VERSION: "4"
         # Single-size 1024px icon; Xcode derives every size App Store
         # validation demands (90023 rejects uploads with no icon).
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -57,6 +62,11 @@ targets:
           CODE_SIGN_IDENTITY: "Apple Distribution"
           PROVISIONING_PROFILE_SPECIFIER: "TimeConverter App Store"
           DEVELOPMENT_TEAM: CNHB9B5GX6
+    dependencies:
+      # Embeds the Control Center extension into the app bundle
+      # (TimeConverter.app/PlugIns). An extension is only ever installed as part
+      # of its host app, so this line is what puts the control on the device.
+      - target: TimeConverterControls
     info:
       path: TimeConverter/Info.plist
       properties:
@@ -68,6 +78,24 @@ targets:
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen: {}
+        # Siri matches an App Shortcut phrase against the app's display name —
+        # "TimeConverter", one word, which nobody says out loud. These are the
+        # spoken synonyms, including the App Store name ("Time Converter 3000"),
+        # so "Convert a time in Time Converter" is heard too.
+        INAlternativeAppNames:
+          - INAlternativeAppName: "Time Converter"
+          - INAlternativeAppName: "Time Converter 3000"
+        # A private scheme behind the launchers (backlog item 11):
+        # `timeconverter://convert` opens the app with an empty, focused field.
+        # It exists so the launcher behaviour can be QA'd headlessly — Control
+        # Center and Siri cannot be scripted, `xcrun simctl openurl` can — and
+        # as a fallback route for the same request. Not a public integration
+        # point; see `LaunchURLRouter`.
+        CFBundleURLTypes:
+          - CFBundleURLName: dev.thisolivier.timeconverter.launch
+            CFBundleTypeRole: Viewer
+            CFBundleURLSchemes:
+              - timeconverter
         ITSAppUsesNonExemptEncryption: false
         # All four orientations: App Store validation (90474) rejects bundles
         # with none declared, and iPad multitasking requires the full set.
@@ -76,6 +104,68 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+  # The project's first second target (backlog item 11, slice 2): a widget
+  # extension whose only content is the Control Center button. It exists because
+  # a `ControlWidget` cannot live in an app target — the system loads controls
+  # out of an extension.
+  TimeConverterControls:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: TimeConverterControls
+        excludes:
+          - "**/readme.md"
+      # Shared with the app, deliberately. The extension needs the intent type
+      # to resolve the control button's action; the app needs the same type to
+      # run `perform()` once it is foregrounded. Compiling it into only one of
+      # the two is the classic "the control does nothing when tapped" bug.
+      - TimeConverter/Launchers/ConvertATimeIntent.swift
+      - TimeConverter/Launchers/LaunchRequest.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.thisolivier.timeconverter.controls
+        PRODUCT_NAME: "TimeConverterControls"
+        SWIFT_VERSION: "6.0"
+        # Matches the app: ad-hoc, no team, so Debug builds, scripts/test.sh and
+        # scripts/run-ios.sh stay headless with no keychain access.
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_IDENTITY: "-"
+        # An extension ships *inside* its host app and is never installed on its
+        # own, so it must stay out of the archive's Applications directory.
+        SKIP_INSTALL: "YES"
+        # Repeated from the app target: the Mac Catalyst build embeds this
+        # extension, so it has to be buildable for Catalyst or the whole Mac
+        # lane fails. `ControlWidgetButton` is available on Mac Catalyst.
+        SUPPORTS_MACCATALYST: "YES"
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
+        TARGETED_DEVICE_FAMILY: "1,2,6"
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
+      configs:
+        # Release only, exactly as the app target does it — and with the same
+        # consequence: this profile must exist before `scripts/ship.sh` can
+        # archive. An extension needs its OWN App ID
+        # (dev.thisolivier.timeconverter.controls) and its own distribution
+        # profile; the app's profile cannot cover it. See the README's shipping
+        # note for the portal steps.
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: "Apple Distribution"
+          PROVISIONING_PROFILE_SPECIFIER: "TimeConverter Controls App Store"
+          DEVELOPMENT_TEAM: CNHB9B5GX6
+    info:
+      # Generated from here, like the app's — do not edit the plist directly.
+      path: TimeConverterControls/Info.plist
+      properties:
+        CFBundleDisplayName: "TimeConverter Controls"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        # The one line that makes this a WidgetKit extension rather than a
+        # generic app extension. Controls have no principal class: the `@main`
+        # `ControlWidget` is the entry point.
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
   TimeConverterTests:
     type: bundle.unit-test
     platform: iOS

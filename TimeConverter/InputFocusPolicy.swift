@@ -16,6 +16,12 @@ enum InputFocusPolicy {
     /// prefilled text stays put; focusing only places the cursor in it.
     static let shouldFocusOnAppear = true
 
+    /// A launcher (App Shortcut phrase, Control Center control — backlog item
+    /// 11) always focuses, even mid-session. Unlike a scene-phase change this
+    /// is an explicit press of a button whose entire purpose is "let me type a
+    /// time", so taking focus is obeying the user rather than interrupting one.
+    static let shouldFocusOnLaunchRequest = true
+
     /// Whether a scene-phase transition counts as arriving at the app.
     static func shouldFocusInput(
         movingFrom previousPhase: ScenePhase,

@@ -13,6 +13,11 @@ struct ContentView: View {
     @FocusState private var inputFieldIsFocused: Bool
     @Environment(\.scenePhase) private var scenePhase
 
+    /// Where the App Shortcut and the Control Center control post their one
+    /// request (backlog item 11). Not `@State`: the app owns one mailbox and the
+    /// intent writes to it from outside the view's lifetime.
+    private let launchRequests = LaunchRequestInbox.shared
+
     /// Keeps the window feeling like a small utility on Mac Catalyst without
     /// fighting the window's own sizing.
     private let contentWidth: CGFloat = 480
@@ -47,6 +52,16 @@ struct ContentView: View {
             // chips — immediately.
             showResultWithoutWaiting()
             inputFieldIsFocused = InputFocusPolicy.shouldFocusOnAppear
+            // A cold launch from a launcher can perform its intent before the
+            // view exists, so the mailbox is drained here as well as below.
+            honourPendingLaunchRequest()
+        }
+        // The warm case: the app was already running, so the intent (or the
+        // QA URL) arrives while this view is on screen.
+        .onChange(of: launchRequests.pendingRequest) { honourPendingLaunchRequest() }
+        .onOpenURL { url in
+            guard let request = LaunchURLRouter.request(for: url) else { return }
+            launchRequests.post(request)
         }
         // Launch-to-typing is zero taps, and a window returning from the
         // background arrives ready to type — but focus is never taken
@@ -94,6 +109,21 @@ struct ContentView: View {
     /// keeps the driver, presenter, parser and conversion engine pure.
     private func showResultWithoutWaiting() {
         displayDriver.showWithoutWaiting(for: freeformInput, now: Date())
+    }
+
+    /// Launcher arrival: empty field, cursor in it, nothing else.
+    ///
+    /// The *decisions* here are tested — what the input becomes
+    /// (`LaunchRequest.inputToStartFrom`) and that arriving focuses the field
+    /// (`InputFocusPolicy`). What is left is the `@FocusState` write, which only
+    /// a running app can prove.
+    private func honourPendingLaunchRequest() {
+        guard let request = launchRequests.takePendingRequest() else { return }
+        freeformInput = request.inputToStartFrom
+        // Driven from the request rather than from `freeformInput`, which was
+        // written one line ago: the output area must never lag the field.
+        displayDriver.showWithoutWaiting(for: request.inputToStartFrom, now: Date())
+        inputFieldIsFocused = InputFocusPolicy.shouldFocusOnLaunchRequest
     }
 
     /// A chip rewrites the sentence; the sentence stays the single source of

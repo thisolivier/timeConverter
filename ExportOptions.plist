@@ -14,10 +14,16 @@
 	     machine's Xcode. -->
 	<key>method</key>
 	<string>app-store-connect</string>
+	<!-- One entry per bundle in the archive, app and embedded extension alike.
+	     The extension needs its own App ID and its own distribution profile;
+	     the app's does not cover it. "TimeConverter Controls App Store" does
+	     NOT exist in the portal yet — see the README's shipping note. -->
 	<key>provisioningProfiles</key>
 	<dict>
 		<key>dev.thisolivier.timeconverter</key>
 		<string>TimeConverter App Store</string>
+		<key>dev.thisolivier.timeconverter.controls</key>
+		<string>TimeConverter Controls App Store</string>
 	</dict>
 	<key>signingCertificate</key>
 	<string>Apple Distribution</string>
