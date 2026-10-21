@@ -86,3 +86,9 @@ Source docs (read these for depth; this file is just the checklist):
 - Use the `release-version` skill for bumps; CHANGELOG entry per build
   (NaviAdmin bundles its CHANGELOG into the app — nice pattern if we want an
   in-app "what's new" later).
+
+## Verified in practice (2026-10-21)
+
+Build 3 installed and ran from TestFlight on both iPhone and Mac (Olivier
+confirmed). The Mac-for-free Catalyst theory holds for this app's own
+pipeline, not just Amperfy's.
