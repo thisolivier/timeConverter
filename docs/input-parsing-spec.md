@@ -111,6 +111,12 @@ item 4 renders them.
 - Echo the full interpretation back canonically so mistakes are visible:
   `12:00 pm New York (UTC-5) → 5:00 pm London (UTC+0)`, including a +1d/−1d
   marker when the date rolls over.
+- **Abbreviation inputs echo expanded** (added 2026-10-21): when a zone was
+  resolved from an abbreviation/alias, the echo shows the expanded name with
+  representative cities, not the bare identifier city — `12pm ET in London` →
+  `12:00 pm Eastern Time (New York, Toronto) …`. Alias and abbreviation
+  resolver entries carry a display name and one or two representative cities.
+  City- and country-resolved tokens echo as before (`London`, `Lisbon`).
 - DST edges on transition days: a nonexistent local time resolves forward to the
   next valid instant; an ambiguous (repeated) time takes the earlier instant.
   The displayed UTC offsets make the choice visible; no prompt.

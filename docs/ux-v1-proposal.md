@@ -148,3 +148,4 @@ differs per platform; usage never does.
 - **Mac global hotkey**: **⌃⌥T** ("T for time"), not ⌃⌥Space.
 - **One-letter-off typos**: never auto-accept — always require the tap.
 - **Explicitly out, not even backlogged**: remembering time zones, visualising zones against each other, converting to multiple target zones at once. A world exists where these happen; it is not this world yet.
+- **Follow-up decisions (2026-10-21)**: proposal #3 (prompt tone/styling) declined for now — verbose copy and red are fine, keep messages broken onto new lines; a proper design sprint comes later. New accepted requirement: abbreviation inputs echo expanded — "ET" in the input renders as "Eastern Time (New York, …)" in the result (spec amended). Sprint plan: items 7–10 + the expanded echo in one sprint; item 11 plus a research/POC for item 12 (including a safe same-machine QA approach: no restarts, no more process impact than a simulator) in the following sprint.
