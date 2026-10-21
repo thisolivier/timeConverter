@@ -3,11 +3,48 @@ import Foundation
 /// How one zone reads the converted instant.
 struct ZoneReading: Equatable, Sendable {
     let timeZoneIdentifier: String
+    /// The name the echo uses: a city for city/country tokens, the expanded
+    /// zone name for abbreviations (`Eastern Time`).
     let zoneDisplayName: String
+    /// Cities shown beside an expanded abbreviation name; empty otherwise.
+    let representativeCities: [String]
     /// Canonical 12-hour form, e.g. `5:00 pm`.
     let formattedTime: String
     /// e.g. `UTC+0`, `UTC-5`, `UTC+5:30`.
     let utcOffsetDescription: String
+
+    init(
+        timeZoneIdentifier: String,
+        zoneDisplayName: String,
+        representativeCities: [String] = [],
+        formattedTime: String,
+        utcOffsetDescription: String
+    ) {
+        self.timeZoneIdentifier = timeZoneIdentifier
+        self.zoneDisplayName = zoneDisplayName
+        self.representativeCities = representativeCities
+        self.formattedTime = formattedTime
+        self.utcOffsetDescription = utcOffsetDescription
+    }
+
+    /// The plain city for this zone, regardless of how the token was written.
+    /// Prose that names a place ("doesn't exist today in New York") wants this,
+    /// not the expanded zone name.
+    var cityName: String {
+        ZoneDisplayName.forIdentifier(timeZoneIdentifier)
+    }
+
+    /// One side of the echo line.
+    ///
+    /// `5:00 pm London (UTC+0)` for a place, and for an abbreviation the cities
+    /// join the *same* parenthetical as the offset —
+    /// `12:00 pm Eastern Time (New York, Toronto, UTC-5)` — rather than opening
+    /// a second one. The offset's own rendering is untouched.
+    var echoDescription: String {
+        let parenthetical = (representativeCities + [utcOffsetDescription])
+            .joined(separator: ", ")
+        return "\(formattedTime) \(zoneDisplayName) (\(parenthetical))"
+    }
 }
 
 /// Display-ready output: everything item 4 needs to render the echo line, with
@@ -32,12 +69,10 @@ struct ConversionResult: Equatable, Sendable {
 
     /// The spec's echo line:
     /// `12:00 pm New York (UTC-5) → 5:00 pm London (UTC+0)`, with the rollover
-    /// marker appended when there is one.
+    /// marker appended when there is one. Abbreviation-resolved sides expand —
+    /// see `ZoneReading.echoDescription`.
     var summary: String {
-        let line = "\(source.formattedTime) \(source.zoneDisplayName) "
-            + "(\(source.utcOffsetDescription)) → "
-            + "\(target.formattedTime) \(target.zoneDisplayName) "
-            + "(\(target.utcOffsetDescription))"
+        let line = "\(source.echoDescription) → \(target.echoDescription)"
         guard let dayRolloverMarker else { return line }
         return "\(line) \(dayRolloverMarker)"
     }
@@ -79,6 +114,7 @@ struct ConversionEngine: Sendable {
         return ZoneReading(
             timeZoneIdentifier: zone.timeZone.identifier,
             zoneDisplayName: zone.displayName,
+            representativeCities: zone.representativeCities,
             formattedTime: TimeFormatting.twelveHourDescription(
                 hour: components.hour ?? 0,
                 minute: components.minute ?? 0

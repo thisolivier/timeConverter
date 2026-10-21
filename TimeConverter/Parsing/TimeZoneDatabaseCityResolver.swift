@@ -29,6 +29,15 @@ struct TimeZoneDatabaseCityResolver: ZoneResolver {
         }
     }
 
+    /// The indexed city names. The richest vocabulary the suggester has (~400
+    /// entries) and the one it most wants to offer — a mistyped city is the
+    /// failure mode item 9 exists for.
+    var vocabulary: [ZoneVocabularyEntry] {
+        Self.identifiersByCityName.keys.map {
+            ZoneVocabularyEntry(token: $0, shape: .placeName, matchSource: matchSource)
+        }
+    }
+
     /// The canonical IANA areas. Everything else in the known list is a legacy
     /// alias or a synthetic offset bucket, and is not a city.
     static let cityBearingAreas: Set<String> = [

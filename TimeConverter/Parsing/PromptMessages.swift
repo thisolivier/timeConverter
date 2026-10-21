@@ -20,10 +20,10 @@ extension Prompt {
             return "Convert \(time.canonicalDescription) \(sourceZoneToken) to where? "
                 + "Add 'in' or 'to' + a place"
 
-        case let .ambiguousZone(token, _, _):
+        case let .ambiguousZone(token, _, _, _):
             return "'\(token)' could mean more than one place — pick one"
 
-        case let .unknownZone(token, _):
+        case let .unknownZone(token, _, _):
             return "Don't recognize '\(token)' — try a timezone (ET, PST), "
                 + "a major city, or a country"
         }

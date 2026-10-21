@@ -51,11 +51,14 @@ struct InputParserTests {
     }
 
     /// The echoed interpretation names the zone actually used, so the
-    /// Lisbon-not-Azores choice is visible to the user.
+    /// Lisbon-not-Azores choice is visible to the user. `PST` is an
+    /// abbreviation, so the target side expands (item 13) while the
+    /// country-resolved source stays a plain city.
     @Test func portugalExampleEchoesTheCanonicalZone() throws {
         let outcome = parser.parseAndConvert("06:34 Portugal in PST", now: FixedDates.winterMidday)
         let result = try #require(outcome.resultValue)
-        #expect(result.summary == "6:34 am Lisbon (UTC+0) → 10:34 pm Los Angeles (UTC-8) -1d")
+        #expect(result.summary == "6:34 am Lisbon (UTC+0) "
+            + "→ 10:34 pm Pacific Standard Time (Los Angeles, Vancouver, UTC-8) -1d")
     }
 
     /// A redundant-but-consistent meridiem survives the whole pipeline: the

@@ -98,14 +98,14 @@ extension ParseOutcome {
 
 extension Prompt {
     var ambiguousChoices: [ZoneChoice]? {
-        guard case let .ambiguousZone(_, _, choices) = self else { return nil }
+        guard case let .ambiguousZone(_, _, _, choices) = self else { return nil }
         return choices
     }
 
     var offendingToken: String? {
         switch self {
-        case let .ambiguousZone(token, _, _): return token
-        case let .unknownZone(token, _): return token
+        case let .ambiguousZone(token, _, _, _): return token
+        case let .unknownZone(token, _, _): return token
         case let .missingTargetZone(_, sourceZoneToken): return sourceZoneToken
         default: return nil
         }
@@ -113,9 +113,48 @@ extension Prompt {
 
     var side: ZoneSide? {
         switch self {
-        case let .ambiguousZone(_, side, _): return side
-        case let .unknownZone(_, side): return side
+        case let .ambiguousZone(_, side, _, _): return side
+        case let .unknownZone(_, side, _): return side
         default: return nil
         }
     }
+}
+
+// MARK: - Raw ranges
+
+/// The range of the first occurrence of `token` in `rawInput`, written the way
+/// a reader checks it: by naming the substring rather than counting characters.
+func rawRange(of token: String, in rawInput: String) -> RawTextRange {
+    guard let found = rawInput.range(of: token) else {
+        return RawTextRange(startOffset: 0, endOffset: 0)
+    }
+    return RawTextRange(
+        startOffset: rawInput.distance(from: rawInput.startIndex, to: found.lowerBound),
+        endOffset: rawInput.distance(from: rawInput.startIndex, to: found.upperBound)
+    )
+}
+
+// MARK: - Display state
+
+extension ConverterDisplayState {
+    var problemMessage: String? {
+        guard case let .problem(problem) = self else { return nil }
+        return problem.message
+    }
+
+    var problemChips: [ReplacementChip]? {
+        guard case let .problem(problem) = self else { return nil }
+        return problem.chips
+    }
+
+    var convertedDisplay: ConverterDisplay? {
+        guard case let .converted(display) = self else { return nil }
+        return display
+    }
+}
+
+/// A `.problem` state with no chips — the shape P1–P3 always take, and the
+/// spelling the pre-chip tests used.
+func plainProblem(_ message: String) -> ConverterDisplayState {
+    .problem(ConverterProblem(message: message))
 }

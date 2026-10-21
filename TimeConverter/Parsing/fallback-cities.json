@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "comment": "Offline fallback gazetteer — step 5 of the zone-resolution chain. Cities the tz database has no entry for. Seeded with QA entries only; replace this file with a larger gazetteer in the same shape and the resolver chain needs no code changes. Names must be lowercase. timeZoneIdentifiers may list more than one zone, in which case the chain prompts.",
   "entries": [
     {
@@ -9,6 +9,11 @@
     {
       "name": "manchester",
       "timeZoneIdentifiers": ["Europe/London"]
+    },
+    {
+      "comment": "Modern name for a zone this OS still ships under its link name, Asia/Calcutta — so step 3 indexes 'calcutta' and not 'kolkata'. Needed by item 7's chips: the IST ambiguity offers a chip labelled Kolkata, and whatever a chip writes into the sentence has to be readable back by the chain. ReplacementChipTests.everyAmbiguityChipWritesATokenTheChainCanResolve is the guard that found this and will find the next one.",
+      "name": "kolkata",
+      "timeZoneIdentifiers": ["Asia/Kolkata"]
     }
   ]
 }

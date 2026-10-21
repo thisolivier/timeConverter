@@ -13,6 +13,16 @@ protocol ZoneResolver: Sendable {
     /// `normalizedZoneToken` is already trimmed, whitespace-collapsed and
     /// lowercased by `InputTokenizer`.
     func candidates(for normalizedZoneToken: String) -> [ZoneCandidate]
+
+    /// Everything this resolver could match, for the did-you-mean suggester
+    /// (item 9). Additive and optional: the default is an empty vocabulary, so
+    /// a resolver that cannot enumerate itself just never contributes a
+    /// suggestion and resolution is unaffected either way.
+    var vocabulary: [ZoneVocabularyEntry] { get }
+}
+
+extension ZoneResolver {
+    var vocabulary: [ZoneVocabularyEntry] { [] }
 }
 
 /// What the chain concluded about a single token.
@@ -47,7 +57,8 @@ struct ZoneResolverChain: Sendable {
                let timeZone = TimeZone(identifier: onlyCandidate.timeZoneIdentifier) {
                 return .resolved(ResolvedZone(
                     timeZone: timeZone,
-                    displayName: onlyCandidate.displayName,
+                    displayName: onlyCandidate.echoDisplayName,
+                    representativeCities: onlyCandidate.echoRepresentativeCities,
                     matchSource: onlyCandidate.matchSource,
                     originalToken: normalizedZoneToken
                 ))

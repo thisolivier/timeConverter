@@ -12,48 +12,123 @@ struct AliasZoneResolver: ZoneResolver {
     let matchSource: ZoneMatchSource = .aliasTable
 
     func candidates(for normalizedZoneToken: String) -> [ZoneCandidate] {
-        guard let identifiers = AliasZoneTable.identifiersByAlias[normalizedZoneToken] else {
+        guard let meanings = AliasZoneTable.meaningsByAlias[normalizedZoneToken] else {
             return []
         }
-        return identifiers.map {
-            ZoneCandidate(timeZoneIdentifier: $0, matchSource: matchSource)
+        return meanings.map {
+            ZoneCandidate(
+                timeZoneIdentifier: $0.timeZoneIdentifier,
+                matchSource: matchSource,
+                abbreviationDisplay: $0.display
+            )
+        }
+    }
+
+    /// Every alias is an abbreviation, so the suggester treats the whole table
+    /// as abbreviation vocabulary — see `ZoneSuggestionEngine`'s policy.
+    var vocabulary: [ZoneVocabularyEntry] {
+        AliasZoneTable.meaningsByAlias.keys.map {
+            ZoneVocabularyEntry(token: $0, shape: .abbreviation, matchSource: matchSource)
         }
     }
 }
 
+/// One meaning of an alias: the zone, plus the expanded name the echo shows
+/// (item 13). Positional initialiser so the table below reads as a table.
+struct AliasZoneMeaning: Equatable, Sendable {
+    let timeZoneIdentifier: String
+    let display: AbbreviationDisplay
+
+    init(_ timeZoneIdentifier: String, _ name: String, _ representativeCities: [String]) {
+        self.timeZoneIdentifier = timeZoneIdentifier
+        self.display = AbbreviationDisplay(name: name, representativeCities: representativeCities)
+    }
+}
+
 /// Versioned in code on purpose: these are editorial choices (which city stands
-/// for "ET", which meanings of "CST" we honour), not data to be scraped.
+/// for "ET", which meanings of "CST" we honour, what to *call* each one), not
+/// data to be scraped.
 enum AliasZoneTable {
-    static let identifiersByAlias: [String: [String]] = [
-        // Ambiguous by design — every listed meaning is offered to the user.
-        "cst": ["America/Chicago", "Asia/Shanghai"],
-        "ist": ["Asia/Kolkata", "Europe/Dublin"],
+    static let meaningsByAlias: [String: [AliasZoneMeaning]] = [
+        // Ambiguous by design — every listed meaning is offered to the user,
+        // and the two meanings of CST get their own names rather than sharing a
+        // vague one.
+        "cst": [
+            AliasZoneMeaning("America/Chicago", "Central Time", ["Chicago", "Dallas"]),
+            AliasZoneMeaning("Asia/Shanghai", "China Standard Time", ["Shanghai", "Beijing"]),
+        ],
+        "ist": [
+            AliasZoneMeaning("Asia/Kolkata", "India Standard Time", ["Kolkata", "Mumbai"]),
+            AliasZoneMeaning("Europe/Dublin", "Irish Standard Time", ["Dublin"]),
+        ],
 
         // DST-neutral North American forms. Foundation only knows the
         // standard/daylight variants (EST/EDT), not the plain ones people type.
-        "et": ["America/New_York"],
-        "ct": ["America/Chicago"],
-        "mt": ["America/Denver"],
-        "pt": ["America/Los_Angeles"],
-        "akt": ["America/Anchorage"],
-        "nyc": ["America/New_York"],
+        "et": [AliasZoneMeaning("America/New_York", "Eastern Time", ["New York", "Toronto"])],
+        "ct": [AliasZoneMeaning("America/Chicago", "Central Time", ["Chicago", "Dallas"])],
+        "mt": [AliasZoneMeaning("America/Denver", "Mountain Time", ["Denver", "Calgary"])],
+        "pt": [
+            AliasZoneMeaning(
+                "America/Los_Angeles", "Pacific Time", ["Los Angeles", "Vancouver"]
+            ),
+        ],
+        "akt": [AliasZoneMeaning("America/Anchorage", "Alaska Time", ["Anchorage"])],
+        "nyc": [AliasZoneMeaning("America/New_York", "Eastern Time", ["New York"])],
 
         // European colloquialisms.
-        "uk": ["Europe/London"],
-        "gb": ["Europe/London"],
-        "cet": ["Europe/Paris"],
-        "cest": ["Europe/Paris"],
-        "eet": ["Europe/Athens"],
-        "eest": ["Europe/Athens"],
-        "wet": ["Europe/Lisbon"],
-        "west": ["Europe/Lisbon"],
+        "uk": [AliasZoneMeaning("Europe/London", "UK Time", ["London"])],
+        "gb": [AliasZoneMeaning("Europe/London", "UK Time", ["London"])],
+        "cet": [
+            AliasZoneMeaning("Europe/Paris", "Central European Time", ["Paris", "Berlin"]),
+        ],
+        "cest": [
+            AliasZoneMeaning("Europe/Paris", "Central European Summer Time", ["Paris", "Berlin"]),
+        ],
+        "eet": [
+            AliasZoneMeaning("Europe/Athens", "Eastern European Time", ["Athens", "Helsinki"]),
+        ],
+        "eest": [
+            AliasZoneMeaning(
+                "Europe/Athens", "Eastern European Summer Time", ["Athens", "Helsinki"]
+            ),
+        ],
+        "wet": [
+            AliasZoneMeaning("Europe/Lisbon", "Western European Time", ["Lisbon"]),
+        ],
+        "west": [
+            AliasZoneMeaning("Europe/Lisbon", "Western European Summer Time", ["Lisbon"]),
+        ],
 
         // Australian forms, none of which Foundation knows.
-        "aet": ["Australia/Sydney"],
-        "aest": ["Australia/Sydney"],
-        "aedt": ["Australia/Sydney"],
-        "acst": ["Australia/Adelaide"],
-        "acdt": ["Australia/Adelaide"],
-        "awst": ["Australia/Perth"],
+        "aet": [AliasZoneMeaning("Australia/Sydney", "Australian Eastern Time", ["Sydney"])],
+        "aest": [
+            AliasZoneMeaning(
+                "Australia/Sydney", "Australian Eastern Standard Time", ["Sydney", "Melbourne"]
+            ),
+        ],
+        "aedt": [
+            AliasZoneMeaning(
+                "Australia/Sydney", "Australian Eastern Daylight Time", ["Sydney", "Melbourne"]
+            ),
+        ],
+        "acst": [
+            AliasZoneMeaning(
+                "Australia/Adelaide", "Australian Central Standard Time", ["Adelaide"]
+            ),
+        ],
+        "acdt": [
+            AliasZoneMeaning(
+                "Australia/Adelaide", "Australian Central Daylight Time", ["Adelaide"]
+            ),
+        ],
+        "awst": [
+            AliasZoneMeaning("Australia/Perth", "Australian Western Standard Time", ["Perth"]),
+        ],
     ]
+
+    /// The identifiers only, which is all the integrity tests and any
+    /// identifier-level caller need.
+    static var identifiersByAlias: [String: [String]] {
+        meaningsByAlias.mapValues { $0.map(\.timeZoneIdentifier) }
+    }
 }

@@ -53,11 +53,39 @@ enum ZoneMatchSource: String, Equatable, Sendable {
 struct ZoneCandidate: Equatable, Sendable {
     let timeZoneIdentifier: String
     let matchSource: ZoneMatchSource
+    /// Set only by the two abbreviation resolvers, and only for abbreviations
+    /// their curated tables cover. Everything else leaves it nil and keeps the
+    /// identifier-derived city name (item 13).
+    let abbreviationDisplay: AbbreviationDisplay?
 
-    /// Human-facing name derived from the identifier, so the alias and country
-    /// tables stay as plain identifier lists with no duplicated display copy.
-    var displayName: String {
+    init(
+        timeZoneIdentifier: String,
+        matchSource: ZoneMatchSource,
+        abbreviationDisplay: AbbreviationDisplay? = nil
+    ) {
+        self.timeZoneIdentifier = timeZoneIdentifier
+        self.matchSource = matchSource
+        self.abbreviationDisplay = abbreviationDisplay
+    }
+
+    /// City-style name derived from the identifier (`America/New_York` → `New
+    /// York`), so the alias and country tables stay as plain identifier lists.
+    /// This is what disambiguation pickers and chips show, because a chip's
+    /// label has to be something the user can also type.
+    var representativeCityName: String {
         ZoneDisplayName.forIdentifier(timeZoneIdentifier)
+    }
+
+    /// Name for the echo line: expanded for abbreviations, the plain city
+    /// otherwise.
+    var echoDisplayName: String {
+        abbreviationDisplay?.name ?? representativeCityName
+    }
+
+    /// Extra cities the echo line should show beside `echoDisplayName`. Empty
+    /// for city and country tokens, which already *are* a place name.
+    var echoRepresentativeCities: [String] {
+        abbreviationDisplay?.representativeCities ?? []
     }
 }
 
@@ -65,10 +93,27 @@ struct ZoneCandidate: Equatable, Sendable {
 struct ResolvedZone: Equatable, Sendable {
     let timeZone: TimeZone
     let displayName: String
+    /// Cities to show beside `displayName` in the echo — populated only when
+    /// the token resolved through an abbreviation (item 13).
+    let representativeCities: [String]
     let matchSource: ZoneMatchSource
     /// The token the user actually typed (normalised to lowercase), kept for
     /// echoing back and for prompt copy.
     let originalToken: String
+
+    init(
+        timeZone: TimeZone,
+        displayName: String,
+        representativeCities: [String] = [],
+        matchSource: ZoneMatchSource,
+        originalToken: String
+    ) {
+        self.timeZone = timeZone
+        self.displayName = displayName
+        self.representativeCities = representativeCities
+        self.matchSource = matchSource
+        self.originalToken = originalToken
+    }
 }
 
 // MARK: - Requests and outcomes
@@ -91,48 +136,4 @@ struct ConversionRequest: Equatable, Sendable {
 enum ParseOutcome: Equatable, Sendable {
     case request(ConversionRequest)
     case prompt(Prompt)
-}
-
-// MARK: - Prompts
-
-/// One candidate as offered in a disambiguation picker (P4), pre-rendered with
-/// the detail the spec asks for: a representative city and the current UTC
-/// offset at the injected reference date.
-struct ZoneChoice: Equatable, Sendable {
-    let timeZoneIdentifier: String
-    let representativeCity: String
-    let utcOffsetDescription: String
-}
-
-/// The five prompts from the spec, as values. Item 4 renders these; the parser
-/// never formats UI itself (though `message` offers the spec's copy for
-/// convenience, see `PromptMessages.swift`).
-enum Prompt: Equatable, Sendable {
-    /// P1 — no parseable time at the start of the input.
-    case timeNotFound(input: String)
-
-    /// P2 — a time was found but no source zone precedes the conjunction.
-    /// `conjunction` is nil when the user hasn't typed one yet at all.
-    case missingSourceZone(time: ParsedTime, conjunction: Conjunction?)
-
-    /// P3 — no conjunction found, or nothing after it.
-    case missingTargetZone(time: ParsedTime, sourceZoneToken: String)
-
-    /// P4 — the token has more than one meaning. Never silently defaulted.
-    case ambiguousZone(token: String, side: ZoneSide, choices: [ZoneChoice])
-
-    /// P5 — no resolver in the chain recognised the token.
-    case unknownZone(token: String, side: ZoneSide)
-
-    /// Stable identifier matching the spec's prompt table, for tests and
-    /// analytics.
-    var specIdentifier: String {
-        switch self {
-        case .timeNotFound: return "P1"
-        case .missingSourceZone: return "P2"
-        case .missingTargetZone: return "P3"
-        case .ambiguousZone: return "P4"
-        case .unknownZone: return "P5"
-        }
-    }
 }

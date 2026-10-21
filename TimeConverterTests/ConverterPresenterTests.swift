@@ -20,7 +20,8 @@ struct ConverterPresenterTests {
     @Test func convertedResultShowsTheCanonicalEchoAndTheZonesUsed() {
         let state = presenter.displayState(for: "12pm ET in London", now: FixedDates.winterMidday)
         #expect(state == .converted(ConverterDisplay(
-            echoLine: "12:00 pm New York (UTC-5) → 5:00 pm London (UTC+0)",
+            echoLine: "12:00 pm Eastern Time (New York, Toronto, UTC-5) "
+                + "→ 5:00 pm London (UTC+0)",
             detailLine: "America/New_York → Europe/London"
         )))
     }
@@ -73,7 +74,10 @@ struct ConverterPresenterTests {
             Issue.record("expected a conversion")
             return
         }
-        #expect(display.echoLine == "3:00 am New York (UTC-4) → 7:00 am London (UTC+0)")
+        #expect(display.echoLine == "3:00 am Eastern Time (New York, Toronto, UTC-4) "
+            + "→ 7:00 am London (UTC+0)")
+        // The DST note names the plain city even though the echo expanded the
+        // abbreviation — "doesn't exist today in Eastern Time (…)" does not read.
         #expect(display.detailLine == "America/New_York → Europe/London · "
             + "2:30 am doesn't exist today in New York — clocks went forward")
     }
@@ -111,7 +115,7 @@ struct ConverterPresenterTests {
     ])
     func everyPromptBecomesAProblemLine(input: String, specIdentifier: String) throws {
         let state = presenter.displayState(for: input, now: FixedDates.winterMidday)
-        guard case let .problem(message) = state else {
+        guard let message = state.problemMessage else {
             Issue.record("expected \(specIdentifier) to render as a problem")
             return
         }
@@ -120,24 +124,23 @@ struct ConverterPresenterTests {
 
     @Test func plainPromptsUseTheirSpecCopyUnchanged() {
         #expect(presenter.displayState(for: "hello there", now: FixedDates.winterMidday)
-            == .problem("Couldn't find a time — start with e.g. 14:30 or 2:30 pm"))
+            == plainProblem("Couldn't find a time — start with e.g. 14:30 or 2:30 pm"))
         #expect(presenter.displayState(for: "3pm in Tokyo", now: FixedDates.winterMidday)
-            == .problem("Where is 3:00 pm? Add a zone before 'in'"))
+            == plainProblem("Where is 3:00 pm? Add a zone before 'in'"))
     }
 
-    /// No picker in this phase, so P4 has to say the candidates out loud.
+    /// The inline candidate list stays exactly as it was: the chip row is
+    /// additive, and prompt copy is explicitly out of scope until the design
+    /// sprint.
     @Test func ambiguityPromptListsItsCandidatesInline() {
         #expect(presenter.displayState(for: "9am CST in London", now: FixedDates.winterMidday)
-            == .problem("'cst' could mean more than one place — pick one: "
-                + "Chicago (UTC-6), Shanghai (UTC+8)"))
+            .problemMessage == "'cst' could mean more than one place — pick one: "
+                + "Chicago (UTC-6), Shanghai (UTC+8)")
     }
 
     @Test func ambiguityPromptListsAllSixUnitedStatesZones() throws {
         let state = presenter.displayState(for: "9am USA to London", now: FixedDates.winterMidday)
-        guard case let .problem(message) = state else {
-            Issue.record("expected a problem")
-            return
-        }
+        let message = try #require(state.problemMessage)
         for city in ["New York", "Chicago", "Denver", "Los Angeles", "Anchorage", "Honolulu"] {
             #expect(message.contains(city))
         }

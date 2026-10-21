@@ -114,10 +114,13 @@ struct ConversionEngineTests {
 
     // MARK: End to end through the parser
 
+    /// `ET` is an abbreviation, so the echo expands it (item 13); `London` is a
+    /// city token and is untouched.
     @Test func parseAndConvertComposesBothSteps() throws {
         let outcome = makeParser().parseAndConvert("12pm ET in London", now: FixedDates.winterMidday)
         let result = try #require(outcome.resultValue)
-        #expect(result.summary == "12:00 pm New York (UTC-5) → 5:00 pm London (UTC+0)")
+        #expect(result.summary == "12:00 pm Eastern Time (New York, Toronto, UTC-5) "
+            + "→ 5:00 pm London (UTC+0)")
     }
 
     @Test func parseAndConvertPassesPromptsStraightThrough() throws {

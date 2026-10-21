@@ -17,4 +17,13 @@ struct CountryZoneResolver: ZoneResolver {
             ZoneCandidate(timeZoneIdentifier: $0, matchSource: matchSource)
         }
     }
+
+    /// Country names and their common forms. Place-shaped, so the suggester
+    /// will happily offer them — `portgual` → `Portugal` is the single most
+    /// valuable correction in the QA list.
+    var vocabulary: [ZoneVocabularyEntry] {
+        CountryZoneTable.zonesByCountryName.keys.map {
+            ZoneVocabularyEntry(token: $0, shape: .placeName, matchSource: matchSource)
+        }
+    }
 }

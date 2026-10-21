@@ -1,32 +1,10 @@
 import Foundation
 
-/// The three things the UI can be showing.
-enum ConverterDisplayState: Equatable, Sendable {
-    /// Nothing typed yet — the quiet hint.
-    case hint
-    /// A successful conversion.
-    case converted(ConverterDisplay)
-    /// Any of P1–P5, rendered as a single plain line. This phase has no
-    /// pickers, so even the ambiguity prompt is just text to read and retype
-    /// against.
-    case problem(String)
-}
-
-/// Pre-rendered strings for the output area, so the view holds no logic.
-struct ConverterDisplay: Equatable, Sendable {
-    /// The spec's canonical echo:
-    /// `12:00 pm New York (UTC-5) → 5:00 pm London (UTC+0) +1d`.
-    let echoLine: String
-    /// Quieter supporting detail: the zones actually used, plus a note when the
-    /// DST policy had to move the time.
-    let detailLine: String
-}
-
 /// Glue between `InputParser` and the view.
 ///
 /// Pure, and deliberately the only place where parse output becomes display
-/// strings — which is what makes the UI testable without any UI tests. `now`
-/// is a parameter here too; the view is the one place that calls `Date()`.
+/// values — which is what makes the UI testable without any UI tests. `now` is
+/// a parameter here too; the view is the one place that calls `Date()`.
 struct ConverterPresenter: Sendable {
     private let parser: InputParser
 
@@ -34,7 +12,19 @@ struct ConverterPresenter: Sendable {
         self.parser = parser
     }
 
-    func displayState(for rawInput: String, now: Date) -> ConverterDisplayState {
+    /// What an input produces, *before* the expensive part.
+    ///
+    /// Split out for item 8's debounce: the driver needs to know whether an
+    /// edit yields a result (show it now) or a prompt (hold it back) without
+    /// paying for the did-you-mean vocabulary scan on every keystroke. The scan
+    /// happens in `problem(for:)`, once the prompt is actually due.
+    enum Evaluation: Equatable, Sendable {
+        case hint
+        case converted(ConverterDisplay)
+        case prompt(Prompt)
+    }
+
+    func evaluate(_ rawInput: String, now: Date) -> Evaluation {
         let trimmedInput = rawInput.trimmingCharacters(in: .whitespacesAndNewlines)
         // Empty input stays quiet rather than scolding the user with P1 before
         // they have typed anything.
@@ -44,8 +34,20 @@ struct ConverterPresenter: Sendable {
         case let .result(result):
             return .converted(Self.display(for: result))
         case let .prompt(prompt):
-            return .problem(Self.problemLine(for: prompt))
+            return .prompt(prompt)
         }
+    }
+
+    func displayState(for evaluation: Evaluation) -> ConverterDisplayState {
+        switch evaluation {
+        case .hint: return .hint
+        case let .converted(display): return .converted(display)
+        case let .prompt(prompt): return .problem(problem(for: prompt))
+        }
+    }
+
+    func displayState(for rawInput: String, now: Date) -> ConverterDisplayState {
+        displayState(for: evaluate(rawInput, now: now))
     }
 
     // MARK: - Rendering
@@ -60,9 +62,13 @@ struct ConverterPresenter: Sendable {
 
     /// Explains the DST policy in passing, on the two days a year it applies.
     /// Without this the echoed time silently differs from what was typed.
+    ///
+    /// Names the plain city even when the echo line expanded an abbreviation:
+    /// "doesn't exist today in New York" reads; "in Eastern Time (New York,
+    /// Toronto)" does not.
     static func daylightSavingNote(for result: ConversionResult) -> String? {
         let requestedTime = result.requestedTime.canonicalDescription
-        let city = result.source.zoneDisplayName
+        let city = result.source.cityName
         switch result.wallClockDisposition {
         case .unambiguous:
             return nil
@@ -73,16 +79,56 @@ struct ConverterPresenter: Sendable {
         }
     }
 
-    /// Prompts render as their spec copy. P4 additionally lists its candidates
-    /// inline, because there is no picker to tap — the user retypes using one
-    /// of the names shown.
+    // MARK: - Prompts
+
+    /// Prompts render as their spec copy, unchanged — styling and wording are
+    /// deliberately not part of this sprint. What *is* new is the chip row: P4
+    /// offers its candidates and P5 its did-you-mean suggestions as taps that
+    /// rewrite the offending token in the sentence.
+    func problem(for prompt: Prompt) -> ConverterProblem {
+        ConverterProblem(message: Self.problemLine(for: prompt), chips: chips(for: prompt))
+    }
+
+    /// P4 additionally lists its candidates inline. Redundant now that the
+    /// chips are tappable, but the interim copy is explicitly staying as-is
+    /// until the design sprint, and it is also what a user reading aloud or
+    /// screenshotting sees.
     static func problemLine(for prompt: Prompt) -> String {
-        guard case let .ambiguousZone(_, _, choices) = prompt, !choices.isEmpty else {
+        guard case let .ambiguousZone(_, _, _, choices) = prompt, !choices.isEmpty else {
             return prompt.message
         }
         let candidateList = choices
             .map { "\($0.representativeCity) (\($0.utcOffsetDescription))" }
             .joined(separator: ", ")
         return "\(prompt.message): \(candidateList)"
+    }
+
+    func chips(for prompt: Prompt) -> [ReplacementChip] {
+        switch prompt {
+        case let .ambiguousZone(_, _, tokenRange, choices):
+            return choices.map { choice in
+                ReplacementChip(
+                    label: "\(choice.representativeCity) (\(choice.utcOffsetDescription))",
+                    replacementText: choice.representativeCity,
+                    replacementRange: tokenRange
+                )
+            }
+
+        case let .unknownZone(token, _, tokenRange):
+            // Never auto-accepted, not even a unique distance-1 match — the tap
+            // is the whole point. See `ZoneSuggestionEngine`'s policy.
+            return ZoneSuggestionEngine
+                .suggestions(for: token, in: parser.zoneResolverChain)
+                .map { suggestion in
+                    ReplacementChip(
+                        label: "\(suggestion.label)?",
+                        replacementText: suggestion.label,
+                        replacementRange: tokenRange
+                    )
+                }
+
+        case .timeNotFound, .missingSourceZone, .missingTargetZone:
+            return []
+        }
     }
 }

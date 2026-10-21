@@ -150,19 +150,25 @@ struct PromptTests {
     // MARK: P5 — unknown zone
 
     @Test func unknownSourceZoneTriggersP5() throws {
-        let prompt = try #require(
-            parser.parse("9am Narnia in London", now: FixedDates.winterMidday).promptValue
-        )
-        #expect(prompt == .unknownZone(token: "narnia", side: .source))
+        let input = "9am Narnia in London"
+        let prompt = try #require(parser.parse(input, now: FixedDates.winterMidday).promptValue)
+        #expect(prompt == .unknownZone(
+            token: "narnia",
+            side: .source,
+            tokenRange: rawRange(of: "Narnia", in: input)
+        ))
         #expect(prompt.message == "Don't recognize 'narnia' — try a timezone (ET, PST), "
             + "a major city, or a country")
     }
 
     @Test func unknownTargetZoneTriggersP5() throws {
-        let prompt = try #require(
-            parser.parse("9am London in Narnia", now: FixedDates.winterMidday).promptValue
-        )
-        #expect(prompt == .unknownZone(token: "narnia", side: .target))
+        let input = "9am London in Narnia"
+        let prompt = try #require(parser.parse(input, now: FixedDates.winterMidday).promptValue)
+        #expect(prompt == .unknownZone(
+            token: "narnia",
+            side: .target,
+            tokenRange: rawRange(of: "Narnia", in: input)
+        ))
     }
 
     /// Two bad tokens: the user is asked about the left-hand one first.

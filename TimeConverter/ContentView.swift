@@ -2,16 +2,16 @@ import SwiftUI
 
 /// The whole app: one input field and one output area.
 ///
-/// Deliberately minimal for the MVC phase — no pickers, no disambiguation UI.
-/// All five prompts render as a single line of text the user reads and retypes
-/// against. Parsing runs on every keystroke; it is pure and fast enough that
-/// debouncing would only add latency.
+/// Still logic-free: a `switch` over `ConverterDisplayState`, whose three cases
+/// arrive fully rendered from `ConverterPresenter`. What the view now owns, and
+/// could not delegate, is platform state — keyboard focus and the scene phase —
+/// plus the typed string itself. Timing lives in `ConverterDisplayDriver`.
 struct ContentView: View {
     /// Prefilled from `-initialInput` in DEBUG builds, empty otherwise.
     @State private var freeformInput: String = LaunchArguments.initialInput ?? ""
-    @State private var displayState: ConverterDisplayState = .hint
-
-    private let presenter = ConverterPresenter()
+    @State private var displayDriver = ConverterDisplayDriver()
+    @FocusState private var inputFieldIsFocused: Bool
+    @Environment(\.scenePhase) private var scenePhase
 
     /// Keeps the window feeling like a small utility on Mac Catalyst without
     /// fighting the window's own sizing.
@@ -27,7 +27,9 @@ struct ContentView: View {
                 .font(.title3)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
-                .onSubmit(refreshDisplayState)
+                .focused($inputFieldIsFocused)
+                // Submitting is an action, not typing, so it skips the debounce.
+                .onSubmit { showResultWithoutWaiting() }
 
             outputArea
 
@@ -36,16 +38,30 @@ struct ContentView: View {
         .padding(24)
         .frame(maxWidth: contentWidth, alignment: .leading)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        // `initial: true` covers the DEBUG prefill, so a launch-argument run
-        // shows its conversion without waiting for a keystroke.
-        .onChange(of: freeformInput, initial: true) {
-            refreshDisplayState()
+        .onChange(of: freeformInput) {
+            displayDriver.inputDidChange(to: freeformInput, now: Date())
+        }
+        .onAppear {
+            // Covers the DEBUG prefill without the debounce, so a
+            // launch-argument run shows its conversion — or its prompt and
+            // chips — immediately.
+            showResultWithoutWaiting()
+            inputFieldIsFocused = InputFocusPolicy.shouldFocusOnAppear
+        }
+        // Launch-to-typing is zero taps, and a window returning from the
+        // background arrives ready to type — but focus is never taken
+        // mid-session. See `InputFocusPolicy`.
+        .onChange(of: scenePhase) { previousPhase, currentPhase in
+            guard InputFocusPolicy.shouldFocusInput(
+                movingFrom: previousPhase, to: currentPhase
+            ) else { return }
+            inputFieldIsFocused = true
         }
     }
 
     @ViewBuilder
     private var outputArea: some View {
-        switch displayState {
+        switch displayDriver.displayState {
         case .hint:
             Text("Type a time to convert")
                 .foregroundStyle(.secondary)
@@ -61,18 +77,29 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-        case let .problem(message):
-            Text(message)
-                .font(.callout)
-                .foregroundStyle(.red)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        case let .problem(problem):
+            VStack(alignment: .leading, spacing: 12) {
+                Text(problem.message)
+                    .font(.callout)
+                    .foregroundStyle(.red)
+                if !problem.chips.isEmpty {
+                    PromptChipRow(chips: problem.chips, onTap: apply)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     /// `Date()` lives here and nowhere else: the UI is the injection point that
-    /// keeps the parser and the conversion engine pure.
-    private func refreshDisplayState() {
-        displayState = presenter.displayState(for: freeformInput, now: Date())
+    /// keeps the driver, presenter, parser and conversion engine pure.
+    private func showResultWithoutWaiting() {
+        displayDriver.showWithoutWaiting(for: freeformInput, now: Date())
+    }
+
+    /// A chip rewrites the sentence; the sentence stays the single source of
+    /// truth and the re-parse follows from it.
+    private func apply(_ chip: ReplacementChip) {
+        freeformInput = displayDriver.apply(chip, to: freeformInput, now: Date())
     }
 }
 

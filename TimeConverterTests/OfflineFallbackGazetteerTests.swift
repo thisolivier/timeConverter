@@ -21,11 +21,26 @@ struct OfflineFallbackGazetteerTests {
         #expect(OfflineFallbackGazetteer.bundledEntries["manchester"] == ["Europe/London"])
     }
 
-    /// The seed is deliberately tiny: only QA entries, so a token that happens
-    /// to be a real city elsewhere still reports as unknown rather than
+    /// The seed is deliberately tiny: QA entries plus the one modern city name
+    /// this OS's tz database only ships under a link name. Anything else that
+    /// happens to be a real city elsewhere still reports as unknown rather than
     /// silently resolving.
-    @Test func seedContainsOnlyTheQAEntries() {
-        #expect(Set(OfflineFallbackGazetteer.bundledEntries.keys) == ["porto", "manchester"])
+    @Test func seedContainsOnlyTheQAEntriesAndTheKolkataLinkFix() {
+        #expect(Set(OfflineFallbackGazetteer.bundledEntries.keys)
+            == ["porto", "manchester", "kolkata"])
+    }
+
+    /// `Asia/Kolkata` is a valid `TimeZone` identifier but is absent from this
+    /// OS's `knownTimeZoneIdentifiers` (which carries `Asia/Calcutta`), so step
+    /// 3 never indexes the modern name. Item 7's IST chip is labelled Kolkata
+    /// and must therefore be typeable.
+    @Test func kolkataIsTypeableEvenThoughTheTzDatabaseIndexesCalcuttaInstead() throws {
+        #expect(TimeZoneDatabaseCityResolver.identifiersByCityName["kolkata"] == nil)
+        let request = try #require(
+            makeParser().parse("9am Kolkata to London", now: FixedDates.winterMidday).requestValue
+        )
+        #expect(request.sourceZone.timeZone.identifier == "Asia/Kolkata")
+        #expect(request.sourceZone.matchSource == .offlineFallbackList)
     }
 
     @Test func portoResolvesThroughTheRealBundledFile() throws {

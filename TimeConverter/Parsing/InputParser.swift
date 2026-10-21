@@ -30,13 +30,13 @@ struct InputParser: Sendable {
         // Resolved left to right, so a user with two bad tokens is asked about
         // the first one first rather than being shown an arbitrary choice.
         let sourceZone: ResolvedZone
-        switch resolve(tokens.sourceZoneToken, side: .source, now: now) {
+        switch resolve(tokens.sourceZone, side: .source, now: now) {
         case let .prompt(prompt): return .prompt(prompt)
         case let .resolved(zone): sourceZone = zone
         }
 
         let targetZone: ResolvedZone
-        switch resolve(tokens.targetZoneToken, side: .target, now: now) {
+        switch resolve(tokens.targetZone, side: .target, now: now) {
         case let .prompt(prompt): return .prompt(prompt)
         case let .resolved(zone): targetZone = zone
         }
@@ -58,18 +58,29 @@ struct InputParser: Sendable {
         case prompt(Prompt)
     }
 
-    private func resolve(_ zoneToken: String, side: ZoneSide, now: Date) -> ZoneStep {
-        switch zoneResolverChain.resolve(zoneToken) {
+    /// Takes the whole `ZoneToken`, not just its text, so the prompt it may
+    /// produce can carry the raw range a correction chip has to rewrite.
+    private func resolve(
+        _ zoneToken: InputTokenizer.ZoneToken,
+        side: ZoneSide,
+        now: Date
+    ) -> ZoneStep {
+        switch zoneResolverChain.resolve(zoneToken.text) {
         case let .resolved(zone):
             return .resolved(zone)
         case let .ambiguous(candidates):
             return .prompt(.ambiguousZone(
-                token: zoneToken,
+                token: zoneToken.text,
                 side: side,
+                tokenRange: zoneToken.rawRange,
                 choices: Self.choices(from: candidates, at: now)
             ))
         case .unknown:
-            return .prompt(.unknownZone(token: zoneToken, side: side))
+            return .prompt(.unknownZone(
+                token: zoneToken.text,
+                side: side,
+                tokenRange: zoneToken.rawRange
+            ))
         }
     }
 
@@ -83,7 +94,10 @@ struct InputParser: Sendable {
             }
             return ZoneChoice(
                 timeZoneIdentifier: candidate.timeZoneIdentifier,
-                representativeCity: candidate.displayName,
+                // The city, not the expanded abbreviation name: a chip's label
+                // has to be something the user could also have typed, and
+                // tapping it writes exactly this word into the sentence.
+                representativeCity: candidate.representativeCityName,
                 utcOffsetDescription: UTCOffsetFormatting.description(for: timeZone, at: instant)
             )
         }

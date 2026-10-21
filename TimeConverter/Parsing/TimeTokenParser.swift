@@ -18,6 +18,10 @@ enum TimeTokenParser {
         let time: ParsedTime
         /// Everything after the matched time, with leading whitespace removed.
         let remainder: String
+        /// Character offset, within the normalised input, at which `remainder`
+        /// begins. Carried so the tokenizer can give every zone token an
+        /// absolute range instead of re-deriving one by searching.
+        let remainderStartOffset: Int
     }
 
     // These are computed rather than `static let` because `Regex` is not
@@ -53,7 +57,7 @@ enum TimeTokenParser {
                 minuteText: minuteText,
                 meridiemText: meridiemText
             ) else { return nil }
-            return Match(time: time, remainder: remainder(of: normalizedInput, after: wholeMatch))
+            return match(time: time, in: normalizedInput, after: wholeMatch)
         }
 
         if let twentyFourHourMatch = try? twentyFourHourPattern.prefixMatch(in: normalizedInput) {
@@ -61,9 +65,10 @@ enum TimeTokenParser {
             guard let hour = Int(hourText), let minute = Int(minuteText),
                   (0...23).contains(hour), (0...59).contains(minute)
             else { return nil }
-            return Match(
+            return match(
                 time: ParsedTime(hour: hour, minute: minute),
-                remainder: remainder(of: normalizedInput, after: wholeMatch)
+                in: normalizedInput,
+                after: wholeMatch
             )
         }
 
@@ -110,8 +115,25 @@ enum TimeTokenParser {
         return ParsedTime(hour: hour, minute: minute)
     }
 
-    private static func remainder(of normalizedInput: String, after matched: Substring) -> String {
-        String(normalizedInput[matched.endIndex...])
-            .trimmingCharacters(in: .whitespaces)
+    /// Builds a `Match` from the matched time span, trimming the whitespace
+    /// between the time and the rest of the sentence while keeping count of how
+    /// many characters were skipped — that count is what makes the remainder's
+    /// offsets absolute.
+    private static func match(
+        time: ParsedTime,
+        in normalizedInput: String,
+        after matched: Substring
+    ) -> Match {
+        let tail = normalizedInput[matched.endIndex...]
+        let leadingWhitespaceCount = tail.prefix(while: { $0.isWhitespace }).count
+        let remainder = tail.drop(while: { $0.isWhitespace })
+        return Match(
+            time: time,
+            remainder: String(remainder).trimmingCharacters(in: .whitespaces),
+            remainderStartOffset: normalizedInput.distance(
+                from: normalizedInput.startIndex,
+                to: matched.endIndex
+            ) + leadingWhitespaceCount
+        )
     }
 }

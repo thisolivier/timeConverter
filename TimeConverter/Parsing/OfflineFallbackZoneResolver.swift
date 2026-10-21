@@ -9,7 +9,12 @@ import Foundation
 struct OfflineFallbackZoneResolver: ZoneResolver {
     let matchSource: ZoneMatchSource = .offlineFallbackList
 
-    private let identifiersByPlaceName: [String: [String]]
+    /// Deliberately readable rather than private: the did-you-mean suggester
+    /// (item 9) has to be able to enumerate the gazetteer, and a one-way table
+    /// that only answers exact lookups cannot suggest `Porto` for `Prto`.
+    /// Still `let`, still set once at init — exposing it adds a reader, not a
+    /// mutation path.
+    let identifiersByPlaceName: [String: [String]]
 
     /// Defaults to the bundled file. The parameter exists so tests (and a
     /// future "downloaded gazetteer" path) can supply their own entries.
@@ -21,6 +26,12 @@ struct OfflineFallbackZoneResolver: ZoneResolver {
         guard let identifiers = identifiersByPlaceName[normalizedZoneToken] else { return [] }
         return identifiers.map {
             ZoneCandidate(timeZoneIdentifier: $0, matchSource: matchSource)
+        }
+    }
+
+    var vocabulary: [ZoneVocabularyEntry] {
+        identifiersByPlaceName.keys.map {
+            ZoneVocabularyEntry(token: $0, shape: .placeName, matchSource: matchSource)
         }
     }
 }
