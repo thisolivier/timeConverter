@@ -36,7 +36,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2,6"
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         MARKETING_VERSION: "0.1.0"
-        CURRENT_PROJECT_VERSION: "3"
+        CURRENT_PROJECT_VERSION: "4"
         # Single-size 1024px icon; Xcode derives every size App Store
         # validation demands (90023 rejects uploads with no icon).
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
