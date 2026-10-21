@@ -137,3 +137,14 @@ differs per platform; usage never does.
 [Standalone Status Menu in a Mac Catalyst App](https://blog.overdesigned.net/posts/2021-08-26-catalyst-status-menu/) ·
 [Beyond the Checkbox with Catalyst and AppKit](https://www.highcaffeinecontent.com/blog/20190607-Beyond-the-Checkbox-with-Catalyst-and-AppKit) ·
 [macOS Menu Bar App Guide (2026)](https://techconcepts.org/blog/macos-menu-bar-guide)
+
+---
+
+## Decisions (Olivier, 2026-10-21)
+
+- **Accepted**: tappable-chip corrections (P4 + did-you-mean unified); autofocus-on-launch; home screen and Control Center launchers; Mac menu-bar via loadable AppKit bundle.
+- **Widgets**: dropped — agreed decorative.
+- **Debounce**: yes, ~600 ms.
+- **Mac global hotkey**: **⌃⌥T** ("T for time"), not ⌃⌥Space.
+- **One-letter-off typos**: never auto-accept — always require the tap.
+- **Explicitly out, not even backlogged**: remembering time zones, visualising zones against each other, converting to multiple target zones at once. A world exists where these happen; it is not this world yet.
