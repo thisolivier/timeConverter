@@ -126,7 +126,10 @@ masks the script's exit code.
 ## Mac / Catalyst note
 
 No separate Mac pipeline is needed: iOS TestFlight builds install and run via
-TestFlight **on the Mac** too (verified in practice — Amperfy from TestFlight
-runs on the user's Mac). Ship iOS; the Mac comes for free. First-time
+TestFlight **on the Mac** too. Verified in practice twice: Amperfy from
+TestFlight runs on the user's Mac, and TimeConverter — a Mac Catalyst app
+shipped through exactly this skill's iOS-only pipeline — was confirmed working
+from TestFlight on both iPhone and Mac (2026-10-21). Ship iOS; the Mac comes
+for free. First-time
 `xcodebuild` archive may hang on `builtin-RegisterExecutionPolicyException`
 (Gatekeeper registration) — let it finish once.
