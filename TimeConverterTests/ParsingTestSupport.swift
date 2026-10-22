@@ -40,10 +40,69 @@ enum FixedDates {
     static let londonSpringForwardDay = utc(year: 2026, month: 3, day: 29)
 }
 
+/// Device-zone fixtures for the local-defaulting rule (item 14).
+///
+/// `TimeZone.current` is never read by a test: whatever machine or simulator
+/// runs the suite, the "device" zone is one of these, so every `(local, …)`
+/// assertion is exact. Los Angeles is the default because it is the spec
+/// amendment's own example and sits far enough west that a defaulted side
+/// produces a visible day rollover.
+enum FixedZones {
+    static let losAngeles = TimeZone(identifier: "America/Los_Angeles")!
+    static let london = TimeZone(identifier: "Europe/London")!
+    static let tokyo = TimeZone(identifier: "Asia/Tokyo")!
+
+    /// The zone the parameterless test overloads below inject.
+    static let device = losAngeles
+}
+
 /// The production chain, including the real bundled gazetteer — so the Porto
 /// fixtures genuinely exercise resource bundling rather than a stub.
 func makeParser() -> InputParser {
     InputParser()
+}
+
+// MARK: - Default-zone convenience overloads
+//
+// Production requires `localZone` explicitly — nothing below the view is
+// allowed to guess at the device zone. Tests that name both zones don't care
+// which zone is injected, so these overloads inject `FixedZones.device` and
+// keep those call sites about the thing they are testing. Tests *about*
+// defaulting pass a zone explicitly.
+
+extension InputParser {
+    func parse(_ input: String, now: Date) -> ParseOutcome {
+        parse(input, now: now, localZone: FixedZones.device)
+    }
+
+    func parseAndConvert(_ input: String, now: Date) -> ConversionOutcome {
+        parseAndConvert(input, now: now, localZone: FixedZones.device)
+    }
+}
+
+extension ConverterPresenter {
+    func evaluate(_ rawInput: String, now: Date) -> Evaluation {
+        evaluate(rawInput, now: now, localZone: FixedZones.device)
+    }
+
+    func displayState(for rawInput: String, now: Date) -> ConverterDisplayState {
+        displayState(for: rawInput, now: now, localZone: FixedZones.device)
+    }
+}
+
+@MainActor
+extension ConverterDisplayDriver {
+    func inputDidChange(to rawInput: String, now: Date) {
+        inputDidChange(to: rawInput, now: now, localZone: FixedZones.device)
+    }
+
+    func showWithoutWaiting(for rawInput: String, now: Date) {
+        showWithoutWaiting(for: rawInput, now: now, localZone: FixedZones.device)
+    }
+
+    func apply(_ chip: ReplacementChip, to rawInput: String, now: Date) -> String {
+        apply(chip, to: rawInput, now: now, localZone: FixedZones.device)
+    }
 }
 
 /// Builds a request straight from identifiers, for engine tests that don't care
@@ -106,7 +165,6 @@ extension Prompt {
         switch self {
         case let .ambiguousZone(token, _, _, _): return token
         case let .unknownZone(token, _, _): return token
-        case let .missingTargetZone(_, sourceZoneToken): return sourceZoneToken
         default: return nil
         }
     }
@@ -153,7 +211,7 @@ extension ConverterDisplayState {
     }
 }
 
-/// A `.problem` state with no chips — the shape P1–P3 always take, and the
+/// A `.problem` state with no chips — the shape P1 and P2 always take, and the
 /// spelling the pre-chip tests used.
 func plainProblem(_ message: String) -> ConverterDisplayState {
     .problem(ConverterProblem(message: message))

@@ -1,8 +1,15 @@
 import Foundation
 
-/// Splits a freeform string into its four grammar parts, per the spec's
+/// Splits a freeform string into its grammar parts, per the spec's
 /// tokenization steps: normalise, match the time at the start, then find the
 /// **first standalone** conjunction and cut the rest in two around it.
+///
+/// Since the 2026-10-22 amendment a side may legitimately be **empty**: the
+/// conjunction decides which side a lone named zone belongs to, and the other
+/// side is filled in from the device zone by `InputParser` (never here — the
+/// tokenizer has no business knowing about zones at all). `7pm in London`
+/// leaves the source empty, `7pm east coast` leaves the target empty, and only
+/// a time with no zone on *either* side is a prompt.
 ///
 /// Every zone token comes out with a `RawTextRange` addressing the characters
 /// the user actually typed, so a prompt can later offer a chip that rewrites
@@ -18,14 +25,21 @@ enum InputTokenizer {
         let rawRange: RawTextRange
     }
 
+    /// At least one of `sourceZone` and `targetZone` is always non-nil: a time
+    /// with no zone at all is P2, so the tokenizer never emits two empty sides.
     struct Tokens: Equatable, Sendable {
         let time: ParsedTime
-        let sourceZone: ZoneToken
-        let conjunction: Conjunction
-        let targetZone: ZoneToken
+        /// Nil when the user named only the target (`7pm in London`), in which
+        /// case the source defaults to the injected device zone.
+        let sourceZone: ZoneToken?
+        /// Nil when no standalone conjunction was typed (`7pm east coast`).
+        let conjunction: Conjunction?
+        /// Nil when the user named only the source (`7pm east coast`), in which
+        /// case the target defaults to the injected device zone.
+        let targetZone: ZoneToken?
 
-        var sourceZoneToken: String { sourceZone.text }
-        var targetZoneToken: String { targetZone.text }
+        var sourceZoneToken: String? { sourceZone?.text }
+        var targetZoneToken: String? { targetZone?.text }
     }
 
     enum Result: Equatable, Sendable {
@@ -62,29 +76,32 @@ enum InputTokenizer {
         }
 
         guard let conjunctionIndex else {
-            // Nothing after the time at all: the first thing missing, reading
-            // left to right, is the source zone.
-            guard !remainingWords.isEmpty else {
-                return .prompt(.missingSourceZone(time: timeMatch.time, conjunction: nil))
+            // No conjunction: whatever follows the time is where the time *is*,
+            // so it is the source, and the target defaults to local
+            // ("7pm east coast"). Multi-word names survive because every
+            // remaining word goes into the one token.
+            guard let sourceZone = zoneToken(from: remainingWords, in: normalized) else {
+                // Nothing but a time: there is no zone to convert between.
+                return .prompt(.zoneNotFound(time: timeMatch.time))
             }
-            return .prompt(.missingTargetZone(
+            return .tokens(Tokens(
                 time: timeMatch.time,
-                sourceZoneToken: joinedText(of: remainingWords)
+                sourceZone: sourceZone,
+                conjunction: nil,
+                targetZone: nil
             ))
         }
 
         let conjunction = Conjunction(rawValue: remainingWords[conjunctionIndex].text)!
         let sourceWords = Array(remainingWords[..<conjunctionIndex])
         let targetWords = Array(remainingWords[(conjunctionIndex + 1)...])
+        let sourceZone = zoneToken(from: sourceWords, in: normalized)
+        let targetZone = zoneToken(from: targetWords, in: normalized)
 
-        guard let sourceZone = zoneToken(from: sourceWords, in: normalized) else {
-            return .prompt(.missingSourceZone(time: timeMatch.time, conjunction: conjunction))
-        }
-        guard let targetZone = zoneToken(from: targetWords, in: normalized) else {
-            return .prompt(.missingTargetZone(
-                time: timeMatch.time,
-                sourceZoneToken: sourceZone.text
-            ))
+        // A conjunction with nothing on either side of it ("7pm in") names no
+        // zone at all, so there is still nothing to convert between.
+        guard sourceZone != nil || targetZone != nil else {
+            return .prompt(.zoneNotFound(time: timeMatch.time))
         }
 
         return .tokens(Tokens(

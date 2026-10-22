@@ -9,8 +9,8 @@ enum ConverterDisplayState: Equatable, Sendable {
     case hint
     /// A successful conversion.
     case converted(ConverterDisplay)
-    /// Any of P1–P5: the spec's message, plus the tap-to-replace chips that
-    /// P4 and P5 can offer.
+    /// Any prompt — P1, P2, P4 or P5: the spec's message, plus the
+    /// tap-to-replace chips that P4 and P5 can offer.
     case problem(ConverterProblem)
 }
 
@@ -32,7 +32,7 @@ struct ConverterDisplay: Equatable, Sendable {
 /// already labelled, already carrying the edit they perform.
 struct ConverterProblem: Equatable, Sendable {
     let message: String
-    /// Empty for P1–P3, which have no single token to rewrite.
+    /// Empty for P1 and P2, which have no single token to rewrite.
     let chips: [ReplacementChip]
 
     init(message: String, chips: [ReplacementChip] = []) {

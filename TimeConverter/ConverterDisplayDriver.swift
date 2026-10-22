@@ -47,12 +47,12 @@ final class ConverterDisplayDriver {
     // MARK: - Typing
 
     /// The debounced path: every keystroke.
-    func inputDidChange(to rawInput: String, now: Date) {
+    func inputDidChange(to rawInput: String, now: Date, localZone: TimeZone) {
         guard rawInput != inputShownWithoutWaiting else { return }
         inputShownWithoutWaiting = nil
         cancelPendingPrompt()
 
-        let evaluation = presenter.evaluate(rawInput, now: now)
+        let evaluation = presenter.evaluate(rawInput, now: now, localZone: localZone)
         switch evaluation {
         case .hint, .converted:
             displayState = presenter.displayState(for: evaluation)
@@ -74,10 +74,10 @@ final class ConverterDisplayDriver {
 
     /// Launch, `onSubmit`, and the aftermath of a chip tap: show whatever the
     /// input produces, right now.
-    func showWithoutWaiting(for rawInput: String, now: Date) {
+    func showWithoutWaiting(for rawInput: String, now: Date, localZone: TimeZone) {
         cancelPendingPrompt()
         inputShownWithoutWaiting = rawInput
-        displayState = presenter.displayState(for: rawInput, now: now)
+        displayState = presenter.displayState(for: rawInput, now: now, localZone: localZone)
     }
 
     /// Applies a chip to the sentence and returns the rewritten sentence for
@@ -87,10 +87,11 @@ final class ConverterDisplayDriver {
     func apply(
         _ chip: ReplacementChip,
         to rawInput: String,
-        now: Date
+        now: Date,
+        localZone: TimeZone
     ) -> String {
         let rewrittenInput = chip.applied(to: rawInput)
-        showWithoutWaiting(for: rewrittenInput, now: now)
+        showWithoutWaiting(for: rewrittenInput, now: now, localZone: localZone)
         return rewrittenInput
     }
 

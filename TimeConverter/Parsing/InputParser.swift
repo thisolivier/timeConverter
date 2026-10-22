@@ -3,9 +3,10 @@ import Foundation
 /// The module's entry point: freeform string in, either a conversion to run or
 /// a prompt to show.
 ///
-/// Pure by construction — `now` is injected rather than read from the clock, so
-/// every outcome is reproducible in a test. The resolver chain is injectable
-/// for the same reason.
+/// Pure by construction — `now` and `localZone` are both injected rather than
+/// read from the device, so every outcome is reproducible in a test. Nothing in
+/// this module touches `Date()` or `TimeZone.current`. The resolver chain is
+/// injectable for the same reason.
 struct InputParser: Sendable {
     let zoneResolverChain: ZoneResolverChain
 
@@ -18,7 +19,11 @@ struct InputParser: Sendable {
     ///   - now: the caller's current `Date`. Used for two things only: deciding
     ///     which calendar day "today" is in the source zone, and computing the
     ///     UTC offsets shown in an ambiguity picker.
-    func parse(_ input: String, now: Date) -> ParseOutcome {
+    ///   - localZone: the device's zone, as read by the caller. Stands in for
+    ///     whichever side the user didn't name (spec amendment 2026-10-22) —
+    ///     and only for that, so an input naming both zones ignores it
+    ///     entirely.
+    func parse(_ input: String, now: Date, localZone: TimeZone) -> ParseOutcome {
         let tokens: InputTokenizer.Tokens
         switch InputTokenizer.tokenize(input) {
         case let .prompt(prompt):
@@ -30,13 +35,17 @@ struct InputParser: Sendable {
         // Resolved left to right, so a user with two bad tokens is asked about
         // the first one first rather than being shown an arbitrary choice.
         let sourceZone: ResolvedZone
-        switch resolve(tokens.sourceZone, side: .source, now: now) {
+        switch resolveOrDefault(
+            tokens.sourceZone, side: .source, now: now, localZone: localZone
+        ) {
         case let .prompt(prompt): return .prompt(prompt)
         case let .resolved(zone): sourceZone = zone
         }
 
         let targetZone: ResolvedZone
-        switch resolve(tokens.targetZone, side: .target, now: now) {
+        switch resolveOrDefault(
+            tokens.targetZone, side: .target, now: now, localZone: localZone
+        ) {
         case let .prompt(prompt): return .prompt(prompt)
         case let .resolved(zone): targetZone = zone
         }
@@ -56,6 +65,20 @@ struct InputParser: Sendable {
     private enum ZoneStep {
         case resolved(ResolvedZone)
         case prompt(Prompt)
+    }
+
+    /// An unnamed side is the injected device zone; a named one goes through
+    /// the chain as it always did. This is the *only* place local defaulting
+    /// happens, and it cannot happen to both sides at once — the tokenizer
+    /// prompts (P2) rather than emit two empty sides.
+    private func resolveOrDefault(
+        _ zoneToken: InputTokenizer.ZoneToken?,
+        side: ZoneSide,
+        now: Date,
+        localZone: TimeZone
+    ) -> ZoneStep {
+        guard let zoneToken else { return .resolved(.deviceLocal(localZone)) }
+        return resolve(zoneToken, side: side, now: now)
     }
 
     /// Takes the whole `ZoneToken`, not just its text, so the prompt it may
@@ -118,9 +141,10 @@ extension InputParser {
     func parseAndConvert(
         _ input: String,
         now: Date,
+        localZone: TimeZone,
         engine: ConversionEngine = ConversionEngine()
     ) -> ConversionOutcome {
-        switch parse(input, now: now) {
+        switch parse(input, now: now, localZone: localZone) {
         case let .prompt(prompt): return .prompt(prompt)
         case let .request(request): return .result(engine.convert(request))
         }

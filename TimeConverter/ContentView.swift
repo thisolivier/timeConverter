@@ -44,7 +44,9 @@ struct ContentView: View {
         .frame(maxWidth: contentWidth, alignment: .leading)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onChange(of: freeformInput) {
-            displayDriver.inputDidChange(to: freeformInput, now: Date())
+            displayDriver.inputDidChange(
+                to: freeformInput, now: Date(), localZone: TimeZone.current
+            )
         }
         .onAppear {
             // Covers the DEBUG prefill without the debounce, so a
@@ -105,10 +107,15 @@ struct ContentView: View {
         }
     }
 
-    /// `Date()` lives here and nowhere else: the UI is the injection point that
-    /// keeps the driver, presenter, parser and conversion engine pure.
+    /// `Date()` and `TimeZone.current` live here and nowhere else: the UI is the
+    /// injection point that keeps the driver, presenter, parser and conversion
+    /// engine pure. Read per call rather than captured, so a device that changes
+    /// zone (or crosses midnight) while the app is open is picked up on the next
+    /// keystroke.
     private func showResultWithoutWaiting() {
-        displayDriver.showWithoutWaiting(for: freeformInput, now: Date())
+        displayDriver.showWithoutWaiting(
+            for: freeformInput, now: Date(), localZone: TimeZone.current
+        )
     }
 
     /// Launcher arrival: empty field, cursor in it, nothing else — or, from the
@@ -125,7 +132,9 @@ struct ContentView: View {
             // Driven from the request rather than from `freeformInput`, which
             // was written one line ago: the output area must never lag the
             // field.
-            displayDriver.showWithoutWaiting(for: replacementInput, now: Date())
+            displayDriver.showWithoutWaiting(
+                for: replacementInput, now: Date(), localZone: TimeZone.current
+            )
         }
         inputFieldIsFocused = InputFocusPolicy.shouldFocusOnLaunchRequest
     }
@@ -133,7 +142,9 @@ struct ContentView: View {
     /// A chip rewrites the sentence; the sentence stays the single source of
     /// truth and the re-parse follows from it.
     private func apply(_ chip: ReplacementChip) {
-        freeformInput = displayDriver.apply(chip, to: freeformInput, now: Date())
+        freeformInput = displayDriver.apply(
+            chip, to: freeformInput, now: Date(), localZone: TimeZone.current
+        )
     }
 }
 

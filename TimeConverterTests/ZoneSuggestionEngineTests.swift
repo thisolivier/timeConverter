@@ -171,8 +171,17 @@ struct ZoneSuggestionEngineTests {
         #expect(suggestedTokens(for: "prto").contains("porto"))
     }
 
+    /// Alias *codes* are abbreviation-shaped; the table's multi-word
+    /// colloquialisms ("east coast", item 14) are phrases and are shaped as
+    /// place names, so a chip offers `East Coast` rather than `EAST COAST`.
     @Test func aliasTableVocabularyIsAbbreviationShapedAndCitiesArePlaceShaped() {
-        #expect(AliasZoneResolver().vocabulary.allSatisfy { $0.shape == .abbreviation })
+        let aliasVocabulary = AliasZoneResolver().vocabulary
+        #expect(aliasVocabulary
+            .filter { !$0.token.contains(" ") }
+            .allSatisfy { $0.shape == .abbreviation })
+        #expect(aliasVocabulary
+            .filter { $0.token.contains(" ") }
+            .allSatisfy { $0.shape == .placeName })
         #expect(FoundationAbbreviationZoneResolver().vocabulary
             .allSatisfy { $0.shape == .abbreviation })
         #expect(TimeZoneDatabaseCityResolver().vocabulary.allSatisfy { $0.shape == .placeName })

@@ -2,8 +2,10 @@ import Testing
 import Foundation
 @testable import TimeConverter
 
-/// One suite per spec requirement: each of the five prompts, its trigger, and
-/// the copy the spec's prompt table specifies.
+/// One suite per spec requirement: each prompt the spec still defines, its
+/// trigger, and the copy the prompt table specifies. P3 was retired on
+/// 2026-10-22; what used to trigger it is covered here as the conversions it
+/// became, and in `LocalZoneDefaultingTests`.
 struct PromptTests {
     private let parser = makeParser()
 
@@ -21,53 +23,77 @@ struct PromptTests {
         #expect(prompt.message == "Couldn't find a time — start with e.g. 14:30 or 2:30 pm")
     }
 
-    // MARK: P2 — missing source zone
+    // MARK: P2 — no zone anywhere
 
-    /// The spec's own rejection example: a lone target zone never silently
-    /// assumes the device's zone for the source.
-    @Test func missingSourceZoneTriggersP2() throws {
-        let prompt = try #require(
-            parser.parse("3pm in Tokyo", now: FixedDates.winterMidday).promptValue
-        )
-        #expect(prompt == .missingSourceZone(
-            time: ParsedTime(hour: 15, minute: 0),
-            conjunction: .inWord
-        ))
-        #expect(prompt.message == "Where is 3:00 pm? Add a zone before 'in'")
-    }
-
-    /// Nothing after the time at all: still the source zone that's missing
-    /// first, but there's no conjunction to quote yet.
-    @Test func timeAloneTriggersP2WithNoConjunction() throws {
+    /// Reworded by the 2026-10-22 amendment: a time with no zone at all is the
+    /// *only* missing-zone case left, so the copy no longer asks for the source
+    /// side specifically.
+    @Test func timeAloneTriggersP2() throws {
         let prompt = try #require(parser.parse("3pm", now: FixedDates.winterMidday).promptValue)
-        #expect(prompt == .missingSourceZone(
-            time: ParsedTime(hour: 15, minute: 0),
-            conjunction: nil
-        ))
-        #expect(prompt.message == "Where is 3:00 pm? Add a zone before 'in' or 'to'")
+        #expect(prompt == .zoneNotFound(time: ParsedTime(hour: 15, minute: 0)))
+        #expect(prompt.specIdentifier == "P2")
+        #expect(prompt.message == "Convert 3:00 pm where? Add a timezone, city, or country")
     }
 
-    // MARK: P3 — missing target zone
-
-    /// The spec's other rejection example.
-    @Test func noConjunctionTriggersP3() throws {
-        let prompt = try #require(
-            parser.parse("06:34 Portugal", now: FixedDates.winterMidday).promptValue
-        )
-        #expect(prompt == .missingTargetZone(
-            time: ParsedTime(hour: 6, minute: 34),
-            sourceZoneToken: "portugal"
-        ))
-        #expect(prompt.message
-            == "Convert 6:34 am portugal to where? Add 'in' or 'to' + a place")
+    /// A conjunction with nothing on either side of it names no zone either, so
+    /// it renders P2 rather than the retired P3.
+    @Test(arguments: ["3pm in", "3pm to", "3pm in "])
+    func aDanglingConjunctionWithNoZoneAtAllTriggersP2(input: String) throws {
+        let prompt = try #require(parser.parse(input, now: FixedDates.winterMidday).promptValue)
+        #expect(prompt == .zoneNotFound(time: ParsedTime(hour: 15, minute: 0)))
+        #expect(prompt.message == "Convert 3:00 pm where? Add a timezone, city, or country")
     }
 
-    @Test func conjunctionWithNothingAfterItTriggersP3() throws {
-        let prompt = try #require(
-            parser.parse("3pm tokyo in", now: FixedDates.winterMidday).promptValue
+    /// Migrated from `missingSourceZoneTriggersP2`. The spec's old rejection
+    /// example is now a conversion: the conjunction makes Tokyo the target and
+    /// the source defaults to the injected device zone.
+    @Test func aLoneTargetZoneNoLongerPromptsAtAll() throws {
+        let outcome = parser.parse(
+            "3pm in Tokyo", now: FixedDates.winterMidday, localZone: FixedZones.losAngeles
         )
-        #expect(prompt.specIdentifier == "P3")
-        #expect(prompt.offendingToken == "tokyo")
+        let request = try #require(outcome.requestValue)
+        #expect(request.sourceZone.timeZone == FixedZones.losAngeles)
+        #expect(request.sourceZone.isDeviceLocalZone)
+        #expect(request.targetZone.timeZone.identifier == "Asia/Tokyo")
+    }
+
+    // MARK: P3 — retired 2026-10-22
+
+    /// Migrated from `noConjunctionTriggersP3`. The spec's other rejection
+    /// example converts too, the other way round: with no conjunction, Portugal
+    /// is the source and the *target* defaults to local.
+    @Test func aLoneSourceZoneNoLongerPromptsEither() throws {
+        let outcome = parser.parse(
+            "06:34 Portugal", now: FixedDates.winterMidday, localZone: FixedZones.losAngeles
+        )
+        let request = try #require(outcome.requestValue)
+        #expect(request.sourceZone.timeZone.identifier == "Europe/Lisbon")
+        #expect(request.targetZone.timeZone == FixedZones.losAngeles)
+        #expect(request.targetZone.isDeviceLocalZone)
+    }
+
+    /// Migrated from `conjunctionWithNothingAfterItTriggersP3`. A named zone
+    /// *before* a dangling conjunction is still a named source — the
+    /// conjunction's job is only to say which side the named zone is on — so
+    /// this converts rather than prompting. P2 is reserved for inputs naming no
+    /// zone at all.
+    @Test func aNamedZoneBeforeADanglingConjunctionStillConverts() throws {
+        let outcome = parser.parse(
+            "3pm tokyo in", now: FixedDates.winterMidday, localZone: FixedZones.losAngeles
+        )
+        let request = try #require(outcome.requestValue)
+        #expect(request.sourceZone.timeZone.identifier == "Asia/Tokyo")
+        #expect(request.targetZone.isDeviceLocalZone)
+    }
+
+    /// No prompt reports P3 any more, whatever the input.
+    @Test(arguments: [
+        "hello there", "3pm", "3pm in", "06:34 Portugal", "3pm in Tokyo",
+        "9am CST in London", "9am Narnia in London",
+    ])
+    func noInputCanProduceP3(input: String) {
+        let prompt = makeParser().parse(input, now: FixedDates.winterMidday).promptValue
+        #expect(prompt?.specIdentifier != "P3")
     }
 
     // MARK: P4 — ambiguous zone

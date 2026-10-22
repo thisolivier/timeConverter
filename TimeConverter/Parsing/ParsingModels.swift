@@ -47,6 +47,11 @@ enum ZoneMatchSource: String, Equatable, Sendable {
     case timeZoneDatabaseCity
     case countryTable
     case offlineFallbackList
+    /// Not a resolver at all: the side the user didn't name, filled in from the
+    /// device zone the caller injected (spec amendment 2026-10-22). No resolver
+    /// ever produces this, which is exactly why it is worth distinguishing —
+    /// the echo marks a defaulted side as `(local)`.
+    case deviceLocalZone
 }
 
 /// One possible meaning of a zone token, as emitted by a resolver.
@@ -114,6 +119,28 @@ struct ResolvedZone: Equatable, Sendable {
         self.matchSource = matchSource
         self.originalToken = originalToken
     }
+
+    /// The injected device zone standing in for a side the user left unnamed
+    /// ("7pm in London" names only the target, so the source is this).
+    ///
+    /// The zone arrives as a parameter — nothing in this module reads
+    /// `TimeZone.current` — and the name is derived from the identifier, so a
+    /// defaulted Los Angeles reads as `Los Angeles` exactly as the typed word
+    /// would have.
+    static func deviceLocal(_ timeZone: TimeZone) -> ResolvedZone {
+        ResolvedZone(
+            timeZone: timeZone,
+            displayName: ZoneDisplayName.forIdentifier(timeZone.identifier),
+            matchSource: .deviceLocalZone,
+            // Nothing was typed, so there is no token to echo or to quote in
+            // prompt copy.
+            originalToken: ""
+        )
+    }
+
+    /// True when this side was defaulted rather than named. Drives the echo's
+    /// `(local)` marker, which is what makes the assumption visible.
+    var isDeviceLocalZone: Bool { matchSource == .deviceLocalZone }
 }
 
 // MARK: - Requests and outcomes

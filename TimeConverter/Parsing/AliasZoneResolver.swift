@@ -24,11 +24,19 @@ struct AliasZoneResolver: ZoneResolver {
         }
     }
 
-    /// Every alias is an abbreviation, so the suggester treats the whole table
-    /// as abbreviation vocabulary — see `ZoneSuggestionEngine`'s policy.
+    /// Nearly every alias is a zone code, so the suggester treats the table as
+    /// abbreviation vocabulary — see `ZoneSuggestionEngine`'s policy. The
+    /// multi-word colloquialisms ("east coast") are the exception: they are
+    /// phrases, long enough for edit distance to mean something, and a chip
+    /// labelled `EAST COAST` would read as shouting. Shape affects only
+    /// labelling and ranking, never resolution.
     var vocabulary: [ZoneVocabularyEntry] {
-        AliasZoneTable.meaningsByAlias.keys.map {
-            ZoneVocabularyEntry(token: $0, shape: .abbreviation, matchSource: matchSource)
+        AliasZoneTable.meaningsByAlias.keys.map { alias in
+            ZoneVocabularyEntry(
+                token: alias,
+                shape: alias.contains(" ") ? .placeName : .abbreviation,
+                matchSource: matchSource
+            )
         }
     }
 }
@@ -74,6 +82,19 @@ enum AliasZoneTable {
         ],
         "akt": [AliasZoneMeaning("America/Anchorage", "Alaska Time", ["Anchorage"])],
         "nyc": [AliasZoneMeaning("America/New_York", "Eastern Time", ["New York"])],
+
+        // Colloquial US coasts — multi-word entries, and the spec's own example
+        // of a single-zone input ("7pm East Coast"). Each maps to the
+        // DST-neutral zone a person on that coast means, and echoes with the
+        // same expanded name as its code equivalent (`et`, `pt`).
+        "east coast": [
+            AliasZoneMeaning("America/New_York", "Eastern Time", ["New York", "Toronto"]),
+        ],
+        "west coast": [
+            AliasZoneMeaning(
+                "America/Los_Angeles", "Pacific Time", ["Los Angeles", "Vancouver"]
+            ),
+        ],
 
         // European colloquialisms.
         "uk": [AliasZoneMeaning("Europe/London", "UK Time", ["London"])],

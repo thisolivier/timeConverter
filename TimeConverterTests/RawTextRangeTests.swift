@@ -38,9 +38,11 @@ struct RawTextRangeTests {
             Issue.record("expected \(rawInput) to tokenize")
             return
         }
-        #expect(RawTextEditing.substring(of: tokens.sourceZone.rawRange, in: rawInput)
+        let sourceZone = try #require(tokens.sourceZone)
+        let targetZone = try #require(tokens.targetZone)
+        #expect(RawTextEditing.substring(of: sourceZone.rawRange, in: rawInput)
             == expectedSourceSubstring)
-        #expect(RawTextEditing.substring(of: tokens.targetZone.rawRange, in: rawInput)
+        #expect(RawTextEditing.substring(of: targetZone.rawRange, in: rawInput)
             == expectedTargetSubstring)
     }
 
@@ -53,8 +55,8 @@ struct RawTextRangeTests {
             Issue.record("expected tokens")
             return
         }
-        #expect(tokens.sourceZone.rawRange == RawTextRange(startOffset: 4, endOffset: 7))
-        #expect(tokens.targetZone.rawRange == RawTextRange(startOffset: 11, endOffset: 14))
+        #expect(tokens.sourceZone?.rawRange == RawTextRange(startOffset: 4, endOffset: 7))
+        #expect(tokens.targetZone?.rawRange == RawTextRange(startOffset: 11, endOffset: 14))
     }
 
     /// And the practical consequence: replacing the source side leaves the
@@ -65,9 +67,11 @@ struct RawTextRangeTests {
             Issue.record("expected tokens")
             return
         }
-        #expect(RawTextEditing.replacing(tokens.sourceZone.rawRange, with: "Chicago", in: rawInput)
+        let sourceZone = try #require(tokens.sourceZone)
+        let targetZone = try #require(tokens.targetZone)
+        #expect(RawTextEditing.replacing(sourceZone.rawRange, with: "Chicago", in: rawInput)
             == "9am Chicago to CST")
-        #expect(RawTextEditing.replacing(tokens.targetZone.rawRange, with: "Shanghai", in: rawInput)
+        #expect(RawTextEditing.replacing(targetZone.rawRange, with: "Shanghai", in: rawInput)
             == "9am CST to Shanghai")
     }
 
@@ -87,9 +91,11 @@ struct RawTextRangeTests {
         #expect(unknown.offendingTokenRange == rawRange(of: "Lodnon", in: "9am ET in Lodnon"))
     }
 
-    /// P1–P3 have no single token to rewrite, so they offer no range (and, in
-    /// the presenter, no chips).
-    @Test(arguments: ["hello there", "3pm in Tokyo", "06:34 Portugal"])
+    /// P1 and P2 have no single token to rewrite, so they offer no range (and,
+    /// in the presenter, no chips). The two single-zone strings that used to
+    /// live here now convert, so the cases left are a missing time and a time
+    /// with no zone anywhere.
+    @Test(arguments: ["hello there", "3pm", "3pm in"])
     func promptsWithoutAnOffendingTokenCarryNoRange(input: String) throws {
         let prompt = try #require(makeParser().parse(input, now: FixedDates.winterMidday).promptValue)
         #expect(prompt.offendingTokenRange == nil)
@@ -114,8 +120,9 @@ struct RawTextRangeTests {
             Issue.record("expected tokens")
             return
         }
-        #expect(RawTextEditing.substring(of: tokens.sourceZone.rawRange, in: rawInput) == "🇬🇧")
-        #expect(RawTextEditing.replacing(tokens.sourceZone.rawRange, with: "UK", in: rawInput)
+        let sourceZone = try #require(tokens.sourceZone)
+        #expect(RawTextEditing.substring(of: sourceZone.rawRange, in: rawInput) == "🇬🇧")
+        #expect(RawTextEditing.replacing(sourceZone.rawRange, with: "UK", in: rawInput)
             == "9am UK to Narnia")
     }
 }
