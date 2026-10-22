@@ -1,9 +1,10 @@
 import SwiftUI
+import TimeConverterCore
 
 /// The whole app: one input field and one output area.
 ///
 /// Still logic-free: a `switch` over `ConverterDisplayState`, whose three cases
-/// arrive fully rendered from `ConverterPresenter`. What the view now owns, and
+/// arrive fully rendered from `TimeConverterCore`. What the view now owns, and
 /// could not delegate, is platform state — keyboard focus and the scene phase —
 /// plus the typed string itself. Timing lives in `ConverterDisplayDriver`.
 struct ContentView: View {
@@ -18,8 +19,8 @@ struct ContentView: View {
     /// intent writes to it from outside the view's lifetime.
     private let launchRequests = LaunchRequestInbox.shared
 
-    /// Keeps the window feeling like a small utility on Mac Catalyst without
-    /// fighting the window's own sizing.
+    /// Keeps the content column readable on an iPad without fighting the
+    /// window's own sizing.
     private let contentWidth: CGFloat = 480
 
     var body: some View {

@@ -11,34 +11,36 @@
 	<!-- Same method string as the iOS ExportOptions.plist: `app-store-connect`
 	     is what `xcodebuild -help` lists for Xcode 26 ("Additional options
 	     include app-store (deprecated: use app-store-connect)"). The method
-	     does not name a platform — the *archive* does. Point this file at a
-	     Mac Catalyst archive and the same method produces the macOS product. -->
+	     does not name a platform — the *archive* does. Point this file at the
+	     native macOS archive and the same method produces the macOS product. -->
 	<key>method</key>
 	<string>app-store-connect</string>
-	<!-- One entry per MAIN EXECUTABLE in the archive, and both of these are
-	     distinct App IDs needing their own macOS-platform profile: a profile is
-	     platform-scoped, and the iOS pair ("TimeConverter App Store",
-	     "TimeConverter Controls App Store") report platforms
-	     "visionOS, watchOS, and iOS" — xcodebuild refuses them for platform
-	     "macOS" outright. Neither of the names below exists in the portal yet;
-	     see docs/testflight-setup-checklist.md "macOS train".
+	<!-- One entry per MAIN EXECUTABLE in the archive. Since the native
+	     restructure (backlog item 16) the macOS archive contains exactly one:
+	     TimeConverterMac, carrying the same bundle id as the iOS app.
 
-	     Bundle ids are the SAME as iOS — a Catalyst app distributed through the
-	     App Store keeps its iOS bundle id, with no `maccatalyst.` prefix.
+	     Two things are deliberately absent, and both used to be here:
 
-	     Deliberately absent: dev.thisolivier.timeconverter.menubar. That is a
-	     traditional loadable .bundle, not a main executable — it has no
-	     profile and no entitlements by design (project.yml and
-	     TimeConverterMenuBar/readme.md explain why), so there is nothing to
-	     map. Adding it here would mean minting a profile for it, and an
-	     embedded profile on a secondary bundle is precisely what produces
-	     ITMS-90283. -->
+	     - dev.thisolivier.timeconverter.controls. The Control Center extension
+	       is iOS-only — there is no Control Center on the Mac — so the native
+	       Mac app does not embed it and it needs no macOS profile. One fewer
+	       portal artifact than the Catalyst lane required.
+	     - dev.thisolivier.timeconverter.menubar. The loadable macOS-SDK bundle
+	       that gave Catalyst a menu bar no longer exists; a native target
+	       reaches NSStatusItem and Carbon directly.
+
+	     The profile named below is a **macOS** profile. A profile is
+	     platform-scoped: the iOS "TimeConverter App Store" profile reports
+	     platforms "visionOS, watchOS, and iOS" and xcodebuild refuses it for
+	     platform macOS outright. Its portal profile type is now plain "Mac"
+	     (Mac App Store), NOT "Mac Catalyst" — see
+	     docs/testflight-setup-checklist.md "macOS train". Same App ID, same
+	     bundle id, no `maccatalyst.` prefix (that prefix was a Catalyst
+	     concept and retired with it). -->
 	<key>provisioningProfiles</key>
 	<dict>
 		<key>dev.thisolivier.timeconverter</key>
 		<string>TimeConverter Mac App Store</string>
-		<key>dev.thisolivier.timeconverter.controls</key>
-		<string>TimeConverter Controls Mac App Store</string>
 	</dict>
 	<key>signingCertificate</key>
 	<string>Apple Distribution</string>
@@ -64,10 +66,12 @@
 	     any way" (DTS, forums 740423).
 	     `signingCertificate` above therefore does NOT cover it.
 
-	     This is the one brand-new certificate the macOS train needs, and this
-	     machine does not have it yet: `security find-identity -v` shows only
-	     Apple Distribution and Apple Development, and under
-	     `-p macappstore` both report "Missing required extension".
+	     This requirement is unchanged by the native restructure: it is a
+	     property of the macOS App Store, not of Catalyst. It is still the one
+	     brand-new certificate the macOS train needs, and this machine does not
+	     have it yet: `security find-identity -v` shows only Apple Distribution
+	     and Apple Development, and under `-p macappstore` both report
+	     "Missing required extension".
 	     "Mac Installer Distribution" is an automatic selector — Xcode picks the
 	     newest installed certificate of that type — and is also what this key
 	     would default to; it is spelled out because being told

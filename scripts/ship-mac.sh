@@ -1,21 +1,33 @@
 #!/usr/bin/env bash
-# ship-mac.sh — archive, export and upload the **Mac Catalyst** build of
+# ship-mac.sh — archive, export and upload the **native macOS** build of
 # TimeConverter to the **macOS** platform train of App Store Connect app
-# 6825044484 ("Time Converter 3000"). Backlog item 12b.
+# 6825044484 ("Time Converter 3000"). Backlog items 12b + 16.
 #
 # Sibling of scripts/ship.sh, not a replacement for it. Same app record, same
-# bundle ids, same build-number source of truth (scripts/lib/version.sh) — a
-# different platform train. The two lanes deliver genuinely different binaries:
+# bundle id, same build-number source of truth (scripts/lib/version.sh) — a
+# different platform train, and since item 16 a genuinely different *target*:
 #
-#   ship.sh      iOS archive      -> .ipa -> altool -t ios
-#                Runs on the Mac through TestFlight's "iPhone and iPad app on
-#                Mac" compatibility runtime, i.e. the *iOS* binary in the iOS
-#                runtime. A macOS-SDK AppKit bundle can never load there, which
-#                is why 12a's menu bar cannot reach users down this lane.
-#   ship-mac.sh  Mac Catalyst     -> .pkg -> altool -t macos
-#                archive                The real Catalyst product: Contents/
-#                                       MacOS, Contents/PlugIns, the menu-bar
-#                                       bundle and the Controls extension.
+#   ship.sh      TimeConverter      iOS archive -> .ipa -> altool -t ios
+#                                   Also runs on the Mac through TestFlight's
+#                                   "iPhone and iPad app on Mac" compatibility
+#                                   runtime. That path still works and is
+#                                   untouched by this script.
+#   ship-mac.sh  TimeConverterMac   native macOS archive -> .pkg
+#                                   -> altool -t macos
+#                                   The menu-bar app: MenuBarExtra, ⌃⌥T, no
+#                                   Dock icon. Not reachable down the iOS lane
+#                                   at all, which is why this lane exists.
+#
+# What changed from the Catalyst version of this script:
+#   - destination is `generic/platform=macOS`, not
+#     `generic/platform=macOS,variant=Mac Catalyst`.
+#   - one provisioning profile, not two. The Controls extension is iOS-only
+#     (no Control Center on the Mac) so there is no Mac profile for it, and the
+#     loadable menu-bar bundle it used to assert about no longer exists.
+#   - the portal profile TYPE is plain "Mac" / Mac App Store, not
+#     "Mac Catalyst".
+#   - the Mac Installer Distribution certificate requirement is unchanged: it
+#     is a property of the macOS App Store, not of Catalyst.
 #
 # Usage:
 #   scripts/ship-mac.sh <new-build-number>                # bump, archive, export, upload
@@ -26,15 +38,11 @@
 #                                                         # delivering anything
 #   scripts/ship-mac.sh --help
 #
-# --validate-only is the point of this script existing before the portal work
-# is done. `altool --validate-app` runs the same ITMS validation as an upload
-# but delivers nothing, so it costs no build number and creates no undeletable
-# row in the build list — which matters doubly on macOS, where CFBundleVersion
-# must increase monotonically across *all* version trains, so a number burned
-# on a rejected Mac upload is unrecoverable. It is how we get an answer to the
-# one question nobody on the public record has answered: whether Apple's
-# validator accepts a Catalyst app with a loadable macOS-SDK bundle embedded in
-# Contents/PlugIns (docs/menu-bar-poc-plan.md §3).
+# --validate-only costs nothing. `altool --validate-app` runs the same ITMS
+# validation as an upload but delivers nothing, so it consumes no build number
+# and creates no undeletable row in the build list — which matters doubly on
+# macOS, where CFBundleVersion must increase monotonically across *all* version
+# trains, so a number burned on a rejected Mac upload is unrecoverable.
 
 set -euo pipefail
 
@@ -44,7 +52,7 @@ PROJECT_YML="$REPO_DIR/project.yml"
 BUILD_DIR="$REPO_DIR/build"
 SIGNING_DIR="$HOME/sites/navidromClient/spike/.signing"
 KEYCHAIN="$HOME/Library/Keychains/spike-build.keychain-db"
-SCHEME="TimeConverter"
+SCHEME="TimeConverterMac"
 PRODUCT_NAME="TimeConverter"
 BUNDLE_ID="dev.thisolivier.timeconverter"
 # Distinct paths from ship.sh's, so an iOS archive and a Mac archive can
@@ -54,31 +62,30 @@ EXPORT_DIR="$BUILD_DIR/export-mac"
 EXPORT_OPTIONS="$REPO_DIR/ExportOptions-mac.plist"
 
 # Named exactly as ExportOptions-mac.plist and project.yml's
-# PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*] entries expect. Change in one
+# TimeConverterMac Release PROVISIONING_PROFILE_SPECIFIER expect. Change in one
 # place and you must change all three.
 APP_PROFILE_NAME="TimeConverter Mac App Store"
-CONTROLS_PROFILE_NAME="TimeConverter Controls Mac App Store"
 INSTALLER_IDENTITY="Mac Installer Distribution"
 
-# Mac Catalyst, not native macOS: plain `generic/platform=macOS` would build a
-# native AppKit variant this project does not have.
-MAC_DESTINATION='generic/platform=macOS,variant=Mac Catalyst'
+# Native macOS. No `variant=Mac Catalyst` — that variant no longer exists in
+# this project, and asking for it fails outright.
+MAC_DESTINATION='generic/platform=macOS'
 
 usage() {
   cat <<USAGE
 Usage: $0 <new-build-number> [--skip-upload]
        $0 --validate-only
 
-Archives TimeConverter for Mac Catalyst, exports a .pkg for App Store Connect,
+Archives the native macOS TimeConverter, exports a .pkg for App Store Connect,
 and uploads it to the macOS platform train of app 6825044484.
 
 Prerequisites beyond scripts/ship.sh's:
-  - '$APP_PROFILE_NAME' and '$CONTROLS_PROFILE_NAME'
-    provisioning profiles installed. These are **macOS** profiles
-    (.provisionprofile) of portal type "Mac App Store Connect" / profile type
-    "Mac Catalyst". The existing iOS .mobileprovision profiles cannot be
-    reused: a profile is platform-scoped, and theirs report platforms
-    "visionOS, watchOS, and iOS".
+  - A '$APP_PROFILE_NAME' provisioning profile installed.
+    This is a **macOS** profile (.provisionprofile), portal type
+    "Mac App Store Connect" with profile type **"Mac"** (NOT "Mac Catalyst" —
+    that was the retired Catalyst lane). The existing iOS .mobileprovision
+    cannot be reused: a profile is platform-scoped, and the iOS one reports
+    platforms "visionOS, watchOS, and iOS".
   - A '$INSTALLER_IDENTITY' certificate in $KEYCHAIN.
     This is a different *kind* of certificate from Apple Distribution —
     installer certificates have different OIDs and are not interchangeable —
@@ -169,6 +176,10 @@ step "2/7 Preflight: macOS signing assets"
 # leaves a bumped number behind that the next run's monotonicity guard then
 # rejects — a self-inflicted dead end on the one platform where build numbers
 # are unrecoverable.
+#
+# Set SKIP_PREFLIGHT=1 to run the archive anyway. That is the dry-run mode used
+# to *discover* what the portal has to produce: the archive fails in signing
+# and names the exact profile it wanted. Never use it for a real upload.
 
 # Xcode 16+ nominally keeps profiles in
 # ~/Library/Developer/Xcode/UserData/Provisioning Profiles, but the legacy
@@ -202,19 +213,17 @@ find_profile_by_name() {
 
 PREFLIGHT_PROBLEMS=()
 
-for profile_name in "$APP_PROFILE_NAME" "$CONTROLS_PROFILE_NAME"; do
-  if found="$(find_profile_by_name "$profile_name")"; then
-    profile_path="${found%%$'\t'*}"
-    profile_platforms="${found##*$'\t'}"
-    if [[ "$profile_platforms" != *macOS* && "$profile_platforms" != *macosx* ]]; then
-      PREFLIGHT_PROBLEMS+=("profile '$profile_name' is installed but its platforms are $profile_platforms — no macOS. It is the iOS profile; a macOS one is a separate artifact.")
-    else
-      echo "OK   profile '$profile_name' -> $(basename "$profile_path") $profile_platforms"
-    fi
+if found="$(find_profile_by_name "$APP_PROFILE_NAME")"; then
+  profile_path="${found%%$'\t'*}"
+  profile_platforms="${found##*$'\t'}"
+  if [[ "$profile_platforms" != *macOS* && "$profile_platforms" != *macosx* ]]; then
+    PREFLIGHT_PROBLEMS+=("profile '$APP_PROFILE_NAME' is installed but its platforms are $profile_platforms — no macOS. It is the iOS profile; a macOS one is a separate artifact.")
   else
-    PREFLIGHT_PROBLEMS+=("profile '$profile_name' is not installed in either provisioning-profiles directory.")
+    echo "OK   profile '$APP_PROFILE_NAME' -> $(basename "$profile_path") $profile_platforms"
   fi
-done
+else
+  PREFLIGHT_PROBLEMS+=("profile '$APP_PROFILE_NAME' is not installed in either provisioning-profiles directory.")
+fi
 
 # `security find-identity -p codesigning` will NEVER list an installer identity
 # — it is not a codesigning certificate. Hence the unfiltered query.
@@ -233,31 +242,36 @@ if [[ ${#PREFLIGHT_PROBLEMS[@]} -gt 0 ]]; then
   cat <<GUIDANCE
 
 Nothing has been changed: no bump, no archive, no upload. This is a portal
-errand, and the full two-minute version is under "macOS train" in
+errand, and the full version is under "macOS train" in
 docs/testflight-setup-checklist.md. In short, at developer.apple.com (team
 CNHB9B5GX6):
 
   1. Certificates -> + -> "Mac Installer Distribution". Upload the existing
      CSR at $SIGNING_DIR/distribution.csr.
-     Download the .cer to that same directory.
-  2. Identifiers -> dev.thisolivier.timeconverter -> tick "Mac Catalyst"
-     (and the same for dev.thisolivier.timeconverter.controls), so a macOS
-     profile can be issued against the SAME App ID — the bundle ids do not
-     change and must not gain a 'maccatalyst.' prefix.
+     Download the .cer to that same directory and import it into
+     $KEYCHAIN.
+  2. Identifiers -> dev.thisolivier.timeconverter -> tick "macOS" / "Mac", so a
+     macOS profile can be issued against the SAME App ID. The bundle id does
+     not change. (Only the app's App ID — the Controls extension is iOS-only
+     and needs nothing here.)
   3. Profiles -> + -> Distribution -> "Mac App Store Connect"
-     -> Profile Type "Mac Catalyst" -> App ID dev.thisolivier.timeconverter
+     -> Profile Type **"Mac"** -> App ID dev.thisolivier.timeconverter
      -> certificate "Apple Distribution" -> name it exactly
      "$APP_PROFILE_NAME".
-  4. Repeat 3 for dev.thisolivier.timeconverter.controls, named exactly
-     "$CONTROLS_PROFILE_NAME".
-  5. Download both .provisionprofile files and install each into BOTH
+  4. Download the .provisionprofile and install it into BOTH
      $(printf '%s' "${PROFILE_DIRS[0]}")/
      and
      $(printf '%s' "${PROFILE_DIRS[1]}")/
 
 Then re-run:  $0 --validate-only
 GUIDANCE
-  fail "preflight (macOS signing assets missing)"
+  if [[ "${SKIP_PREFLIGHT:-0}" == "1" ]]; then
+    echo ""
+    echo "SKIP_PREFLIGHT=1 — continuing anyway. The archive is EXPECTED to fail"
+    echo "in signing, naming the exact profile it wanted. That text is the point."
+  else
+    fail "preflight (macOS signing assets missing)"
+  fi
 fi
 
 # ------------------------------------------------------------------
@@ -281,15 +295,17 @@ fi
 echo "xcodegen generate complete — TimeConverter.xcodeproj regenerated from project.yml"
 
 # ------------------------------------------------------------------
-step "4/7 Archive (Mac Catalyst)"
+step "4/7 Archive (native macOS)"
 
 mkdir -p "$BUILD_DIR"
 rm -rf "$ARCHIVE_PATH" "$EXPORT_DIR"
 
-# Release signing for the macOS SDK lives in project.yml's configs.Release
-# behind [sdk=macosx*] conditions, scoped to the app and extension targets.
-# Not passed here: command-line-wide provisioning args leak into every target,
-# including the menu-bar bundle, which must carry no profile at all.
+# Release signing lives in project.yml's TimeConverterMac configs.Release, now
+# unconditional — the `[sdk=macosx*]` conditions the Catalyst lane needed
+# existed only because one target served two platforms.
+#
+# Not passed here: command-line-wide provisioning args leak into every target
+# in the build, including the TimeConverterCore package's, which rejects them.
 xcodebuild \
   -project "$REPO_DIR/$PRODUCT_NAME.xcodeproj" \
   -scheme "$SCHEME" \
@@ -298,7 +314,7 @@ xcodebuild \
   -archivePath "$ARCHIVE_PATH" \
   -allowProvisioningUpdates=NO \
   OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN" \
-  archive 2>&1 | tail -5
+  archive 2>&1 | tail -20
 
 if [[ ! -d "$ARCHIVE_PATH" ]]; then
   fail "archive (xcarchive not found)"
@@ -316,84 +332,48 @@ if [[ "$ARCHIVED_BUILD" != "$NEW_BUILD_NUMBER" ]]; then
   fail "archive (embedded CFBundleVersion is '$ARCHIVED_BUILD', expected '$NEW_BUILD_NUMBER')"
 fi
 
-# The bundle id must NOT have acquired a 'maccatalyst.' prefix. If it does,
-# App Store Connect will not attach the build to app 6825044484 and the error
-# arrives late and unhelpfully.
 ARCHIVED_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$ARCHIVE_INFO_PLIST" 2>/dev/null || echo "unreadable")
 if [[ "$ARCHIVED_BUNDLE_ID" != "$BUNDLE_ID" ]]; then
   echo "Error: archived CFBundleIdentifier is '$ARCHIVED_BUNDLE_ID', expected '$BUNDLE_ID'."
-  echo "       A 'maccatalyst.' prefix means DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER"
-  echo "       has been turned on; this app shares one bundle id across platforms."
+  echo "       The Mac app shares the iOS app's bundle id on purpose — that is"
+  echo "       what makes it the macOS train of app 6825044484 rather than a"
+  echo "       second app record."
   fail "archive (unexpected bundle identifier)"
 fi
 echo "Archive succeeded (CFBundleVersion $ARCHIVED_BUILD, bundle id $ARCHIVED_BUNDLE_ID)"
 
 # ------------------------------------------------------------------
-step "5/7 Assert the embedded bundle is signed the only way it can be"
+step "5/7 Assert the archive is the shape the Mac App Store wants"
 
-# This is the ITMS-90283 trip-wire, checked locally instead of discovered at
-# ingestion. Apple's position (Creating Distribution-Signed Code for Mac;
-# "Notarizing macOS software before distribution"): entitlements only make
-# sense on a main executable, and "plug-ins don't declare their own
-# entitlements — they inherit the entitlements of the host process". Every
-# public ITMS-90283 report naming an embedded .bundle names a *provisioning
-# profile found inside that bundle*. So: the app and the extension each get
-# exactly one profile and the sandbox entitlement; the plug-in gets neither.
-MENUBAR_BUNDLE="$ARCHIVED_APP/Contents/PlugIns/${PRODUCT_NAME}MenuBar.bundle"
-CONTROLS_APPEX="$ARCHIVED_APP/Contents/PlugIns/${PRODUCT_NAME}Controls.appex"
+# The Catalyst version of this step policed an embedded loadable .bundle
+# (ITMS-90283) and an .appex. The native archive has neither: one executable,
+# one profile, one sandbox. What is left is worth keeping because both are
+# mechanical ingestion rejections.
 
-if [[ ! -d "$MENUBAR_BUNDLE" ]]; then
-  echo "Error: the Catalyst archive has no $(basename "$MENUBAR_BUNDLE")."
-  echo "       That is the entire reason this lane exists (backlog item 12a) —"
-  echo "       check project.yml's platformFilter/embed/copy dependency block."
-  fail "archive (menu-bar bundle missing from Contents/PlugIns)"
+if [[ "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$ARCHIVE_INFO_PLIST" 2>/dev/null)" != "true" ]]; then
+  echo "Error: LSUIElement is not set in the archived app. The Mac product is a"
+  echo "       menu-bar utility; without this it ships with a Dock icon and no"
+  echo "       window, which is the worst of both designs."
+  fail "archive (LSUIElement missing)"
 fi
-if [[ ! -d "$CONTROLS_APPEX" ]]; then
-  fail "archive (Controls extension missing from Contents/PlugIns)"
-fi
+echo "OK   LSUIElement — menu-bar utility, no Dock icon"
 
-# `codesign -d --entitlements -` prints nothing at all for an unentitled
-# binary. Even an EMPTY entitlements dict on a non-main-executable is the bug.
-MENUBAR_ENTITLEMENTS=$(codesign -d --entitlements - --xml "$MENUBAR_BUNDLE" 2>/dev/null || true)
-if [[ -n "$MENUBAR_ENTITLEMENTS" ]]; then
-  echo "Error: $(basename "$MENUBAR_BUNDLE") carries entitlements:"
-  echo "$MENUBAR_ENTITLEMENTS" | plutil -p - || true
-  echo "       A loadable plug-in must carry none — it inherits the host's."
-  fail "signing assertion (entitlements on a loadable bundle)"
-fi
-echo "OK   $(basename "$MENUBAR_BUNDLE") has no entitlements"
-
-EMBEDDED_PROFILES=$(find "$ARCHIVED_APP" -name 'embedded.provisionprofile' | sort)
 # macOS uses embedded.provisionprofile, not the iOS embedded.mobileprovision —
-# different file name as well as different location, per TN3125. If neither is
-# present the archive was signed without a profile at all, and export would
-# fail later with something far less legible.
-if [[ -z "$EMBEDDED_PROFILES" ]]; then
-  echo "Error: no embedded.provisionprofile anywhere in the archived app."
-  echo "       A distribution-signed macOS app must embed one at"
-  echo "       Contents/embedded.provisionprofile (and one per .appex)."
+# different file name as well as different location, per TN3125.
+if [[ ! -f "$ARCHIVED_APP/Contents/embedded.provisionprofile" ]]; then
+  echo "Error: no Contents/embedded.provisionprofile in the archived app."
+  echo "       A distribution-signed macOS app must embed one."
   fail "signing assertion (no embedded provisioning profile)"
 fi
-UNEXPECTED_PROFILES=$(printf '%s\n' "$EMBEDDED_PROFILES" | grep -F '.bundle/' || true)
-if [[ -n "$UNEXPECTED_PROFILES" ]]; then
-  echo "Error: a provisioning profile is embedded inside a loadable bundle:"
-  printf '%s\n' "$UNEXPECTED_PROFILES"
-  echo "       This is the documented cause of ITMS-90283 'Invalid"
-  echo "       com.apple.application-identifier entitlement value'."
-  fail "signing assertion (profile inside a loadable bundle)"
-fi
-echo "OK   embedded.provisionprofile only where it belongs:"
-printf '%s\n' "$EMBEDDED_PROFILES" | sed "s|$ARCHIVED_APP|     .|"
+echo "OK   Contents/embedded.provisionprofile present"
 
-for sandboxed in "$ARCHIVED_APP" "$CONTROLS_APPEX"; do
-  if ! codesign -d --entitlements - --xml "$sandboxed" 2>/dev/null \
-      | plutil -p - 2>/dev/null | grep -q '"com.apple.security.app-sandbox" => true'; then
-    echo "Error: $(basename "$sandboxed") is not sandboxed. The Mac App Store"
-    echo "       rejects this at ingestion (ITMS-90296)."
-    fail "signing assertion (app-sandbox missing)"
-  fi
-done
-echo "OK   app and Controls extension are both sandboxed"
+if ! codesign -d --entitlements - --xml "$ARCHIVED_APP" 2>/dev/null \
+    | plutil -p - 2>/dev/null | grep -q '"com.apple.security.app-sandbox" => true'; then
+  echo "Error: the app is not sandboxed. The Mac App Store rejects this at"
+  echo "       ingestion (ITMS-90296)."
+  fail "signing assertion (app-sandbox missing)"
+fi
+echo "OK   app is sandboxed"
 
 # ------------------------------------------------------------------
 step "6/7 Export (.pkg for App Store Connect)"
@@ -405,8 +385,7 @@ xcodebuild -exportArchive \
   -allowProvisioningUpdates=NO 2>&1 | tail -3
 
 # A macOS App Store export is an installer package. `man 7 altool`: "To upload
-# your app binary files (.ipa or .pkg)". Xcode Help, "Archive export files":
-# "for macOS apps, this is an installer package (with a .pkg file extension)".
+# your app binary files (.ipa or .pkg)".
 PKG_PATH="$EXPORT_DIR/$PRODUCT_NAME.pkg"
 if [[ ! -f "$PKG_PATH" ]]; then
   FOUND_PKG=$(find "$EXPORT_DIR" -maxdepth 1 -name '*.pkg' | head -1)
@@ -435,20 +414,17 @@ if [[ "$VALIDATE_ONLY" == "1" ]]; then
   if echo "$VALIDATE_OUTPUT" | grep -qi 'No errors validating'; then
     echo "VALIDATION PASSED for build $NEW_BUILD_NUMBER."
     echo ""
-    echo "This is the answer to the open question in docs/menu-bar-poc-plan.md §3:"
-    echo "Apple's validator accepts a Catalyst app with the loadable macOS-SDK"
-    echo "bundle embedded in Contents/PlugIns. Note what it does NOT answer —"
-    echo "validation is ingestion-time only, so it says nothing about App Review"
-    echo "policy, and DTS still calls the architecture unsupported."
+    echo "Note what it does NOT answer: validation is ingestion-time only, so it"
+    echo "says nothing about App Review policy. It does retire the open question"
+    echo "the Catalyst lane carried — there is no loadable bundle in this archive"
+    echo "to be unsupported any more."
     echo ""
     echo "Next: scripts/ship-mac.sh $((NEW_BUILD_NUMBER + 1))"
     exit 0
   else
     echo "VALIDATION FAILED — and the error text is the finding. Record it in"
-    echo "docs/menu-bar-poc-plan.md §3 verbatim. If it is ITMS-90283 naming"
-    echo "TimeConverterMenuBar.bundle, the bundle-in-Catalyst architecture is"
-    echo "answered negatively and item 12b needs the LoginItems helper-app"
-    echo "route instead. No build number was consumed either way."
+    echo "docs/testflight-setup-checklist.md verbatim. No build number was"
+    echo "consumed either way."
     fail "validation"
   fi
 fi
@@ -468,7 +444,7 @@ else
   # eaten by set -e inside the command substitution, which on the very first
   # TimeConverter upload made Apple's 90023/90474 rejections vanish silently.
   #
-  # -t macos: `altool --help` on this Xcode (26.40.1) spells the enum
+  # -t macos: `altool --help` on this Xcode spells the enum
   # "{macos | ios | appletvos | visionos}". The old `osx` value is stale.
   UPLOAD_OUTPUT=$(xcrun altool --upload-app \
     -f "$PKG_PATH" \
@@ -492,7 +468,7 @@ COMMIT_SHA=$(git -C "$REPO_DIR" rev-parse --short HEAD 2>/dev/null || echo "unkn
 
 echo ""
 echo "Mac ship complete!"
-echo "  Platform:      macOS (Mac Catalyst)"
+echo "  Platform:      macOS (native)"
 echo "  Build number:  $NEW_BUILD_NUMBER"
 echo "  Delivery UUID: $DELIVERY_UUID"
 echo "  Commit:        $COMMIT_SHA"

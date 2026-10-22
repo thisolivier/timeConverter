@@ -6,12 +6,13 @@
 # and TimeConverter.xcodeproj is gitignored, regenerated fresh before every
 # build.
 #
-# One iOS archive covers current needs: the iOS TestFlight build installs and
-# runs via TestFlight on the Mac too (user-verified, builds 3 and 4). Nuance
-# from the item-12 research: what TestFlight delivers on the Mac is the iOS
-# binary, NOT the local Catalyst product — so any Catalyst/macOS-only feature
-# (e.g. a menu-bar AppKit bundle) will not ride this lane; shipping such
-# features needs a separate Catalyst delivery lane (backlog item 12b).
+# This lane is iOS only, and it is unchanged by the native restructure (backlog
+# item 16). An iOS TestFlight build does also install and run via TestFlight on
+# the Mac (user-verified, builds 3 and 4) — but as the *iOS* binary in the
+# compatibility runtime, which is a different product from the native menu-bar
+# app: no status item, no ⌃⌥T, a window. The Mac experience ships through
+# scripts/ship-mac.sh and the TimeConverterMac target. Nothing about that lane
+# touches this one.
 #
 # Usage:
 #   scripts/ship.sh <new-build-number> [--skip-upload]
@@ -78,8 +79,8 @@ step() { echo ""; echo "=== $1 ==="; }
 fail() { echo "FAILED at step: $1"; exit 1; }
 
 # The build-number read/bump/monotonicity logic lives in lib/version.sh because
-# scripts/ship-mac.sh (the Mac Catalyst lane, backlog item 12b) uploads into a
-# second platform train of the same App Store Connect record and must agree with
+# scripts/ship-mac.sh (the native macOS lane) uploads into a second platform
+# train of the same App Store Connect record and must agree with
 # this script on CFBundleVersion to the digit. Sourced rather than duplicated:
 # two copies of a sed one-liner is how the two trains would quietly drift apart.
 # `fail` above is the lib's error path, so it must be defined before this.

@@ -7,10 +7,12 @@ import SwiftUI
 ///
 /// For a typed-input tool, launch-to-typing *is* the access story, so launch and
 /// a genuine return from the background both focus the field. A `.inactive`
-/// phase does not, and that distinction is the whole point on Mac Catalyst,
-/// where merely clicking another window drops the scene to `.inactive` and
-/// clicking back raises it again. Treating that as "arrival" would yank focus
-/// out from under a user who was doing something else on the same machine.
+/// phase does not, and that distinction is the whole point on iPad
+/// multitasking, where merely tapping another window drops the scene to
+/// `.inactive` and tapping back raises it again. Treating that as "arrival"
+/// would yank focus out from under a user who was doing something else on the
+/// same screen. (It mattered on Mac Catalyst for the same reason; the Mac is
+/// its own native target since item 16 and has its own focus story.)
 enum InputFocusPolicy {
     /// Launch (and the DEBUG `-initialInput` prefill): always focus. The
     /// prefilled text stays put; focusing only places the cursor in it.

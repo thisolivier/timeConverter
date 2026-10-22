@@ -1,8 +1,15 @@
 # TimeConverter
 
-A small universal macOS/iOS app (SwiftUI, Mac Catalyst) for freeform timezone
-conversion: type something like `12pm ET in London` or `06:34 Portugal in PST`
-and see the converted time.
+A small iOS/macOS app (SwiftUI) for freeform timezone conversion: type
+something like `12pm ET in London` or `06:34 Portugal in PST` and see the
+converted time.
+
+**Two native shells over one shared core** (backlog item 16). `TimeConverterCore`
+is a local Swift package holding the parser, the presenter and every rule; the
+iOS app is a window, and the Mac app is a menu-bar utility with a ⌃⌥T global
+hotkey and no persistent window. Mac Catalyst is retired — the platforms want
+genuinely different access, and Catalyst could deliver neither `MenuBarExtra`
+nor `NSStatusItem` nor Carbon. Behaviour never differs; only access does.
 
 ## Dev environment
 
@@ -12,21 +19,30 @@ source of truth (including version numbers); regenerate with `xcodegen
 generate` (the scripts do this for you). Requires Xcode 26+ and
 [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
-One iOS target covers iPhone, iPad, and Mac (via Catalyst,
-`TARGETED_DEVICE_FAMILY: "1,2,6"`). Local builds sign ad-hoc with no team, so
-everything works headlessly with no keychain access.
+Three product targets plus two test targets, one scheme per platform. Local
+builds sign ad-hoc with no team, so everything works headlessly with no
+keychain access.
+
+| scheme | platform | what it builds and tests |
+|---|---|---|
+| `TimeConverter` | iOS | the iOS app + the Controls extension; `TimeConverterTests` + the whole `TimeConverterCore` test target, on the simulator |
+| `TimeConverterMac` | macOS | the native menu-bar app; `TimeConverterMacTests` + the same `TimeConverterCore` test target, natively |
 
 ```bash
-scripts/test.sh                 # unit tests, iOS simulator
-scripts/test.sh --platform all  # unit tests, iOS simulator + Mac Catalyst
+scripts/test.sh                 # unit tests, iOS simulator (202 tests)
+scripts/test.sh --platform mac  # unit tests, native macOS (203 tests)
+scripts/test.sh --platform all  # both lanes
+scripts/test.sh PromptTests     # one core suite (bare names mean the core)
 scripts/run-ios.sh              # build, install and launch on a simulator
-scripts/run-mac.sh              # build and launch the Mac Catalyst app
+scripts/run-mac.sh              # build and launch the native Mac menu-bar app
 scripts/qa-menubar.sh           # Mac-only: QA the menu bar and ⌃⌥T (Debug)
+cd TimeConverterCore && swift test   # the core alone, fastest loop
 ```
 
-Run `--platform all` before shipping anything that touches startup wiring or
-storage — in the sibling music projects the Mac build broke twice while the
-iOS lane stayed green.
+The shared core is deliberately tested **twice**, once per platform, which is
+why the two lanes overlap by 195 tests. Run `--platform all` before shipping
+anything that touches parsing, the presenter or startup wiring — in the sibling
+music projects the Mac build broke twice while the iOS lane stayed green.
 
 ## Shipping
 
@@ -34,12 +50,21 @@ Two lanes into the **same** App Store Connect record (app `6825044484`), one per
 platform train. Release signing is **manual** in both, against named
 provisioning profiles.
 
-| | iOS | macOS (Mac Catalyst) |
+| | iOS | macOS (native) |
 |---|---|---|
 | | `scripts/ship.sh <build>` | `scripts/ship-mac.sh <build>` |
-| profiles | `TimeConverter App Store`, `TimeConverter Controls App Store` | `TimeConverter Mac App Store`, `TimeConverter Controls Mac App Store` |
+| target | `TimeConverter` | `TimeConverterMac` |
+| archive | `generic/platform=iOS` | `generic/platform=macOS` |
+| profiles | `TimeConverter App Store`, `TimeConverter Controls App Store` | `TimeConverter Mac App Store` (one — no extension on the Mac) |
 | product | `.ipa` → `altool -t ios` | `.pkg` → `altool -t macos` |
 | status | **working** — build 5 is VALID | **blocked on the portal** (below) |
+
+Both targets carry the bundle id `dev.thisolivier.timeconverter`. A bundle id is
+scoped per platform in App Store Connect, so the Mac app is the macOS train of
+the one record rather than a second app — which is what makes it a universal
+purchase. xcodegen has no objection to two targets sharing one
+`PRODUCT_BUNDLE_IDENTIFIER`; the products never collide because they build into
+per-platform directories.
 
 The build number comes from `project.yml`'s `CURRENT_PROJECT_VERSION` via
 `scripts/lib/version.sh`, shared by both scripts on purpose: macOS requires
@@ -49,55 +74,66 @@ lanes cannot be allowed to drift.
 ### Why the Mac needs its own lane at all
 
 An iOS TestFlight build does install and run on an Apple silicon Mac — but as
-"iPhone and iPad app on Mac", i.e. the *iOS* binary in the iOS runtime, not the
-Catalyst product. Nothing built against the macOS SDK can load there, so the
-menu-bar bundle and ⌃⌥T (backlog item 12a) cannot ride the iOS lane under any
-configuration. `ship-mac.sh` archives the real Catalyst product, with
-`Contents/PlugIns` and both embedded bundles intact.
+"iPhone and iPad app on Mac", i.e. the *iOS* binary in the iOS runtime. It is a
+different product from the menu-bar app: no status item, no ⌃⌥T, a window. That
+compatibility path still works and is untouched; it simply cannot deliver the
+Mac experience, which is why `ship-mac.sh` archives `TimeConverterMac`.
 
-> **⚠️ `ship-mac.sh` cannot complete yet** — it needs two macOS provisioning
-> profiles and a Mac Installer Distribution certificate that do not exist. It
+> **⚠️ `ship-mac.sh` cannot complete yet** — it needs one macOS provisioning
+> profile and a Mac Installer Distribution certificate that do not exist. It
 > stops in **preflight (step 2/7)**, before touching the build number, and
-> prints the portal steps. The full list is under **"macOS train"** in
-> `docs/testflight-setup-checklist.md`. Nothing else is affected: `ship.sh`,
-> Debug builds, both test lanes, `run-ios.sh` and `run-mac.sh` all work, because
-> Debug signs ad-hoc with no team and the macOS signing settings are scoped to
-> Release *and* the macOS SDK.
+> prints the portal steps. The final list is under **"macOS train"** in
+> `docs/testflight-setup-checklist.md`, including the dry-run archive's verbatim
+> demand. Nothing else is affected: `ship.sh`, Debug builds, both test lanes,
+> `run-ios.sh` and `run-mac.sh` all work, because Debug signs ad-hoc with no
+> team and the macOS signing settings are scoped to the Mac target's Release
+> config.
 >
-> Once the profiles are installed, the first command to run is
+> Once the profile is installed, the first command to run is
 > `scripts/ship-mac.sh --validate-only`: it archives, exports and asks App Store
 > Connect's validator for a verdict **without delivering anything and without
-> consuming a build number**. That is how we find out whether ingestion accepts
-> a Catalyst app with a macOS-SDK `.bundle` embedded in it — a question with no
-> precedent on the public record either way.
+> consuming a build number**. macOS build numbers are unrecoverable, so that
+> order matters.
 
 ## Layout
 
-- `TimeConverter/` — app source. `ContentView.swift` is the whole interface;
-  `ConverterPresenter.swift` turns parse output into display values;
-  `ConverterDisplayDriver.swift` owns *when* the output area changes;
-  `PromptChipRow.swift` renders the correction chips; `Parsing/` is the
-  headless parser and conversion engine (see
-  `TimeConverter/Parsing/readme.md`); `Launchers/` is the App Shortcut, the
-  intent and the URL route (see `TimeConverter/Launchers/readme.md`)
-- `TimeConverterControls/` — the Control Center widget extension (see
+- `TimeConverterCore/` — **the local SPM package: everything that is not a
+  view.** `Parsing/` is the headless parser and conversion engine,
+  `Presentation/` is the presenter plus the display driver that owns *when* the
+  output changes, `Launch/` is the launch-request logic and the DEBUG prefill,
+  `Resources/fallback-cities.json` is reached through `Bundle.module`, and
+  `Tests/` holds 195 of the repo's tests. See `TimeConverterCore/readme.md` and
+  `TimeConverterCore/Sources/TimeConverterCore/Parsing/readme.md`
+- `TimeConverter/` — the **iOS** shell. `ContentView.swift` is the whole
+  interface; `PromptChipRow.swift` renders the correction chips;
+  `InputFocusPolicy.swift` decides when the field takes focus; `Launchers/` is
+  the App Shortcut and the intent (see `TimeConverter/Launchers/readme.md`)
+- `TimeConverterMac/` — the **macOS** shell: `MenuBarExtra`, the summoned
+  panel, ⌃⌥T (see `TimeConverterMac/readme.md`)
+- `TimeConverterControls/` — the Control Center widget extension, iOS-only (see
   `TimeConverterControls/readme.md`)
-- `TimeConverterMenuBar/` — the Mac-only menu-bar bundle, a macOS-SDK target
-  excluded from iOS builds entirely (see `TimeConverterMenuBar/readme.md` and
-  `TimeConverter/MenuBar/readme.md`)
-- `TimeConverterTests/` — test suite (Swift Testing)
+- `TimeConverterTests/`, `TimeConverterMacTests/` — each shell's own tests, thin
+  by design (Swift Testing)
 - `docs/` — backlog (`docs/backlog.md`) and specs
 - `scripts/` — build/run/test helpers
 
 Note: the targets' `sources` globs copy non-Swift files into the bundle,
 flattened, so every module `readme.md` is excluded in `project.yml` — without
-that exclude two readmes in different modules collide at build time. The UI
+that exclude two readmes in different modules collide at build time. The
+package does the same thing with `exclude:` in `Package.swift`, where an
+unhandled `readme.md` would otherwise be warned about and copied. The iOS view
 layer has no module of its own and is documented below instead.
 
 ## UI layer
 
+This section describes the **iOS** shell. The Mac shell deliberately has its
+own, plainer view layer as a placeholder for the translucent summoned design —
+see `TimeConverterMac/readme.md` — but drives the identical
+`ConverterDisplayDriver`, so every rule below (debounce, chips, instant
+results) holds there too.
+
 Still deliberately minimal: one text field, one output area, content
-constrained to ~480pt so the Catalyst window reads as a small utility.
+constrained to ~480pt so an iPad window reads as a small utility.
 
 **The guiding rule is that the typed sentence is the single source of truth, on
 every platform.** Every interaction edits that sentence rather than introducing
@@ -108,15 +144,17 @@ selection somewhere.
 - **The UI is the only thing that knows what time it is, or where it is.**
   `ContentView` calls `Date()` and reads `TimeZone.current`, and passes both
   down; the driver, presenter, parser and conversion engine all take them as
-  parameters. That single injection point is what keeps everything below the
+  parameters. `MenuBarConverterView` is the only other place in the repo that
+  does this. That single injection point is what keeps everything below the
   view pure and testable — including local-zone defaulting, where the device
   zone fills in a side the user didn't name (`7pm in London` →
   `7:00 pm Los Angeles (local, UTC-8) → 3:00 am London (UTC+0) +1d`).
 - **The view holds no logic.** `ConverterPresenter` renders finished values and
   the view is a `switch` over three `ConverterDisplayState` cases, so UI
-  behaviour is covered by ordinary unit tests (`ConverterPresenterTests`,
-  `ReplacementChipTests`, `ConverterDisplayDriverTests`) with no UI tests at
-  all.
+  behaviour is covered by ordinary unit tests in the package
+  (`ConverterPresenterTests`, `ReplacementChipTests`,
+  `ConverterDisplayDriverTests`) with no UI tests at all — and because they live
+  in the package, they run on both platforms.
 - **Results are instant; prompts wait 600 ms.** `ConverterDisplayDriver` holds
   prompt display behind a cancellable task so ordinary typing stops flashing
   red text per keystroke, while conversions still render on the keystroke that
@@ -134,12 +172,12 @@ selection somewhere.
   Kolkata). Identical SwiftUI buttons on iPhone, iPad and Mac; `ChipFlowLayout`
   wraps them onto as many lines as they need, because Russia offers ten.
   **Did-you-mean never auto-accepts**, not even a unique one-letter match — see
-  the policy in `TimeConverter/Parsing/readme.md`.
+  the policy in `TimeConverterCore/Sources/TimeConverterCore/Parsing/readme.md`.
 - **The field focuses itself** on launch and on a genuine return from the
-  background, so launch-to-typing is zero taps and the Mac window arrives ready
-  to type. It never takes focus mid-session: `InputFocusPolicy` distinguishes
-  returning from `.background` (focus) from merely regaining key status via
-  `.inactive` (don't), which is the case that matters on Catalyst. A launcher
+  background, so launch-to-typing is zero taps. It never takes focus
+  mid-session: `InputFocusPolicy` distinguishes returning from `.background`
+  (focus) from merely regaining key status via `.inactive` (don't), which is the
+  case that matters in iPad multitasking. A launcher
   (below) is the one thing that may take focus mid-session — it is a button
   whose entire meaning is "let me type a time".
 - **Styling is interim and knowingly so.** Prompt copy stays verbose, the text
@@ -205,9 +243,13 @@ pause.
 
 ```bash
 scripts/run-mac.sh    # build once, then launch with a prefilled field:
-open -n build/DerivedData/Build/Products/Debug-maccatalyst/TimeConverter.app \
+open -n build/DerivedData/Build/Products/Debug/TimeConverter.app \
   --args -initialInput "12pm ET in London"
 ```
+
+On the Mac the prefilled field is in the menu-bar dropdown (click the clock
+glyph) or the ⌃⌥T panel; on iOS use `scripts/run-ios.sh` and
+`xcrun simctl launch booted dev.thisolivier.timeconverter -initialInput "…"`.
 
 Inputs that between them exercise the whole output area:
 
@@ -224,35 +266,31 @@ Inputs that between them exercise the whole output area:
 
 ## Getting into the app on the Mac (menu bar + ⌃⌥T)
 
-The Catalyst app puts a small clock glyph in the menu bar and registers **⌃⌥T**
-as a global hotkey. Both do the same thing: bring TimeConverter forward with the
-field focused and **whatever was typed still in it**. That is the one place the
-Mac deliberately disagrees with the iOS launchers — on the Mac the app sits
-behind other windows all day and ⌃⌥T is pressed to get *back* to a sentence
-mid-edit, so clearing it would be destroying work. (Internally that is
-`LaunchRequest.summonWithoutReset` rather than `.startFreshConversion`.)
+The Mac app **is** the menu bar: a small clock glyph, no Dock icon, no window.
+Clicking the glyph drops down the converter; **⌃⌥T** from anywhere summons a
+floating panel with the same converter in it. Pressing ⌃⌥T again while looking
+at the panel puts it away; pressing it from another app brings the panel
+forward rather than hiding it, because hiding there would make the hotkey look
+broken (`SummonPolicy`, unit-tested).
+
+Nothing is ever cleared on the Mac. On the Mac the app sits behind other
+windows all day and ⌃⌥T is pressed to get *back* to a sentence mid-edit, so
+clearing it would be destroying work — the opposite of the iOS Control Center
+control, which means "start a conversion". That distinction is the tested value
+`LaunchRequest.inputToStartFrom` in the core.
 
 It is **⌃⌥T, not ⌃⌥Space**: Space already carries six system registrations
 including ⌃⌥Space (input-source switching), while keycode 17 (T) carries none.
 
-It lives in `TimeConverterMenuBar/`, a macOS-SDK bundle loaded out of
-`Contents/PlugIns` at launch — the only way to reach `NSStatusItem` and Carbon's
-`RegisterEventHotKey` from Catalyst at all. `platformFilter: macOS` keeps it out
-of iOS builds entirely, so the shipped `.ipa` has no trace of it and
-`scripts/ship.sh` is unaffected. Loading is optional at every step: if the
-bundle is missing or refuses to load, the app logs one line and runs normally.
-
-**Whether it can ever reach a user is still open.** `scripts/ship-mac.sh`
-(backlog item 12b) is the lane that would carry it, and the local half of that
-lane is built and verified: the Catalyst archive contains the bundle, the App
-Sandbox the Mac App Store demands is wired in for Release only, and the bundle
-is signed the one way a loadable plug-in may be — no entitlements, no embedded
-profile. What is not known is Apple's answer. Ingestion has no public precedent
-either way, and DTS has called the architecture unsupported three times across
-2024–2025, so `ship-mac.sh --validate-only` exists to ask without spending a
-build number. See `TimeConverter/MenuBar/readme.md`,
-`TimeConverterMenuBar/readme.md`, `docs/menu-bar-poc-plan.md` §3 and the
-"macOS train" section of `docs/testflight-setup-checklist.md`.
+The whole thing lives in `TimeConverterMac/` as ordinary native code —
+`MenuBarExtra(.window)`, `NSPanel`, and Carbon `RegisterEventHotKey`, which
+needs no permission because the WindowServer delivers only the one pre-declared
+chord. The retired Catalyst approach (backlog item 12a) had to load a macOS-SDK
+`.bundle` into the Catalyst process to reach any of that, along with an `@objc`
+hosting protocol whose silent mis-cast was the sharpest trap in the design; all
+of it is gone, and `GlobalHotKey.swift` ported across unchanged. The view layer
+is a deliberate placeholder — `docs/ux-v1-proposal.md` has a translucent
+Spotlight-style modal for the design sprint.
 
 ### QA: the menu bar headlessly
 
@@ -260,12 +298,12 @@ build number. See `TimeConverter/MenuBar/readme.md`,
 scripts/qa-menubar.sh
 ```
 
-Twelve steps, all headless bar the last: hotkey-collision snapshot via
-`CopySymbolicHotKeys()`, bundle placement and `platform MACOS`/`MACCATALYST`
-checks, the load and registration log line, single-instance plus RSS, a second
-instance via `open -n` being harmless, re-registration after both a quit and a
-`kill -9`, and the app still running with the bundle moved out of `PlugIns`. It
-leaves nothing running.
+Eleven steps, all headless bar the last: hotkey-collision snapshot via
+`CopySymbolicHotKeys()`, a `platform MACOS` check on the binary and
+`LSUIElement` on the built plist, the launch log line naming what actually came
+up, single-instance plus RSS, a second instance via `open -n` being harmless,
+and re-registration after both a quit and a `kill -9`. It leaves nothing
+running.
 
 ### QA: the 10-second manual check (the one thing a script cannot do)
 
@@ -282,13 +320,20 @@ Then: **click another app, and press ⌃⌥T.**
 
 Expect, in order:
 
-1. TimeConverter comes forward with the input field focused.
-2. Type half a sentence, click another app, press ⌃⌥T again — the half-typed
-   text is **still there** (the Control Center control, by contrast, clears it).
-3. Clicking the clock glyph in the menu bar does exactly the same as the
-   keypress.
-4. ⌘Q — the glyph disappears from the menu bar.
+1. A small floating "Time Converter" panel appears, centred, field focused.
+2. Type half a sentence, press ⌃⌥T again while looking at it — it hides. Press
+   once more — it comes back with the half-typed text **still there**.
+3. Clicking the clock glyph opens the dropdown, with its own focused field.
+4. "Quit Time Converter" in the dropdown — the glyph disappears.
 
-If step 1 fails while `scripts/qa-menubar.sh` passes, the registration is being
-shared or shadowed by another process rather than broken: quit anything that
-grabs global hotkeys and retry.
+Every press logs a line, which is what separates "the keystroke never arrived"
+from "the summon failed":
+
+```bash
+log show --predicate 'subsystem == "dev.thisolivier.timeconverter"' \
+  --last 2m --style compact
+```
+
+Nothing logged on a press means the keystroke did not reach the process at all
+— suspect screen-share key forwarding, or another process holding ⌃⌥T. A
+`hotkey received` line with no panel is a real bug.

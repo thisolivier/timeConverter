@@ -1,4 +1,5 @@
 import AppIntents
+import TimeConverterCore
 
 /// "Convert a time" — the one intent behind every launcher (backlog item 11).
 ///

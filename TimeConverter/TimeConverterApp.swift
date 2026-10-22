@@ -1,15 +1,14 @@
 import SwiftUI
 
+/// The iOS/iPadOS shell: one window, one `ContentView`, nothing else.
+///
+/// It used to also start the Mac menu bar here — `MenuBarPresence` loaded a
+/// macOS-SDK bundle out of `Contents/PlugIns` when the app was running under
+/// Mac Catalyst (backlog item 12a). That is gone: the Mac is its own native
+/// target now (`TimeConverterMac`), so this target is iOS-only and has nothing
+/// platform-conditional left in it.
 @main
 struct TimeConverterApp: App {
-    init() {
-        // Mac only, and optional by design: on Mac Catalyst this loads the
-        // menu-bar bundle out of Contents/PlugIns and brings up a status item
-        // plus ⌃⌥T. On iOS, and whenever the bundle is missing or refuses to
-        // load, it logs and does nothing else. See TimeConverter/MenuBar.
-        MenuBarPresence.startIfAvailable()
-    }
-
     var body: some Scene {
         WindowGroup {
             ContentView()

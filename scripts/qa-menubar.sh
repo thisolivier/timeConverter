@@ -1,30 +1,34 @@
 #!/usr/bin/env bash
-# qa-menubar.sh — QA the Mac menu-bar presence and ⌃⌥T (backlog item 12a).
+# qa-menubar.sh — QA the native Mac menu-bar app and ⌃⌥T (backlog item 16).
+#
+# Successor to the item-12a version, which QA'd a macOS-SDK bundle loaded into a
+# Catalyst process. There is no bundle any more, so the checks that proved it
+# was placed in Contents/PlugIns, was a macOS binary, cast across the `@objc`
+# protocol boundary, and degraded gracefully when absent are all gone — their
+# failure modes went with the architecture. What is left is what still matters:
+# the status item, the hotkey registration, process hygiene, and the one thing
+# a script cannot do.
 #
 # Debug only, this machine only, and deliberately NOT part of scripts/test.sh:
-# it launches and kills a GUI app and touches the real menu bar, which has no
-# place in a unit-test lane.
+# it launches and kills a GUI app and touches the real menu bar.
 #
-# Everything here is headless except the one thing that cannot be: a literal
-# keypress. Synthetic keystroke injection is TCC-blocked (osascript hangs
-# waiting for an Accessibility consent prompt that a locked screen cannot
-# answer), and granting Accessibility to an automation harness purely to test a
-# hotkey would be a far bigger blast radius than the feature. So step 7 prints
-# what to press and this script asserts everything around it — including that
-# registration returned noErr, which is necessary but NOT sufficient:
-# RegisterEventHotKey also returns noErr for a combo the system already owns.
+# Synthetic keystroke injection stays off the table: it is TCC-blocked
+# (osascript hangs on an Accessibility consent prompt a locked screen cannot
+# answer), and granting Accessibility to an automation harness to test a hotkey
+# is a far bigger blast radius than the feature. So the last step prints what to
+# press and everything around it is asserted — including that registration
+# returned noErr, which is necessary but NOT sufficient.
 #
 # Usage: scripts/qa-menubar.sh
 
 set -uo pipefail  # not -e: every step reports, then the script sums up
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_PATH="$REPO_DIR/build/DerivedData/Build/Products/Debug-maccatalyst/TimeConverter.app"
-PLUGIN_PATH="$APP_PATH/Contents/PlugIns/TimeConverterMenuBar.bundle"
-PLUGIN_BINARY="$PLUGIN_PATH/Contents/MacOS/TimeConverterMenuBar"
+APP_PATH="$REPO_DIR/build/DerivedData/Build/Products/Debug/TimeConverter.app"
+APP_BINARY="$APP_PATH/Contents/MacOS/TimeConverter"
 # Matches only this build's process, so a copy of the app running from
 # /Applications cannot be mistaken for the one under test — or killed by it.
-PROCESS_PATTERN="Debug-maccatalyst/TimeConverter.app/Contents/MacOS/TimeConverter"
+PROCESS_PATTERN="Products/Debug/TimeConverter.app/Contents/MacOS/TimeConverter"
 LOG_PREDICATE='subsystem == "dev.thisolivier.timeconverter" AND category == "menubar"'
 
 FAILURES=0
@@ -36,12 +40,9 @@ fail() { printf '   FAIL  %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
 note() { printf '   ....  %s\n' "$1"; }
 
 # `pgrep -c` is a Linux flag; BSD pgrep prints usage and exits 2, so count by
-# hand. The pattern is the full binary path, which also means it cannot match
-# an older build of this app whose product was named differently.
+# hand.
 instance_count() { pgrep -f "$PROCESS_PATTERN" 2>/dev/null | wc -l | tr -d ' '; }
 
-# The app logs through os.Logger, so the log is readable after the fact rather
-# than only on a terminal that owns the process.
 menubar_log_since() {
   /usr/bin/log show --predicate "$LOG_PREDICATE" --start "$1" --style compact 2>/dev/null \
     | grep -E "menu bar (ready|unavailable)"
@@ -66,7 +67,7 @@ kill_all_instances() {
   while [[ $(instance_count) -ne 0 && $waited -lt 20 ]]; do sleep 0.5; waited=$((waited + 1)); done
 }
 
-echo "QA: Mac menu bar + ⌃⌥T (item 12a)"
+echo "QA: native Mac menu bar + ⌃⌥T (item 16)"
 
 step "Pre-flight — no instance of this build already running"
 if [[ $(instance_count) -eq 0 ]]; then
@@ -92,37 +93,31 @@ else
 fi
 kill_all_instances  # run-mac.sh already launched it; relaunch below with logging
 
-step "Placement — the bundle is where builtInPlugInsURL looks, and is a macOS binary"
-if [[ -d "$PLUGIN_PATH" ]]; then
-  pass "Contents/PlugIns/$(basename "$PLUGIN_PATH")"
+step "Shape — a native macOS binary with no Dock presence"
+if vtool -show-build "$APP_BINARY" 2>/dev/null | grep -q "platform MACOS"; then
+  pass "app binary: platform MACOS (not MACCATALYST)"
 else
-  fail "missing $PLUGIN_PATH (a wrong 'copy:' in project.yml lands it in Contents/Resources)"
+  fail "app binary is not a native macOS binary"
 fi
-if vtool -show-build "$PLUGIN_BINARY" 2>/dev/null | grep -q "platform MACOS"; then
-  pass "bundle binary: platform MACOS"
+if [[ "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$APP_PATH/Contents/Info.plist" 2>/dev/null)" == "true" ]]; then
+  pass "LSUIElement — no Dock icon, no app menu bar, no window on launch"
 else
-  fail "bundle binary is not a macOS binary"
-fi
-if vtool -show-build "$APP_PATH/Contents/MacOS/TimeConverter" 2>/dev/null | grep -q "platform MACCATALYST"; then
-  pass "host binary: platform MACCATALYST"
-else
-  fail "host binary is not a Catalyst binary"
+  fail "LSUIElement is not set; the app would acquire a Dock icon"
 fi
 
-step "Load + registration — the app says what came up"
+step "Launch — the app says what actually came up"
 launch_and_wait
 if [[ -n "$LAST_LAUNCH_LOG" ]]; then note "$LAST_LAUNCH_LOG"; fi
 if grep -q "menu bar ready" <<<"$LAST_LAUNCH_LOG"; then
-  pass "bundle loaded, principal class cast to MenuBarHosting"
+  pass "menu bar started"
 else
   fail "no 'menu bar ready' log line"
 fi
-# The bundle reports what actually came up, so this is an assertion rather than
-# a tautology: it says "status item" only when NSStatusBar gave a button *and*
-# AppKit placed it in a status-bar window. "no status item" and "status item
-# (created but not placed…)" both fail this grep.
+# The app reports what it can actually observe (a status-bar window in this
+# process), so this is an assertion rather than a tautology: "no status item"
+# fails this grep.
 if grep -q -- "— status item +" <<<"$LAST_LAUNCH_LOG"; then
-  pass "status item placed in the menu bar"
+  pass "MenuBarExtra status item placed in the menu bar"
 else
   fail "status item did not appear — see the log line above"
 fi
@@ -180,23 +175,6 @@ else
 fi
 kill_all_instances
 
-step "Negative path — the app must run fine with no bundle at all"
-mv "$PLUGIN_PATH" "$PLUGIN_PATH.qa-moved"
-launch_and_wait
-if [[ -n "$LAST_LAUNCH_LOG" ]]; then note "$LAST_LAUNCH_LOG"; fi
-if grep -q "menu bar unavailable" <<<"$LAST_LAUNCH_LOG"; then
-  pass "logged the failure and continued"
-else
-  fail "expected a 'menu bar unavailable' log line"
-fi
-if [[ $(instance_count) -eq 1 ]]; then
-  pass "app is running without a menu bar"
-else
-  fail "app did not survive a missing bundle"
-fi
-kill_all_instances
-mv "$PLUGIN_PATH.qa-moved" "$PLUGIN_PATH"
-
 step "Clean exit — nothing left running, no hotkey state stranded"
 if [[ $(instance_count) -eq 0 ]]; then
   pass "no processes left"
@@ -217,10 +195,19 @@ cat <<'MANUAL'
      scripts/run-mac.sh
      # click some other app, then press ⌃⌥T
 
-   Expect: TimeConverter comes forward, the field is focused, and anything
-   already typed in it is STILL THERE (unlike the Control Center control,
-   which clears it). Clicking the clock glyph in the menu bar must do the
-   same. Then ⌘Q and watch the glyph disappear.
+   Expect: a small floating "Time Converter" panel appears, centred, with the
+   field focused. Press ⌃⌥T again while looking at it and it goes away
+   (SummonPolicy: a toggle only toggles when you can already see it). Press it
+   from another app while the panel is open and it comes forward instead.
+   Clicking the clock glyph must open the dropdown with its own focused field.
+   Every press logs a 'hotkey received' line:
+
+     log show --predicate 'subsystem == "dev.thisolivier.timeconverter"' \
+       --last 2m --style compact
+
+   That line is what separates "the keystroke never arrived" (nothing logged —
+   suspect screen-share key forwarding) from "the summon failed" (logged, no
+   panel).
 MANUAL
 
 printf '\n'

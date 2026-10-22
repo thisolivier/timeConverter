@@ -450,3 +450,7 @@ leak test), `probe.swift` (system-claimed-combo control), `dup.swift`
 enumeration), `session.swift` (window-server session), `xcgtest/` (full
 xcodegen + Catalyst + macOS-bundle + status item + hotkey POC). Nothing was
 written to the repo except this file; no commits were made.
+
+---
+
+**SUPERSEDED (2026-10-22).** This plan describes the Catalyst loadable-bundle architecture, retired the same week by the native two-target restructure (backlog item 16): the Mac binary is now a native macOS MenuBarExtra app and no AppKit smuggling is needed. The hotkey findings (⌃⌥T free, crash-safe teardown, QA method) and the signing research carried over; the bundle mechanics did not. Kept for the record.

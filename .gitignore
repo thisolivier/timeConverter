@@ -5,7 +5,7 @@
 *.xcodeproj/
 TimeConverter/Info.plist
 TimeConverterControls/Info.plist
-TimeConverterMenuBar/Info.plist
+TimeConverterMac/Info.plist
 build/
 DerivedData/
 *.xcuserstate
