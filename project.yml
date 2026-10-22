@@ -65,6 +65,24 @@ targets:
           CODE_SIGN_IDENTITY: "Apple Distribution"
           PROVISIONING_PROFILE_SPECIFIER: "TimeConverter App Store"
           DEVELOPMENT_TEAM: CNHB9B5GX6
+          # --- macOS (Mac Catalyst) train, backlog item 12b ---------------
+          # A Mac Catalyst build compiles against the macOS SDK, so
+          # `[sdk=macosx*]` is the one condition that separates the Catalyst
+          # archive (scripts/ship-mac.sh) from the iOS archive
+          # (scripts/ship.sh) while both read this single Release block.
+          # Conditional assignments outrank the unconditional ones above, so
+          # the iOS lane is byte-for-byte unchanged.
+          #
+          # A provisioning profile is platform-scoped: the existing
+          # "TimeConverter App Store" profile reports platforms
+          # "visionOS, watchOS, and iOS" and xcodebuild refuses it outright for
+          # platform "macOS". Hence a second, macOS profile against the same
+          # App ID — same bundle id, no `maccatalyst.` prefix.
+          PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]: "TimeConverter Mac App Store"
+          # The Mac App Store requires App Sandbox. Scoped to Release+macOS so
+          # Debug, scripts/test.sh and scripts/run-mac.sh stay unsandboxed and
+          # headless exactly as before.
+          CODE_SIGN_ENTITLEMENTS[sdk=macosx*]: TimeConverter/TimeConverter-macOS.entitlements
     dependencies:
       # Embeds the Control Center extension into the app bundle
       # (TimeConverter.app/PlugIns). An extension is only ever installed as part
@@ -178,6 +196,15 @@ targets:
           CODE_SIGN_IDENTITY: "Apple Distribution"
           PROVISIONING_PROFILE_SPECIFIER: "TimeConverter Controls App Store"
           DEVELOPMENT_TEAM: CNHB9B5GX6
+          # macOS (Mac Catalyst) train — same reasoning as the app target, and
+          # the same cost: the extension's *own* App ID needs its own macOS
+          # profile too. The Catalyst archive fails on this target first (it
+          # builds before the app), so this is the error Olivier sees if only
+          # one of the two macOS profiles has been created.
+          PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]: "TimeConverter Controls Mac App Store"
+          # An .appex is a separate process with its own signature, so it needs
+          # its own App Sandbox entitlement — the host's does not reach it.
+          CODE_SIGN_ENTITLEMENTS[sdk=macosx*]: TimeConverterControls/TimeConverterControls-macOS.entitlements
     info:
       # Generated from here, like the app's — do not edit the plist directly.
       path: TimeConverterControls/Info.plist
@@ -229,16 +256,26 @@ targets:
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_IDENTITY: "-"
       configs:
-        # Release exists only so a hypothetical Catalyst archive (item 12b)
-        # would sign rather than fail. It cannot affect scripts/ship.sh: that
-        # lane is an iOS archive, and platformFilter keeps this target out of
-        # it, so these settings are never even evaluated there.
+        # This is the config the Catalyst archive (scripts/ship-mac.sh, item
+        # 12b) actually uses — `platformFilter: macOS` includes this target in
+        # a Mac Catalyst build and excludes it from the iOS one, so these
+        # settings are live on the Mac lane and never evaluated by
+        # scripts/ship.sh.
         #
-        # Deliberately NO provisioning profile and NO entitlements: per TN3125
-        # a traditional plug-in needs neither, and an embedded profile on a
-        # secondary bundle is what trips ITMS-90283. Signing with the team's
-        # own identity satisfies library validation, so
-        # com.apple.security.cs.disable-library-validation is not needed.
+        # Deliberately NO provisioning profile and NO entitlements, and that is
+        # a rule rather than a preference: entitlements belong to a *main
+        # executable*, and this is a loadable plug-in that runs inside the
+        # app's process and inherits the app's sandbox. Giving it its own
+        # app-sandbox entitlement or embedded profile is what trips ITMS-90283
+        # ("Invalid 'com.apple.application-identifier' entitlement value") on a
+        # secondary bundle. Signing with the team's own identity satisfies
+        # library validation, so com.apple.security.cs.disable-library-validation
+        # is not needed either. See docs/menu-bar-poc-plan.md §3 and the
+        # module readme.
+        #
+        # Consequently there is NO entry for this bundle in
+        # ExportOptions-mac.plist: that dictionary keys on main executables
+        # (app + .appex), and a plug-in with no profile has nothing to map.
         Release:
           CODE_SIGN_STYLE: Manual
           CODE_SIGN_IDENTITY: "Apple Distribution"

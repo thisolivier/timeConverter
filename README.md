@@ -30,37 +30,46 @@ iOS lane stayed green.
 
 ## Shipping
 
-`scripts/ship.sh <build>` archives, exports and uploads to TestFlight. Release
-signing is **manual**, against named provisioning profiles — the app's is
-`TimeConverter App Store`.
+Two lanes into the **same** App Store Connect record (app `6825044484`), one per
+platform train. Release signing is **manual** in both, against named
+provisioning profiles.
 
-> **⚠️ `ship.sh` cannot complete right now.** Since backlog item 11 the app
-> embeds a second target, the `TimeConverterControls` extension, and an
-> extension needs its *own* App ID and its *own* distribution profile — the
-> app's profile cannot cover it. The build expects a profile named
-> **`TimeConverter Controls App Store`**, which does not exist yet, so the run
-> fails at **step 3/6 (archive)** while signing the extension (and would fail
-> again at step 4/6, export). Everything else — Debug builds, both test lanes,
-> `run-ios.sh`, `run-mac.sh` — works without it, because Debug signs ad-hoc with
-> no team.
+| | iOS | macOS (Mac Catalyst) |
+|---|---|---|
+| | `scripts/ship.sh <build>` | `scripts/ship-mac.sh <build>` |
+| profiles | `TimeConverter App Store`, `TimeConverter Controls App Store` | `TimeConverter Mac App Store`, `TimeConverter Controls Mac App Store` |
+| product | `.ipa` → `altool -t ios` | `.pkg` → `altool -t macos` |
+| status | **working** — build 5 is VALID | **blocked on the portal** (below) |
+
+The build number comes from `project.yml`'s `CURRENT_PROJECT_VERSION` via
+`scripts/lib/version.sh`, shared by both scripts on purpose: macOS requires
+`CFBundleVersion` to increase monotonically across *all* trains, so the two
+lanes cannot be allowed to drift.
+
+### Why the Mac needs its own lane at all
+
+An iOS TestFlight build does install and run on an Apple silicon Mac — but as
+"iPhone and iPad app on Mac", i.e. the *iOS* binary in the iOS runtime, not the
+Catalyst product. Nothing built against the macOS SDK can load there, so the
+menu-bar bundle and ⌃⌥T (backlog item 12a) cannot ride the iOS lane under any
+configuration. `ship-mac.sh` archives the real Catalyst product, with
+`Contents/PlugIns` and both embedded bundles intact.
+
+> **⚠️ `ship-mac.sh` cannot complete yet** — it needs two macOS provisioning
+> profiles and a Mac Installer Distribution certificate that do not exist. It
+> stops in **preflight (step 2/7)**, before touching the build number, and
+> prints the portal steps. The full list is under **"macOS train"** in
+> `docs/testflight-setup-checklist.md`. Nothing else is affected: `ship.sh`,
+> Debug builds, both test lanes, `run-ios.sh` and `run-mac.sh` all work, because
+> Debug signs ad-hoc with no team and the macOS signing settings are scoped to
+> Release *and* the macOS SDK.
 >
-> Olivier, before the next ship, in the Apple Developer portal (team
-> `CNHB9B5GX6`):
->
-> 1. **Identifiers → App IDs → +** → App → Description
->    "Time Converter 3000 Controls", Bundle ID **explicit**
->    `dev.thisolivier.timeconverter.controls`. No capabilities needed.
-> 2. **Profiles → +** → *App Store Connect* (distribution) → select that App ID
->    → certificate **Apple Distribution** (the team's existing one) → name it
->    exactly **`TimeConverter Controls App Store`**.
-> 3. Download it and double-click, or drop it in
->    `~/Library/MobileDevice/Provisioning Profiles/`, on this build machine —
->    the same place `TimeConverter App Store` lives.
-> 4. Run `scripts/ship.sh <build> --skip-upload` once to prove archive and
->    export both pass before a real upload.
->
-> No change to `project.yml` or `ExportOptions.plist` is needed afterwards; both
-> already name the profile.
+> Once the profiles are installed, the first command to run is
+> `scripts/ship-mac.sh --validate-only`: it archives, exports and asks App Store
+> Connect's validator for a verdict **without delivering anything and without
+> consuming a build number**. That is how we find out whether ingestion accepts
+> a Catalyst app with a macOS-SDK `.bundle` embedded in it — a question with no
+> precedent on the public record either way.
 
 ## Layout
 
@@ -220,17 +229,24 @@ mid-edit, so clearing it would be destroying work. (Internally that is
 It is **⌃⌥T, not ⌃⌥Space**: Space already carries six system registrations
 including ⌃⌥Space (input-source switching), while keycode 17 (T) carries none.
 
-**This is a local-only feature, by design.** It lives in
-`TimeConverterMenuBar/`, a macOS-SDK bundle loaded out of `Contents/PlugIns` at
-launch — the only way to reach `NSStatusItem` and Carbon's
+It lives in `TimeConverterMenuBar/`, a macOS-SDK bundle loaded out of
+`Contents/PlugIns` at launch — the only way to reach `NSStatusItem` and Carbon's
 `RegisterEventHotKey` from Catalyst at all. `platformFilter: macOS` keeps it out
 of iOS builds entirely, so the shipped `.ipa` has no trace of it and
 `scripts/ship.sh` is unaffected. Loading is optional at every step: if the
 bundle is missing or refuses to load, the app logs one line and runs normally.
-Apple DTS has twice called this architecture unsupported for distribution and
-there is no Mac delivery lane yet (backlog item 12b), so nothing here is
-expected to reach a user. See `TimeConverter/MenuBar/readme.md`,
-`TimeConverterMenuBar/readme.md` and `docs/menu-bar-poc-plan.md`.
+
+**Whether it can ever reach a user is still open.** `scripts/ship-mac.sh`
+(backlog item 12b) is the lane that would carry it, and the local half of that
+lane is built and verified: the Catalyst archive contains the bundle, the App
+Sandbox the Mac App Store demands is wired in for Release only, and the bundle
+is signed the one way a loadable plug-in may be — no entitlements, no embedded
+profile. What is not known is Apple's answer. Ingestion has no public precedent
+either way, and DTS has called the architecture unsupported three times across
+2024–2025, so `ship-mac.sh --validate-only` exists to ask without spending a
+build number. See `TimeConverter/MenuBar/readme.md`,
+`TimeConverterMenuBar/readme.md`, `docs/menu-bar-poc-plan.md` §3 and the
+"macOS train" section of `docs/testflight-setup-checklist.md`.
 
 ### QA: the menu bar headlessly
 

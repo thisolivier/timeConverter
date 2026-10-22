@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>destination</key>
+	<string>export</string>
+	<key>generateAppStoreInformation</key>
+	<false/>
+	<key>manageAppVersionAndBuildNumber</key>
+	<true/>
+	<!-- Same method string as the iOS ExportOptions.plist: `app-store-connect`
+	     is what `xcodebuild -help` lists for Xcode 26 ("Additional options
+	     include app-store (deprecated: use app-store-connect)"). The method
+	     does not name a platform — the *archive* does. Point this file at a
+	     Mac Catalyst archive and the same method produces the macOS product. -->
+	<key>method</key>
+	<string>app-store-connect</string>
+	<!-- One entry per MAIN EXECUTABLE in the archive, and both of these are
+	     distinct App IDs needing their own macOS-platform profile: a profile is
+	     platform-scoped, and the iOS pair ("TimeConverter App Store",
+	     "TimeConverter Controls App Store") report platforms
+	     "visionOS, watchOS, and iOS" — xcodebuild refuses them for platform
+	     "macOS" outright. Neither of the names below exists in the portal yet;
+	     see docs/testflight-setup-checklist.md "macOS train".
+
+	     Bundle ids are the SAME as iOS — a Catalyst app distributed through the
+	     App Store keeps its iOS bundle id, with no `maccatalyst.` prefix.
+
+	     Deliberately absent: dev.thisolivier.timeconverter.menubar. That is a
+	     traditional loadable .bundle, not a main executable — it has no
+	     profile and no entitlements by design (project.yml and
+	     TimeConverterMenuBar/readme.md explain why), so there is nothing to
+	     map. Adding it here would mean minting a profile for it, and an
+	     embedded profile on a secondary bundle is precisely what produces
+	     ITMS-90283. -->
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>dev.thisolivier.timeconverter</key>
+		<string>TimeConverter Mac App Store</string>
+		<key>dev.thisolivier.timeconverter.controls</key>
+		<string>TimeConverter Controls Mac App Store</string>
+	</dict>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>stripSwiftSymbols</key>
+	<true/>
+	<key>teamID</key>
+	<string>CNHB9B5GX6</string>
+	<key>testFlightInternalTestingOnly</key>
+	<false/>
+	<key>uploadSymbols</key>
+	<true/>
+	<!-- The macOS App Store product is an *installer package*, not an app
+	     bundle: `man 7 altool` says "To upload your app binary files (.ipa or
+	     .pkg)", Xcode Help's "Archive export files" says "for macOS apps, this
+	     is an installer package (with a .pkg file extension)", and DTS is
+	     blunt about it — "A Mac App Store app must be submitted as an installer
+	     package" (forums 701581). So this export signs a .pkg, and a .pkg is
+	     signed by an *installer* identity, which is a different certificate
+	     type from a code-signing one: "Installer certificates have different
+	     OIDs than code signing certificates. They are not interchangeable in
+	     any way" (DTS, forums 740423).
+	     `signingCertificate` above therefore does NOT cover it.
+
+	     This is the one brand-new certificate the macOS train needs, and this
+	     machine does not have it yet: `security find-identity -v` shows only
+	     Apple Distribution and Apple Development, and under
+	     `-p macappstore` both report "Missing required extension".
+	     "Mac Installer Distribution" is an automatic selector — Xcode picks the
+	     newest installed certificate of that type — and is also what this key
+	     would default to; it is spelled out because being told
+	     "No signing certificate 'Mac Installer Distribution' found" by
+	     `-exportArchive` is otherwise mystifying. `scripts/ship-mac.sh`
+	     preflights for it so the failure arrives before the archive, not after. -->
+	<key>installerSigningCertificate</key>
+	<string>Mac Installer Distribution</string>
+</dict>
+</plist>

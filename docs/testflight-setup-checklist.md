@@ -92,3 +92,121 @@ Source docs (read these for depth; this file is just the checklist):
 Build 3 installed and ran from TestFlight on both iPhone and Mac (Olivier
 confirmed). The Mac-for-free Catalyst theory holds for this app's own
 pipeline, not just Amperfy's.
+
+---
+
+## macOS train (backlog item 12b)
+
+Item 7 above — "no separate Mac pipeline needed" — is **half right and was
+retired on 2026-10-22**. What TestFlight delivers on the Mac today is the *iOS*
+binary running in the compatibility runtime, not the Catalyst product. That is
+genuinely fine for the app as it was; it can never carry the menu-bar bundle or
+anything else built against the macOS SDK. So the Mac gets its own lane into the
+**same app record** (`6825044484`), as a second platform train:
+
+| | iOS lane | macOS lane |
+|---|---|---|
+| script | `scripts/ship.sh <n>` | `scripts/ship-mac.sh <n>` |
+| archive | `generic/platform=iOS` | `generic/platform=macOS,variant=Mac Catalyst` |
+| product | `.ipa` | `.pkg` (an installer package) |
+| upload | `altool -t ios` | `altool -t macos` |
+| export options | `ExportOptions.plist` | `ExportOptions-mac.plist` |
+
+Both read `CURRENT_PROJECT_VERSION` from `project.yml` through the shared
+`scripts/lib/version.sh`, because **macOS requires `CFBundleVersion` to increase
+monotonically across *all* platform trains** (iOS does not). The iOS train has
+already consumed build 5, so the first Mac upload must be **6 or higher**, and a
+number burned on a rejected Mac upload is not recoverable.
+
+### Olivier's portal errand (the two-minute version)
+
+Nothing in the local repo is waiting on anything else — `scripts/ship-mac.sh`
+stops in preflight and prints this same list until these exist. All of it is at
+developer.apple.com, team **CNHB9B5GX6**.
+
+1. [ ] **Certificates → + → "Mac Installer Distribution"**. Upload the existing
+       CSR at `~/sites/navidromClient/spike/.signing/distribution.csr` (same
+       key as the Apple Distribution cert — no need to make a new one). Save
+       the `.cer` next to it as `installer-distribution.cer`.
+       *Why a whole new certificate:* the macOS App Store product is a signed
+       **installer package**, and installer certs have different OIDs from
+       code-signing certs — per DTS, "not interchangeable in any way". The
+       Apple Distribution cert signs the app inside the package; it cannot sign
+       the package.
+2. [ ] **Identifiers → `dev.thisolivier.timeconverter` → tick "Mac Catalyst"**,
+       then the same for `dev.thisolivier.timeconverter.controls`. If asked,
+       choose **"Use existing Mac App ID"** — never "Automatically create an
+       identifier", which mints a `maccatalyst.`-prefixed App ID we do not want.
+       The bundle ids stay exactly as they are on iOS.
+       (Skip if the App IDs already show up in step 3's menu.)
+3. [ ] **Profiles → + → Distribution → "Mac App Store Connect"**, Profile Type
+       **"Mac Catalyst"**, App ID `dev.thisolivier.timeconverter`, certificate
+       **Apple Distribution**, named *exactly*:
+       **`TimeConverter Mac App Store`**
+4. [ ] **Repeat step 3** for App ID `dev.thisolivier.timeconverter.controls`,
+       named *exactly*:
+       **`TimeConverter Controls Mac App Store`**
+       (The Control Center extension is a separate executable with its own App
+       ID, so it needs its own profile — the app's does not cover it, exactly
+       as on iOS.)
+5. [ ] **Download both `.provisionprofile` files.** Save them to
+       `~/sites/navidromClient/spike/.signing/` as
+       `TimeConverter_Mac_App_Store.provisionprofile` and
+       `TimeConverter_Controls_Mac_App_Store.provisionprofile`, and install each
+       into **both**
+       `~/Library/MobileDevice/Provisioning Profiles/` and
+       `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`
+       (Xcode 16+ nominally uses the latter; this machine's working iOS
+       profiles live in the former, and Apple staff have cited both).
+6. [x] ~~App Store Connect: add the macOS platform to app 6825044484~~ —
+       **already done, nothing to click.** Checked against the ASC API on
+       2026-10-22: the record already carries a `MAC_OS` `appStoreVersion`
+       (1.0, PREPARE_FOR_SUBMISSION) alongside the `IOS` one. Only the *iOS*
+       `preReleaseVersion` exists, and that is the TestFlight train — it appears
+       for macOS on its own once the first macOS build finishes processing.
+
+Note that steps 1 and 5 end with files on disk, so they are not purely browser
+work; the certificate still has to be imported into the build keychain
+(`security import … -k ~/Library/Keychains/spike-build.keychain-db`) before
+`ship-mac.sh` can see it.
+
+### What the macOS lane adds to the build itself
+
+- **App Sandbox is mandatory** for the Mac App Store, enforced mechanically at
+  ingestion (ITMS-90296 enumerates every executable missing
+  `com.apple.security.app-sandbox`). So the app and the Controls extension each
+  get an entitlements file —
+  `TimeConverter/TimeConverter-macOS.entitlements` and
+  `TimeConverterControls/TimeConverterControls-macOS.entitlements` — wired in
+  through `CODE_SIGN_ENTITLEMENTS[sdk=macosx*]` in the Release config only.
+  Debug, `scripts/test.sh` and `scripts/run-mac.sh` are unchanged and
+  unsandboxed; `scripts/run-mac.sh --sandboxed` opts in when you want to
+  exercise the sandbox locally.
+- **The menu-bar bundle gets neither an entitlements file nor a profile**, and
+  that is a rule, not a preference: entitlements belong to main executables,
+  and a loadable plug-in inherits the host process's sandbox. Every public
+  ITMS-90283 report naming an embedded `.bundle` is about a provisioning
+  profile found *inside* that bundle. `ship-mac.sh` asserts both before it
+  will upload.
+- **Sandbox contents are deliberately one line.** No network entitlement (the
+  app never makes a request), no file-access entitlement (the only file read is
+  the app's own bundle), and nothing for ⌃⌥T — Carbon `RegisterEventHotKey`
+  works from a sandboxed App Store app with no entitlement and no TCC grant,
+  because the WindowServer delivers only the one pre-declared chord.
+
+### The one question only Apple can answer
+
+Whether ingestion accepts a Catalyst app with a macOS-SDK `.bundle` in
+`Contents/PlugIns` has no precedent on the public record either way, and Apple
+DTS has called the architecture unsupported three times across 2024–2025. Ask
+without paying for it:
+
+```
+scripts/ship-mac.sh --validate-only
+```
+
+`altool --validate-app` runs the same ITMS validation as an upload and delivers
+nothing, so it consumes **no build number** and leaves no row in the build list
+— which matters here precisely because macOS build numbers are unrecoverable.
+Record the verdict in `docs/menu-bar-poc-plan.md` §3 verbatim. A pass is not a
+promise about App Review, only about ingestion.

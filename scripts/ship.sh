@@ -77,6 +77,15 @@ usage() {
 step() { echo ""; echo "=== $1 ==="; }
 fail() { echo "FAILED at step: $1"; exit 1; }
 
+# The build-number read/bump/monotonicity logic lives in lib/version.sh because
+# scripts/ship-mac.sh (the Mac Catalyst lane, backlog item 12b) uploads into a
+# second platform train of the same App Store Connect record and must agree with
+# this script on CFBundleVersion to the digit. Sourced rather than duplicated:
+# two copies of a sed one-liner is how the two trains would quietly drift apart.
+# `fail` above is the lib's error path, so it must be defined before this.
+# shellcheck source=lib/version.sh
+source "$SCRIPTS_DIR/lib/version.sh"
+
 SKIP_UPLOAD="${SKIP_UPLOAD:-0}"
 
 [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]] && usage 0
@@ -123,40 +132,10 @@ echo "Keychain unlocked, KEY_ID=$APPSTORE_KEY_ID"
 step "2/6 Bump build number + regenerate project"
 
 # project.yml is patched (not the generated pbxproj): patching the pbxproj
-# would be silently wiped by the next `xcodegen generate`.
-if [[ ! -f "$PROJECT_YML" ]]; then
-  fail "version bump (project.yml not found at $PROJECT_YML)"
-fi
-
-read_build_number() {
-  grep -m1 'CURRENT_PROJECT_VERSION:' "$PROJECT_YML" \
-    | sed -E 's/.*CURRENT_PROJECT_VERSION: *"?([0-9]+)"?.*/\1/'
-}
-
-CURRENT_BUILD_NUMBER="$(read_build_number)"
-if [[ -z "$CURRENT_BUILD_NUMBER" ]]; then
-  fail "version bump (could not find CURRENT_PROJECT_VERSION in project.yml)"
-fi
-
-# CFBundleVersion must be strictly monotonic — Apple rejects a redundant build
-# number at the *altool* stage (ITMS-90189), long after archive and export have
-# both reported success.
-if [[ "$NEW_BUILD_NUMBER" -le "$CURRENT_BUILD_NUMBER" ]]; then
-  echo "Error: build number must increase. project.yml is at"
-  echo "       $CURRENT_BUILD_NUMBER, asked to ship $NEW_BUILD_NUMBER."
-  echo "       Apple rejects duplicate/declining build numbers (ITMS-90189)."
-  fail "version bump (non-monotonic build number)"
-fi
-
-sed -i '' -E \
-  "s/CURRENT_PROJECT_VERSION: \"?${CURRENT_BUILD_NUMBER}\"?/CURRENT_PROJECT_VERSION: \"${NEW_BUILD_NUMBER}\"/" \
-  "$PROJECT_YML"
-
-VERIFIED_BUILD_NUMBER="$(read_build_number)"
-if [[ "$VERIFIED_BUILD_NUMBER" != "$NEW_BUILD_NUMBER" ]]; then
-  fail "version bump (expected CURRENT_PROJECT_VERSION=$NEW_BUILD_NUMBER after sed, found '$VERIFIED_BUILD_NUMBER')"
-fi
-echo "Bumped CURRENT_PROJECT_VERSION: $CURRENT_BUILD_NUMBER → $NEW_BUILD_NUMBER (in project.yml)"
+# would be silently wiped by the next `xcodegen generate`. Existence check,
+# monotonicity guard (ITMS-90189) and read-back verification all live in
+# lib/version.sh — see the sourcing note above.
+bump_build_number "$PROJECT_YML" "$NEW_BUILD_NUMBER"
 
 ( cd "$REPO_DIR" && xcodegen generate ) || fail "xcodegen generate"
 echo "xcodegen generate complete — TimeConverter.xcodeproj regenerated from project.yml"
