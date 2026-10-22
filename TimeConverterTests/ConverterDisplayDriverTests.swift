@@ -27,6 +27,18 @@ struct ConverterDisplayDriverTests {
         #expect(driver.displayState.convertedDisplay != nil)
     }
 
+    /// A single named zone is a complete sentence now, and a conversion is
+    /// still never held back — the answer arrives on the keystroke that
+    /// completes it, with the defaulted side marked `(local)`.
+    @Test func aSingleZoneSentenceConvertsAsSoonAsItIsComplete() {
+        let driver = makeDriver()
+        driver.inputDidChange(
+            to: "7pm in London", now: FixedDates.winterMidday, localZone: FixedZones.losAngeles
+        )
+        #expect(driver.displayState.convertedDisplay?.echoLine
+            == "7:00 pm Los Angeles (local, UTC-8) → 3:00 am London (UTC+0) +1d")
+    }
+
     @Test func clearingTheFieldReturnsToTheHintImmediately() {
         let driver = makeDriver()
         driver.inputDidChange(to: "12pm ET in London", now: FixedDates.winterMidday)
@@ -48,9 +60,14 @@ struct ConverterDisplayDriverTests {
 
     /// The point of the debounce: typing through a sequence of unparseable
     /// states shows one prompt at the end, not one per keystroke.
+    ///
+    /// The walk now ends in a half-typed *unknown* place rather than in
+    /// `12pm et`: since the 2026-10-22 local-defaulting amendment one named
+    /// zone is a complete sentence, so `12pm et` converts on the keystroke that
+    /// finishes it — see `aSingleZoneSentenceConvertsAsSoonAsItIsComplete`.
     @Test func typingThroughManyInvalidStatesShowsNoPromptAlongTheWay() async {
         let driver = makeDriver()
-        for partialInput in ["1", "12", "12p", "12pm", "12pm ", "12pm e", "12pm et"] {
+        for partialInput in ["1", "12", "12p", "12pm", "12pm ", "12pm n", "12pm na", "12pm nar"] {
             driver.inputDidChange(to: partialInput, now: FixedDates.winterMidday)
             #expect(driver.displayState == .hint, "'\(partialInput)' flashed a prompt")
         }

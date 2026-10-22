@@ -96,10 +96,13 @@ parallel state — which is why a correction chip rewrites a span of the input
 string and lets the ordinary re-parse take it from there, instead of holding a
 selection somewhere.
 
-- **The UI is the only thing that knows what time it is.** `ContentView` calls
-  `Date()` and passes it down; the driver, presenter, parser and conversion
-  engine all take the current date as a parameter. That single injection point
-  is what keeps everything below the view pure and testable.
+- **The UI is the only thing that knows what time it is, or where it is.**
+  `ContentView` calls `Date()` and reads `TimeZone.current`, and passes both
+  down; the driver, presenter, parser and conversion engine all take them as
+  parameters. That single injection point is what keeps everything below the
+  view pure and testable — including local-zone defaulting, where the device
+  zone fills in a side the user didn't name (`7pm in London` →
+  `7:00 pm Los Angeles (local, UTC-8) → 3:00 am London (UTC+0) +1d`).
 - **The view holds no logic.** `ConverterPresenter` renders finished values and
   the view is a `switch` over three `ConverterDisplayState` cases, so UI
   behaviour is covered by ordinary unit tests (`ConverterPresenterTests`,
@@ -197,7 +200,7 @@ open -n build/DerivedData/Build/Products/Debug-maccatalyst/TimeConverter.app \
   --args -initialInput "12pm ET in London"
 ```
 
-Four inputs that between them exercise the whole output area:
+Inputs that between them exercise the whole output area:
 
 | `-initialInput` | Shows |
 |---|---|
@@ -206,6 +209,9 @@ Four inputs that between them exercise the whole output area:
 | `12pm ET in Lodnon` | P5 did-you-mean chips |
 | `12pm ET in London` | The expanded abbreviation echo |
 | `9am Russia to London` | Ten chips, i.e. the wrapping layout |
+| `7pm in London` | Local-zone defaulting: the *source* is `(local, …)` |
+| `7pm east coast` | The same the other way round: the *target* is `(local, …)` |
+| `7pm` | P2 — a time with no zone anywhere still prompts |
 
 ## Getting into the app on the Mac (menu bar + ⌃⌥T)
 

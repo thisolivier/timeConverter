@@ -1,6 +1,6 @@
 import Foundation
 
-/// The spec's five disambiguation prompts, as values.
+/// The spec's disambiguation prompts, as values.
 ///
 /// Prompts are data, not UI: the parser emits them and the presenter renders
 /// them, which is what keeps every prompt trigger unit-testable. The spec's
@@ -15,19 +15,22 @@ struct ZoneChoice: Equatable, Sendable {
     let utcOffsetDescription: String
 }
 
-/// The five prompts from the spec, as values. Item 4 renders these; the parser
-/// never formats UI itself (though `message` offers the spec's copy for
-/// convenience, see `PromptMessages.swift`).
+/// The spec's prompts, as values. Item 4 renders these; the parser never
+/// formats UI itself (though `message` offers the spec's copy for convenience,
+/// see `PromptMessages.swift`).
+///
+/// There are four, not five: P3 (missing target zone) was **retired** by the
+/// 2026-10-22 amendment. A single named zone is no longer a dead end — the
+/// other side defaults to the injected device zone — so the only thing left to
+/// prompt about is a time with no zone *anywhere*, which is P2.
 enum Prompt: Equatable, Sendable {
     /// P1 — no parseable time at the start of the input.
     case timeNotFound(input: String)
 
-    /// P2 — a time was found but no source zone precedes the conjunction.
-    /// `conjunction` is nil when the user hasn't typed one yet at all.
-    case missingSourceZone(time: ParsedTime, conjunction: Conjunction?)
-
-    /// P3 — no conjunction found, or nothing after it.
-    case missingTargetZone(time: ParsedTime, sourceZoneToken: String)
+    /// P2 — a time was found but there is no zone anywhere in the input:
+    /// `7pm`, or a dangling conjunction with nothing on either side of it
+    /// (`7pm in`). One named zone is not a P2; it defaults the other side.
+    case zoneNotFound(time: ParsedTime)
 
     /// P4 — the token has more than one meaning. Never silently defaulted.
     /// `tokenRange` addresses the token inside the raw input so the UI can
@@ -44,7 +47,7 @@ enum Prompt: Equatable, Sendable {
     case unknownZone(token: String, side: ZoneSide, tokenRange: RawTextRange)
 
     /// Where in the raw input the offending zone token sits, for the prompts
-    /// that offer a tap-to-replace correction. Nil for P1–P3, which have no
+    /// that offer a tap-to-replace correction. Nil for P1 and P2, which have no
     /// single token to rewrite.
     var offendingTokenRange: RawTextRange? {
         switch self {
@@ -59,8 +62,8 @@ enum Prompt: Equatable, Sendable {
     var specIdentifier: String {
         switch self {
         case .timeNotFound: return "P1"
-        case .missingSourceZone: return "P2"
-        case .missingTargetZone: return "P3"
+        case .zoneNotFound: return "P2"
+        // P3 is retired; no prompt ever reports it again.
         case .ambiguousZone: return "P4"
         case .unknownZone: return "P5"
         }

@@ -12,19 +12,24 @@ struct ZoneReading: Equatable, Sendable {
     let formattedTime: String
     /// e.g. `UTC+0`, `UTC-5`, `UTC+5:30`.
     let utcOffsetDescription: String
+    /// True when the user never named this side and it was filled in from the
+    /// device zone, which the echo marks as `(local, …)`.
+    let isDeviceLocalZone: Bool
 
     init(
         timeZoneIdentifier: String,
         zoneDisplayName: String,
         representativeCities: [String] = [],
         formattedTime: String,
-        utcOffsetDescription: String
+        utcOffsetDescription: String,
+        isDeviceLocalZone: Bool = false
     ) {
         self.timeZoneIdentifier = timeZoneIdentifier
         self.zoneDisplayName = zoneDisplayName
         self.representativeCities = representativeCities
         self.formattedTime = formattedTime
         self.utcOffsetDescription = utcOffsetDescription
+        self.isDeviceLocalZone = isDeviceLocalZone
     }
 
     /// The plain city for this zone, regardless of how the token was written.
@@ -40,8 +45,13 @@ struct ZoneReading: Equatable, Sendable {
     /// join the *same* parenthetical as the offset —
     /// `12:00 pm Eastern Time (New York, Toronto, UTC-5)` — rather than opening
     /// a second one. The offset's own rendering is untouched.
+    ///
+    /// A side defaulted to the device zone leads that same parenthetical with
+    /// `local` — `7:00 pm Los Angeles (local, UTC-8)` — which is how the
+    /// assumption becomes visible instead of silent.
     var echoDescription: String {
-        let parenthetical = (representativeCities + [utcOffsetDescription])
+        let localMarker = isDeviceLocalZone ? ["local"] : []
+        let parenthetical = (localMarker + representativeCities + [utcOffsetDescription])
             .joined(separator: ", ")
         return "\(formattedTime) \(zoneDisplayName) (\(parenthetical))"
     }
@@ -119,7 +129,8 @@ struct ConversionEngine: Sendable {
                 hour: components.hour ?? 0,
                 minute: components.minute ?? 0
             ),
-            utcOffsetDescription: UTCOffsetFormatting.description(for: zone.timeZone, at: instant)
+            utcOffsetDescription: UTCOffsetFormatting.description(for: zone.timeZone, at: instant),
+            isDeviceLocalZone: zone.isDeviceLocalZone
         )
     }
 

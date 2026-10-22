@@ -3,8 +3,9 @@ import Foundation
 /// Glue between `InputParser` and the view.
 ///
 /// Pure, and deliberately the only place where parse output becomes display
-/// values — which is what makes the UI testable without any UI tests. `now` is
-/// a parameter here too; the view is the one place that calls `Date()`.
+/// values — which is what makes the UI testable without any UI tests. `now` and
+/// `localZone` are parameters here too; the view is the one place that calls
+/// `Date()` and reads `TimeZone.current`.
 struct ConverterPresenter: Sendable {
     private let parser: InputParser
 
@@ -24,13 +25,13 @@ struct ConverterPresenter: Sendable {
         case prompt(Prompt)
     }
 
-    func evaluate(_ rawInput: String, now: Date) -> Evaluation {
+    func evaluate(_ rawInput: String, now: Date, localZone: TimeZone) -> Evaluation {
         let trimmedInput = rawInput.trimmingCharacters(in: .whitespacesAndNewlines)
         // Empty input stays quiet rather than scolding the user with P1 before
         // they have typed anything.
         guard !trimmedInput.isEmpty else { return .hint }
 
-        switch parser.parseAndConvert(rawInput, now: now) {
+        switch parser.parseAndConvert(rawInput, now: now, localZone: localZone) {
         case let .result(result):
             return .converted(Self.display(for: result))
         case let .prompt(prompt):
@@ -46,8 +47,12 @@ struct ConverterPresenter: Sendable {
         }
     }
 
-    func displayState(for rawInput: String, now: Date) -> ConverterDisplayState {
-        displayState(for: evaluate(rawInput, now: now))
+    func displayState(
+        for rawInput: String,
+        now: Date,
+        localZone: TimeZone
+    ) -> ConverterDisplayState {
+        displayState(for: evaluate(rawInput, now: now, localZone: localZone))
     }
 
     // MARK: - Rendering
@@ -127,7 +132,7 @@ struct ConverterPresenter: Sendable {
                     )
                 }
 
-        case .timeNotFound, .missingSourceZone, .missingTargetZone:
+        case .timeNotFound, .zoneNotFound:
             return []
         }
     }

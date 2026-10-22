@@ -158,7 +158,10 @@ struct ReplacementChipTests {
 
     // MARK: Prompts with nothing to correct
 
-    @Test(arguments: ["hello there", "3pm in Tokyo", "06:34 Portugal"])
+    /// Re-aimed for the 2026-10-22 amendment: `3pm in Tokyo` and
+    /// `06:34 Portugal` are conversions now, so the chipless prompts are a
+    /// missing time and a time with no zone anywhere.
+    @Test(arguments: ["hello there", "3pm", "3pm in"])
     func promptsWithoutAnOffendingTokenOfferNoChips(input: String) {
         #expect(chips(for: input).isEmpty)
     }

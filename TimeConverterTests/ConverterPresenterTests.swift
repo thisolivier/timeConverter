@@ -106,10 +106,13 @@ struct ConverterPresenterTests {
 
     // MARK: Prompts render as one plain line
 
+    /// P3 is retired, so the single-zone strings that used to stand for it are
+    /// now conversions; `3pm in` takes its place as the other way to name no
+    /// zone at all.
     @Test(arguments: [
         ("hello there", "P1"),
-        ("3pm in Tokyo", "P2"),
-        ("06:34 Portugal", "P3"),
+        ("3pm", "P2"),
+        ("3pm in", "P2"),
         ("9am CST in London", "P4"),
         ("9am Narnia in London", "P5"),
     ])
@@ -125,8 +128,8 @@ struct ConverterPresenterTests {
     @Test func plainPromptsUseTheirSpecCopyUnchanged() {
         #expect(presenter.displayState(for: "hello there", now: FixedDates.winterMidday)
             == plainProblem("Couldn't find a time — start with e.g. 14:30 or 2:30 pm"))
-        #expect(presenter.displayState(for: "3pm in Tokyo", now: FixedDates.winterMidday)
-            == plainProblem("Where is 3:00 pm? Add a zone before 'in'"))
+        #expect(presenter.displayState(for: "3pm", now: FixedDates.winterMidday)
+            == plainProblem("Convert 3:00 pm where? Add a timezone, city, or country"))
     }
 
     /// The inline candidate list stays exactly as it was: the chip row is

@@ -6,10 +6,13 @@ dependencies beyond Foundation.
 
 ## Working patterns
 
-- **Nothing reads the clock.** `InputParser.parse(_:now:)` takes the current
-  date as a parameter and it travels onward on `ConversionRequest.referenceDate`,
-  so `ConversionEngine` is pure too. Tests inject fixed dates and assert exact
-  UTC offsets.
+- **Nothing reads the clock, and nothing reads the device zone.**
+  `InputParser.parse(_:now:localZone:)` takes both as parameters; the date
+  travels onward on `ConversionRequest.referenceDate`, so `ConversionEngine` is
+  pure too, and the zone is used only to fill in a side the user didn't name.
+  `TimeZone.current` appears exactly once in the app, in `ContentView`, next to
+  `Date()`. Tests inject fixed dates and fixed zones (`FixedZones`) and assert
+  exact UTC offsets.
 - **No `Locale`, no `DateFormatter`.** The spec pins exact output shapes
   (`12:00 pm`, `UTC-5`, `UTC+5:30`), so formatting is hand-rolled in
   `Formatting.swift` and calendars are always `Calendar(identifier: .gregorian)`
@@ -42,12 +45,13 @@ NormalizedInput     trim + collapse + lowercase, keeping a per-character map
                     back to the raw string the user typed
   ↓
 InputTokenizer      match time at start → split on first standalone in/to →
-                    four grammar parts, each zone token with a RawTextRange
-                    (or P1/P2/P3)
+                    time + up to two zone tokens, each with a RawTextRange.
+                    One side may legitimately be empty (or P1/P2)
   ↓
-ZoneResolverChain   each zone token through five resolvers in order, stopping
-                    at the first with ≥1 candidate → resolved / ambiguous (P4)
-                    / unknown (P5); P4 and P5 carry the token's raw range
+ZoneResolverChain   each *named* zone token through five resolvers in order,
+                    stopping at the first with ≥1 candidate → resolved /
+                    ambiguous (P4) / unknown (P5); P4 and P5 carry the token's
+                    raw range. An unnamed side becomes the injected local zone
   ↓
 ConversionRequest   time + both resolved zones + the injected reference date
   ↓
@@ -62,14 +66,14 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 
 | File | Purpose |
 |---|---|
-| `InputParser.swift` | Entry point. `parse(_:now:) -> ParseOutcome`, plus `parseAndConvert` for callers that want the rendered result. |
-| `InputTokenizer.swift` | The first-standalone-conjunction split, emitting range-carrying zone tokens. |
+| `InputParser.swift` | Entry point. `parse(_:now:localZone:) -> ParseOutcome`, plus `parseAndConvert` for callers that want the rendered result. Also the one place local defaulting happens. |
+| `InputTokenizer.swift` | The first-standalone-conjunction split, emitting range-carrying zone tokens — either side may be empty. |
 | `NormalizedInput.swift` | Normalisation plus the normalised→raw offset map. |
 | `RawTextRange.swift` | A character range into the raw input, and `RawTextEditing` to apply one. |
 | `TimeTokenParser.swift` | The `<time>` grammar: `H[H]:mm` 24-hour and `H[H][:mm] [space] am/pm`, with lenient spacing and the redundant-meridiem rule. |
 | `ParsingModels.swift` | `ParsedTime`, `ZoneCandidate`, `ResolvedZone`, `ConversionRequest`, `ParseOutcome`. |
-| `Prompt.swift` | The five prompts as values, plus `ZoneChoice`. |
-| `PromptMessages.swift` | The spec's P1–P5 copy. |
+| `Prompt.swift` | The prompts as values (P1, P2, P4, P5 — P3 is retired), plus `ZoneChoice`. |
+| `PromptMessages.swift` | The spec's prompt copy. |
 | `AbbreviationDisplay.swift` | Expanded zone name + representative cities, for the echo. |
 | `ZoneResolver.swift` | The `ZoneResolver` protocol, `ZoneResolution`, and the ordered `ZoneResolverChain`. |
 | `ZoneVocabulary.swift` | `ZoneVocabularyEntry` — what a resolver can match, and whether it is a code or a place. |
@@ -86,6 +90,27 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 
 ## Decisions worth knowing
 
+- **One named zone is enough; the conjunction decides which side it is** (spec
+  amendment 2026-10-22, item 14, reversing the original reject-on-one-zone
+  rule). `7pm in London` → London is the **target** and the source defaults to
+  the device zone; `7pm east coast` → East Coast is the **source** and the
+  target defaults. A dangling conjunction is read the same way: a zone *before*
+  it (`7pm tokyo in`) is still a named source, because the conjunction's only
+  job is to say which side the named zone is on. Only a time with no zone on
+  either side (`7pm`, `7pm in`) prompts, and that prompt is **P2**, reworded;
+  **P3 is retired** and no `Prompt` case reports it.
+- **The defaulted side is marked, never silent.** A defaulted `ResolvedZone`
+  carries `matchSource == .deviceLocalZone`, and the echo leads its existing
+  parenthetical with `local` — `7:00 pm Los Angeles (local, UTC-8) → 3:00 am
+  London (UTC+0) +1d`. The marker means "we assumed this", so typing your own
+  zone's name is *not* marked even when it equals the device zone. The named
+  side is unaffected: abbreviation expansion, P4 pickers and P5 chips all behave
+  exactly as they do in a two-zone sentence.
+- **The device zone is injected, like the date.** `TimeZone.current` is never
+  read below the view — the zone arrives as a `localZone:` parameter through
+  driver → presenter → parser, so a defaulted side can only come from the
+  caller. Tests inject `FixedZones` and therefore assert exact `(local, …)`
+  strings on any machine.
 - **Canonical country zones.** Step 4 entries are either `.canonical(zone)` —
   the clock on the country's mainland street, so `portugal` → `Europe/Lisbon`
   and never the Azores — or `.noCanonicalClock([zones])` for the six countries
@@ -151,15 +176,17 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 ## Tests
 
 `TimeConverterTests/` covers the spec's full fixture list — every example
-string, each P1–P5 trigger, lenient spacing, `12 am`/`12 pm`, redundant and
+string, each surviving prompt trigger, lenient spacing, `12 am`/`12 pm`, redundant and
 contradictory meridiems, CST/IST ambiguity, Porto through the real bundled file
 (which is also how resource bundling is verified), both DST-transition branches
 and day rollover both ways. On top of that: raw-range mapping through case
 folding, collapsed whitespace and emoji (`RawTextRangeTests`); the did-you-mean
 suggester including eight typo rows lifted from `docs/qa-input-candidates.md`
-§3 and the abbreviation guard (`ZoneSuggestionEngineTests`); and the expanded
-echo with its table-integrity checks (`AbbreviationEchoTests`). Run with
-`scripts/test.sh --platform all`.
+§3 and the abbreviation guard (`ZoneSuggestionEngineTests`); the expanded echo
+with its table-integrity checks (`AbbreviationEchoTests`); and local-zone
+defaulting with injected device zones — both conjunction cases, the `(local)`
+echo, the coast aliases, rollover on a defaulted side and chips on the one named
+zone (`LocalZoneDefaultingTests`). Run with `scripts/test.sh --platform all`.
 
 The UI layer that consumes this module is documented in the repo-root
 `README.md`.
