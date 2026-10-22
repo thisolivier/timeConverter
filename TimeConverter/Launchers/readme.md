@@ -7,15 +7,23 @@ and one shared answer: empty field, keyboard up.
 
 ## Working patterns
 
-- **One request, one meaning.** `LaunchRequest` has a single case,
-  `.startFreshConversion`, and a single derived value, `inputToStartFrom` (`""`).
+- **One request, one meaning.** `LaunchRequest` has two cases and one derived
+  value, `inputToStartFrom`: `.startFreshConversion` (`""`) for every launcher
+  here, and `.summonWithoutReset` (`nil`, i.e. "leave the sentence alone") for
+  the Mac menu bar and ⌃⌥T (item 12a, see `TimeConverter/MenuBar/readme.md`).
   Launchers are *access paths*, not a second interaction model: nothing here can
   carry a typed sentence or pre-resolve a zone, so nothing here needs
-  parameters. A new launcher reuses the case; a genuinely different request adds
+  parameters. A new launcher reuses a case; a genuinely different request adds
   one and breaks the `switch` in `ContentView` until it is handled.
-- **A launcher always clears the field.** Pressing "Convert a time" means "start
-  one", so yesterday's half-typed sentence goes. That rule is a tested value
-  (`LaunchRequest.inputToStartFrom`), not a line buried in the view.
+- **A launcher always clears the field; a summon never does.** Pressing "Convert
+  a time" means "start one", so yesterday's half-typed sentence goes. Pressing
+  ⌃⌥T means "show me that window again", so it must not. That difference is a
+  tested value (`LaunchRequest.inputToStartFrom`), not a line buried in the
+  view.
+- **The Mac menu bar shares this mailbox.** `MenuBarPresence.summon()` posts
+  `.summonWithoutReset` to the same `LaunchRequestInbox.shared`, which is how
+  the menu bar inherits the tested focus rule instead of growing a second copy
+  of it.
 - **The intent talks to the app through a one-slot mailbox.**
   `ConvertATimeIntent` is a foreground intent, so it runs in the app's own
   process — but whether it runs before or after `ContentView` appears depends on
@@ -38,7 +46,8 @@ and one shared answer: empty field, keyboard up.
 ## Components
 
 - `LaunchRequest.swift` — the request enum, its `inputToStartFrom` rule, and
-  `LaunchRequestInbox`, the mailbox between a launcher and the view.
+  `LaunchRequestInbox`, the mailbox between a launcher and the view. Shared with
+  the Mac menu bar.
 - `ConvertATimeIntent.swift` — the one `AppIntent` behind every launcher.
   Foreground (`supportedModes = .foreground(.immediate)`, the iOS 26 replacement
   for the deprecated `openAppWhenRun`). **Compiled into both the app and the

@@ -111,7 +111,8 @@ struct ContentView: View {
         displayDriver.showWithoutWaiting(for: freeformInput, now: Date())
     }
 
-    /// Launcher arrival: empty field, cursor in it, nothing else.
+    /// Launcher arrival: empty field, cursor in it, nothing else — or, from the
+    /// Mac menu bar, the cursor back in whatever was already there.
     ///
     /// The *decisions* here are tested — what the input becomes
     /// (`LaunchRequest.inputToStartFrom`) and that arriving focuses the field
@@ -119,10 +120,13 @@ struct ContentView: View {
     /// a running app can prove.
     private func honourPendingLaunchRequest() {
         guard let request = launchRequests.takePendingRequest() else { return }
-        freeformInput = request.inputToStartFrom
-        // Driven from the request rather than from `freeformInput`, which was
-        // written one line ago: the output area must never lag the field.
-        displayDriver.showWithoutWaiting(for: request.inputToStartFrom, now: Date())
+        if let replacementInput = request.inputToStartFrom {
+            freeformInput = replacementInput
+            // Driven from the request rather than from `freeformInput`, which
+            // was written one line ago: the output area must never lag the
+            // field.
+            displayDriver.showWithoutWaiting(for: replacementInput, now: Date())
+        }
         inputFieldIsFocused = InputFocusPolicy.shouldFocusOnLaunchRequest
     }
 

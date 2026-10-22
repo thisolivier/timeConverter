@@ -9,6 +9,9 @@ options:
   bundleIdPrefix: dev.thisolivier
   deploymentTarget:
     iOS: "26.0"
+    # Only the TimeConverterMenuBar bundle is a macOS-SDK target (item 12a);
+    # the app itself reaches the Mac through Catalyst, i.e. the iOS target.
+    macOS: "26.0"
 # Project-level, so the app and the TimeConverterControls extension always carry
 # the *same* version — the App Store rejects a bundle whose extension disagrees
 # with it — and so `scripts/ship.sh` has exactly one line to bump.
@@ -67,6 +70,28 @@ targets:
       # (TimeConverter.app/PlugIns). An extension is only ever installed as part
       # of its host app, so this line is what puts the control on the device.
       - target: TimeConverterControls
+      # The Mac menu-bar bundle (item 12a). Every line here is load-bearing;
+      # see the target below and docs/menu-bar-poc-plan.md §2.
+      #
+      # - platformFilter: macOS -> `platformFilter = maccatalyst` on both the
+      #   dependency and the embed build file, so an iOS build (simulator,
+      #   device, and the Release archive scripts/ship.sh makes) skips the
+      #   bundle entirely. The .ipa is structurally identical to one built
+      #   without any of this: no PlugIns entry, no macOS binary, nothing.
+      # - embed: true is REQUIRED — `copy:` is ignored without it.
+      # - link: false — this is dlopen-ed at runtime, never linked. Linking a
+      #   macOS binary into a Catalyst app would fail outright.
+      # - copy.destination: plugins -> Contents/PlugIns, which is the one
+      #   place `Bundle.main.builtInPlugInsURL` looks. With no `copy:` the
+      #   bundle silently lands in Contents/Resources and is never found.
+      #   No `subpath`: PLUGINS_FOLDER_PATH already ends in Contents/PlugIns.
+      - target: TimeConverterMenuBar
+        platformFilter: macOS
+        embed: true
+        link: false
+        codeSign: true
+        copy:
+          destination: plugins
     info:
       path: TimeConverter/Info.plist
       properties:
@@ -165,6 +190,73 @@ targets:
         # `ControlWidget` is the entry point.
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+  # The Mac menu-bar presence (backlog item 12a) — a loadable *macOS-SDK*
+  # bundle, not an app extension. It exists because neither AppKit's
+  # NSStatusItem nor Carbon's RegisterEventHotKey is reachable from Mac
+  # Catalyst: Carbon.framework is absent from the SDK's iOSSupport tree and
+  # importing it under -target …-macabi fails at compile time. A macOS-platform
+  # binary loaded into the Catalyst process is what makes those calls legal.
+  #
+  # Local-only by design. Apple DTS has twice called this architecture
+  # unsupported for distribution, and there is no Mac delivery lane yet
+  # (backlog item 12b), so nothing here is expected to reach a user. It is also
+  # unreachable from iOS by construction — see the dependency comment above.
+  TimeConverterMenuBar:
+    type: bundle
+    platform: macOS
+    sources:
+      - path: TimeConverterMenuBar
+        excludes:
+          - "**/readme.md"
+      # Shared with the app, deliberately, exactly as the Controls extension
+      # shares the intent: both sides need the same @objc protocol, and the
+      # runtime cast across the bundle boundary is what connects them.
+      - TimeConverter/MenuBar/MenuBarHosting.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.thisolivier.timeconverter.menubar
+        PRODUCT_NAME: "TimeConverterMenuBar"
+        SWIFT_VERSION: "6.0"
+        # `.bundle`, not `.framework` or `.appex`: a traditional loadable
+        # plug-in, found by name under Contents/PlugIns.
+        WRAPPER_EXTENSION: bundle
+        # Never installed on its own; it ships (if ever) inside its host.
+        SKIP_INSTALL: "YES"
+        # Matches the app and the extension: ad-hoc, no team, so Debug builds,
+        # scripts/test.sh and scripts/run-mac.sh stay headless.
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_IDENTITY: "-"
+      configs:
+        # Release exists only so a hypothetical Catalyst archive (item 12b)
+        # would sign rather than fail. It cannot affect scripts/ship.sh: that
+        # lane is an iOS archive, and platformFilter keeps this target out of
+        # it, so these settings are never even evaluated there.
+        #
+        # Deliberately NO provisioning profile and NO entitlements: per TN3125
+        # a traditional plug-in needs neither, and an embedded profile on a
+        # secondary bundle is what trips ITMS-90283. Signing with the team's
+        # own identity satisfies library validation, so
+        # com.apple.security.cs.disable-library-validation is not needed.
+        Release:
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: "Apple Distribution"
+          PROVISIONING_PROFILE_SPECIFIER: ""
+          DEVELOPMENT_TEAM: CNHB9B5GX6
+    info:
+      # Generated from here, like the app's — do not edit the plist directly.
+      path: TimeConverterMenuBar/Info.plist
+      properties:
+        CFBundleDisplayName: "TimeConverter Menu Bar"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        # BNDL + NSPrincipalClass is the whole loading contract: the app asks
+        # the bundle for its principal class and casts it to MenuBarHosting.
+        # The name must match the @objc(MenuBarController) runtime name, not
+        # the Swift-mangled one.
+        CFBundlePackageType: BNDL
+        NSPrincipalClass: MenuBarController
 
   TimeConverterTests:
     type: bundle.unit-test

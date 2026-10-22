@@ -21,6 +21,7 @@ scripts/test.sh                 # unit tests, iOS simulator
 scripts/test.sh --platform all  # unit tests, iOS simulator + Mac Catalyst
 scripts/run-ios.sh              # build, install and launch on a simulator
 scripts/run-mac.sh              # build and launch the Mac Catalyst app
+scripts/qa-menubar.sh           # Mac-only: QA the menu bar and ⌃⌥T (Debug)
 ```
 
 Run `--platform all` before shipping anything that touches startup wiring or
@@ -70,8 +71,11 @@ signing is **manual**, against named provisioning profiles — the app's is
   headless parser and conversion engine (see
   `TimeConverter/Parsing/readme.md`); `Launchers/` is the App Shortcut, the
   intent and the URL route (see `TimeConverter/Launchers/readme.md`)
-- `TimeConverterControls/` — the Control Center widget extension, the project's
-  only second target (see `TimeConverterControls/readme.md`)
+- `TimeConverterControls/` — the Control Center widget extension (see
+  `TimeConverterControls/readme.md`)
+- `TimeConverterMenuBar/` — the Mac-only menu-bar bundle, a macOS-SDK target
+  excluded from iOS builds entirely (see `TimeConverterMenuBar/readme.md` and
+  `TimeConverter/MenuBar/readme.md`)
 - `TimeConverterTests/` — test suite (Swift Testing)
 - `docs/` — backlog (`docs/backlog.md`) and specs
 - `scripts/` — build/run/test helpers
@@ -202,3 +206,67 @@ Four inputs that between them exercise the whole output area:
 | `12pm ET in Lodnon` | P5 did-you-mean chips |
 | `12pm ET in London` | The expanded abbreviation echo |
 | `9am Russia to London` | Ten chips, i.e. the wrapping layout |
+
+## Getting into the app on the Mac (menu bar + ⌃⌥T)
+
+The Catalyst app puts a small clock glyph in the menu bar and registers **⌃⌥T**
+as a global hotkey. Both do the same thing: bring TimeConverter forward with the
+field focused and **whatever was typed still in it**. That is the one place the
+Mac deliberately disagrees with the iOS launchers — on the Mac the app sits
+behind other windows all day and ⌃⌥T is pressed to get *back* to a sentence
+mid-edit, so clearing it would be destroying work. (Internally that is
+`LaunchRequest.summonWithoutReset` rather than `.startFreshConversion`.)
+
+It is **⌃⌥T, not ⌃⌥Space**: Space already carries six system registrations
+including ⌃⌥Space (input-source switching), while keycode 17 (T) carries none.
+
+**This is a local-only feature, by design.** It lives in
+`TimeConverterMenuBar/`, a macOS-SDK bundle loaded out of `Contents/PlugIns` at
+launch — the only way to reach `NSStatusItem` and Carbon's
+`RegisterEventHotKey` from Catalyst at all. `platformFilter: macOS` keeps it out
+of iOS builds entirely, so the shipped `.ipa` has no trace of it and
+`scripts/ship.sh` is unaffected. Loading is optional at every step: if the
+bundle is missing or refuses to load, the app logs one line and runs normally.
+Apple DTS has twice called this architecture unsupported for distribution and
+there is no Mac delivery lane yet (backlog item 12b), so nothing here is
+expected to reach a user. See `TimeConverter/MenuBar/readme.md`,
+`TimeConverterMenuBar/readme.md` and `docs/menu-bar-poc-plan.md`.
+
+### QA: the menu bar headlessly
+
+```bash
+scripts/qa-menubar.sh
+```
+
+Twelve steps, all headless bar the last: hotkey-collision snapshot via
+`CopySymbolicHotKeys()`, bundle placement and `platform MACOS`/`MACCATALYST`
+checks, the load and registration log line, single-instance plus RSS, a second
+instance via `open -n` being harmless, re-registration after both a quit and a
+`kill -9`, and the app still running with the bundle moved out of `PlugIns`. It
+leaves nothing running.
+
+### QA: the 10-second manual check (the one thing a script cannot do)
+
+`RegisterEventHotKey` returning `noErr` is **not** proof that a press fires —
+it returns `noErr` for combos the system already owns too — and synthetic
+keystroke injection is TCC-blocked, so a literal keypress has to be a human.
+On an unlocked screen:
+
+```bash
+scripts/run-mac.sh
+```
+
+Then: **click another app, and press ⌃⌥T.**
+
+Expect, in order:
+
+1. TimeConverter comes forward with the input field focused.
+2. Type half a sentence, click another app, press ⌃⌥T again — the half-typed
+   text is **still there** (the Control Center control, by contrast, clears it).
+3. Clicking the clock glyph in the menu bar does exactly the same as the
+   keypress.
+4. ⌘Q — the glyph disappears from the menu bar.
+
+If step 1 fails while `scripts/qa-menubar.sh` passes, the registration is being
+shared or shadowed by another process rather than broken: quit anything that
+grabs global hotkeys and retry.

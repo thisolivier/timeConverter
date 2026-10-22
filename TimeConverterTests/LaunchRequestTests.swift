@@ -20,10 +20,32 @@ struct LaunchRequestTests {
     @Test func aLauncherDiscardsAHalfTypedSentence() {
         let halfTyped = "9am CST to "
         #expect(LaunchRequest.startFreshConversion.inputToStartFrom != halfTyped)
-        #expect(LaunchRequest.startFreshConversion.inputToStartFrom.isEmpty)
+        #expect(LaunchRequest.startFreshConversion.inputToStartFrom == "")
     }
 
     @Test func launchersFocusTheFieldEvenMidSession() {
+        #expect(InputFocusPolicy.shouldFocusOnLaunchRequest)
+    }
+
+    /// Item 12a. The Mac menu bar and ⌃⌥T are the one route that must *not*
+    /// clear the field: on the Mac the app sits behind other windows all day
+    /// and is summoned back to a sentence mid-edit. `nil` is what tells
+    /// `ContentView` to leave the typed text alone.
+    @Test func summoningTheWindowKeepsWhatWasTyped() {
+        #expect(LaunchRequest.summonWithoutReset.inputToStartFrom == nil)
+    }
+
+    /// The two cases have to disagree about exactly this one thing, or the menu
+    /// bar is just a slower Control Center button that eats your sentence.
+    @Test func theTwoRequestsDisagreeAboutClearingTheField() {
+        #expect(LaunchRequest.startFreshConversion.inputToStartFrom != nil)
+        #expect(LaunchRequest.summonWithoutReset.inputToStartFrom == nil)
+        #expect(LaunchRequest.startFreshConversion != .summonWithoutReset)
+    }
+
+    /// A summon still focuses the field — it is an explicit press of a key
+    /// whose whole meaning is "let me type a time".
+    @Test func summoningFocusesTheFieldToo() {
         #expect(InputFocusPolicy.shouldFocusOnLaunchRequest)
     }
 }
@@ -93,6 +115,18 @@ struct LaunchRequestInboxTests {
         inbox.post(.startFreshConversion)
 
         #expect(inbox.takePendingRequest() == .startFreshConversion)
+        #expect(inbox.takePendingRequest() == nil)
+    }
+
+    /// The mailbox is shared with the Mac menu bar (item 12a), and the two
+    /// requests must not be confusable: a later press wins outright rather than
+    /// merging into whatever was already pending.
+    @Test func aSummonAndALaunchStayDistinctInTheMailbox() {
+        let inbox = LaunchRequestInbox()
+        inbox.post(.startFreshConversion)
+        inbox.post(.summonWithoutReset)
+
+        #expect(inbox.takePendingRequest() == .summonWithoutReset)
         #expect(inbox.takePendingRequest() == nil)
     }
 }
