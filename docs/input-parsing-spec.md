@@ -14,9 +14,18 @@ Implementation is item 3; UI wiring is item 4.
 <zone>        := abbreviation | city | country   (one or more words)
 ```
 
-- All four parts are **required**. A lone zone ("3pm in Tokyo", "06:34 Portugal")
-  is rejected with a prompt for the missing side — we never silently assume the
-  device's local zone.
+- ~~All four parts are required~~ **Amended 2026-10-22 (reverses the original
+  reject-on-one-zone decision): a missing side defaults to the device's local
+  zone, and the conjunction decides which side the named zone is.**
+  - `7pm in London` (conjunction present) → London is the **target**; source
+    defaults to local. `7pm East Coast` (no conjunction) → East Coast is the
+    **source**; target defaults to local.
+  - The default is made explicit in the echo: the defaulted side renders the
+    resolved local zone with a `(local)` marker, e.g.
+    `7:00 pm Los Angeles (local, UTC-7) → 3:00 am London (UTC+0) +1d` — the
+    restated input/output is what makes the assumption visible.
+  - A time with **no** zone at all ("7pm") still prompts — there is nothing to
+    convert between.
 - Matching is case-insensitive throughout; whitespace is collapsed before parsing.
 - Examples that must parse: `12pm ET in London`, `12 pm ET in London`,
   `06:34 Portugal in PST`, `23:15 UK to Porto`, `9:30 am New York to Lisbon`.
@@ -97,8 +106,8 @@ Outcomes per token:
 | ID | Trigger | Prompt behavior |
 |---|---|---|
 | P1 | No parseable time at start of input | "Couldn't find a time — start with e.g. 14:30 or 2:30 pm" |
-| P2 | Missing source zone | "Where is {time}? Add a zone before '{conjunction}'" |
-| P3 | Missing target zone / no conjunction found | "Convert {time} {source} to where? Add 'in' or 'to' + a place" |
+| P2 | No zone anywhere in the input (amended 2026-10-22: single missing sides no longer prompt — they default to local) | "Convert {time} where? Add a timezone, city, or country" |
+| P3 | *(retired 2026-10-22 — absorbed by the local-default rule; a conjunction with nothing after it still renders P2)* | |
 | P4 | Ambiguous zone token | Picker listing every candidate with its current UTC offset and a representative city; selection completes the conversion |
 | P5 | Unknown zone token | "Don't recognize '{token}'" + hint that timezones, major cities, and countries work |
 
