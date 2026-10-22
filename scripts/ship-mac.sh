@@ -216,7 +216,9 @@ PREFLIGHT_PROBLEMS=()
 if found="$(find_profile_by_name "$APP_PROFILE_NAME")"; then
   profile_path="${found%%$'\t'*}"
   profile_platforms="${found##*$'\t'}"
-  if [[ "$profile_platforms" != *macOS* && "$profile_platforms" != *macosx* ]]; then
+  # Apple stamps Mac profiles with the legacy platform string "OSX" (observed
+  # on the real TimeConverter Mac App Store profile, 2026-10-22).
+  if [[ "$profile_platforms" != *macOS* && "$profile_platforms" != *macosx* && "$profile_platforms" != *OSX* ]]; then
     PREFLIGHT_PROBLEMS+=("profile '$APP_PROFILE_NAME' is installed but its platforms are $profile_platforms — no macOS. It is the iOS profile; a macOS one is a separate artifact.")
   else
     echo "OK   profile '$APP_PROFILE_NAME' -> $(basename "$profile_path") $profile_platforms"
