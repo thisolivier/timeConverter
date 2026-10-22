@@ -266,6 +266,8 @@ targets:
         # bar, no window on launch. `TimeConverterMacDelegate` also sets
         # `.accessory` at runtime, belt and braces.
         LSUIElement: true
+        # Mandatory for Mac App Store submission (ITMS-90242).
+        LSApplicationCategoryType: public.app-category.utilities
         ITSAppUsesNonExemptEncryption: false
 
   # The Mac shell's own unit tests — successor to MenuBarPlugInTests, which
