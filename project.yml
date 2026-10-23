@@ -58,6 +58,13 @@ targets:
       # ContentView, PromptChipRow and ConvertATimeIntent.
       - package: TimeConverterCore
         product: TimeConverterCore
+      # The shared design layer (backlog item 20, phase A): the poster and
+      # glass colour tokens, the typography helpers, the arrow shapes and
+      # `ConversionPairView`. Same package, second product — the iPhone links
+      # it for the tokens it already used before they moved out of
+      # TimeConverter/Poster, the iPad will link it for the pair view.
+      - package: TimeConverterCore
+        product: TimeConverterUI
       # Embeds the Control Center extension into the app bundle
       # (TimeConverter.app/PlugIns). An extension is only ever installed as part
       # of its host app, so this line is what puts the control on the device.
@@ -225,6 +232,13 @@ targets:
     dependencies:
       - package: TimeConverterCore
         product: TimeConverterCore
+      # Linked from phase A onwards even though the Mac UI is untouched this
+      # phase: the glass panel of phase B is built entirely out of this
+      # product, and having the link in place now means the Mac lane compiles
+      # the shared views on every test run rather than discovering them broken
+      # at the start of B.
+      - package: TimeConverterCore
+        product: TimeConverterUI
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.thisolivier.timeconverter
@@ -309,8 +323,8 @@ targets:
 schemes:
   # The iOS lane. `scripts/test.sh --platform ios` runs this, and it is
   # unchanged in spirit: one `xcodebuild test`, every test in the repo that is
-  # relevant to iOS. The package's test target is listed explicitly because a
-  # local SPM package's tests are not implied by depending on its library.
+  # relevant to iOS. The package's test targets are listed explicitly because a
+  # local SPM package's tests are not implied by depending on its libraries.
   TimeConverter:
     build:
       targets:
@@ -320,6 +334,7 @@ schemes:
       targets:
         - TimeConverterTests
         - package: TimeConverterCore/TimeConverterCoreTests
+        - package: TimeConverterCore/TimeConverterUITests
   # The Mac lane. `scripts/test.sh --platform mac` runs this: the same core
   # tests natively on macOS, plus the Mac shell's own, plus — because testing
   # builds the scheme — proof that TimeConverterMac still compiles.
@@ -332,3 +347,4 @@ schemes:
       targets:
         - TimeConverterMacTests
         - package: TimeConverterCore/TimeConverterCoreTests
+        - package: TimeConverterCore/TimeConverterUITests

@@ -18,13 +18,23 @@ let package = Package(
         .macOS(.v26)
     ],
     products: [
-        // One product, one target. The split inside `Sources/` (Parsing,
-        // Presentation, Launch) is organisational: making them separate SPM
-        // targets would force the parsing internals public to the presenter,
-        // which is the opposite of the goal.
+        // The split inside `Sources/TimeConverterCore` (Parsing, Presentation,
+        // Launch) is organisational: making *those* separate SPM targets would
+        // force the parsing internals public to the presenter, which is the
+        // opposite of the goal.
         .library(
             name: "TimeConverterCore",
             targets: ["TimeConverterCore"]
+        ),
+        // The second product (item 20, phase A). A real target boundary rather
+        // than another folder, because this one is load-bearing: it is what
+        // stops the shared design layer from reaching into the parser, and it
+        // is the only way two app targets on two platforms can link the same
+        // SwiftUI views. Core stays UI-free — the dependency points one way,
+        // and `TimeConverterCore` does not import SwiftUI anywhere.
+        .library(
+            name: "TimeConverterUI",
+            targets: ["TimeConverterUI"]
         )
     ],
     targets: [
@@ -39,9 +49,18 @@ let package = Package(
             // is what `Bundle.module.url(forResource:withExtension:)` expects.
             resources: [.process("Resources/fallback-cities.json")]
         ),
+        .target(
+            name: "TimeConverterUI",
+            dependencies: ["TimeConverterCore"],
+            exclude: ["readme.md"]
+        ),
         .testTarget(
             name: "TimeConverterCoreTests",
             dependencies: ["TimeConverterCore"]
+        ),
+        .testTarget(
+            name: "TimeConverterUITests",
+            dependencies: ["TimeConverterUI"]
         )
     ]
 )

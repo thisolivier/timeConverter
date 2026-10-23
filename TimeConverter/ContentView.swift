@@ -1,5 +1,6 @@
 import SwiftUI
 import TimeConverterCore
+import TimeConverterUI
 
 /// The whole iOS app, laid out as the poster in `docs/design/Time
 /// Converter.pdf`: title, rule, labelled input box with the parsed source

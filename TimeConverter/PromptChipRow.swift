@@ -1,5 +1,6 @@
 import SwiftUI
 import TimeConverterCore
+import TimeConverterUI
 
 /// The tap-to-replace chips under a prompt (backlog items 7 and 9).
 ///

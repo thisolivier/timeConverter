@@ -103,9 +103,24 @@ enum UTCOffsetFormatting {
     }
 }
 
-/// The footer sentence (spec amendment 2026-10-23, from the iOS design):
-/// `4 hours behind Lisbon.` / `3 hours ahead of New York.` /
-/// `Same time as London.`
+/// The footer sentence (spec amendment 2026-10-23, from the iOS design;
+/// **re-worded 2026-10-23** by the iPad/Mac designs):
+/// `São Paulo is 4 hours behind Lisbon.` /
+/// `London is 3 hours ahead of New York.` /
+/// `Madrid is the same time as Paris.`
+///
+/// ## Why the target is now named
+///
+/// The iPhone design wrote this as a bare predicate — `4 hours behind Lisbon.`
+/// — because on that screen it sits directly under one huge time, and the
+/// subject is unmistakable. Pages 2–4 of `Time Converter-selection.pdf` put
+/// **two** times side by side, and under two times "4 hours behind Lisbon"
+/// stops being a sentence about the result and becomes a riddle about which
+/// column it belongs to. The designs answer it by naming the subject.
+///
+/// Adopted everywhere rather than per platform (working assumption 2 of
+/// `docs/sprint-plan-ipad-mac.md`): one sentence, one implementation, and the
+/// iPhone reads no worse for having a subject.
 ///
 /// Hand-rolled for the same reason as everything else in this file: the shape
 /// is pinned by the spec, and a `NumberFormatter` would render `4.5` as `4,5`
@@ -113,13 +128,45 @@ enum UTCOffsetFormatting {
 enum RelativeOffsetFormatting {
     /// `differenceInSeconds` is the **target** offset minus the **source**
     /// offset at the resolved instant, so a positive number means the target is
-    /// ahead. `sourcePlaceName` is the source's display name, which is what the
-    /// sentence names.
-    static func sentence(differenceInSeconds: Int, sourcePlaceName: String) -> String {
-        guard differenceInSeconds != 0 else { return "Same time as \(sourcePlaceName)." }
+    /// ahead. Both names are the sides' display names, which is what keeps the
+    /// sentence agreeing with the two column headers above it.
+    static func sentence(
+        differenceInSeconds: Int,
+        targetPlaceName: String,
+        sourcePlaceName: String
+    ) -> String {
+        guard differenceInSeconds != 0 else {
+            // `London is the same time as London.` is what naming the subject
+            // does to a conversion from a zone to itself, and it reads as a
+            // bug rather than as an answer. The bare predicate the iPhone used
+            // to print is kept for exactly this case — there is no ambiguity
+            // about which column it describes when both columns say the same
+            // word.
+            guard targetPlaceName != sourcePlaceName else {
+                return "Same time as \(sourcePlaceName)."
+            }
+            return "\(targetPlaceName) is the same time as \(sourcePlaceName)."
+        }
         let direction = differenceInSeconds > 0 ? "ahead of" : "behind"
         let magnitude = hourCountDescription(seconds: abs(differenceInSeconds))
-        return "\(magnitude) \(direction) \(sourcePlaceName)."
+        return "\(targetPlaceName) is \(magnitude) \(direction) \(sourcePlaceName)."
+    }
+
+    /// The same relationship with both names stripped out: `4 hours behind`,
+    /// `3 hours ahead`, `Same time`.
+    ///
+    /// Page 4's labeled arrow (`docs/design/Time Converter-selection.pdf`) sets
+    /// this under the arrow between the two columns, where the keyboard has
+    /// taken the room the full sentence needs. It works there precisely because
+    /// the arrow is already pointing from the source to the target, so the
+    /// phrase needs no subject and no object.
+    ///
+    /// Note `ahead` rather than the sentence's `ahead of`: with nothing
+    /// following it, the preposition would be left dangling.
+    static func phrase(differenceInSeconds: Int) -> String {
+        guard differenceInSeconds != 0 else { return "Same time" }
+        let direction = differenceInSeconds > 0 ? "ahead" : "behind"
+        return "\(hourCountDescription(seconds: abs(differenceInSeconds))) \(direction)"
     }
 
     /// `1 hour`, `4 hours`, `4.5 hours`, `5.75 hours`.

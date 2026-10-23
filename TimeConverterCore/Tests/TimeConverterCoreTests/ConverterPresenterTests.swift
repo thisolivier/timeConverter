@@ -24,11 +24,17 @@ struct ConverterPresenterTests {
                 + "→ 5:00 pm London (UTC+0)",
             detailLine: "America/New_York → Europe/London",
             sourceEchoLine: "Eastern Time (New York, Toronto) · 12:00 PM",
+            sourcePlaceName: "ET (Eastern Time)",
+            sourceClockDigits: "12:00",
+            sourceMeridiem: "PM",
+            sourceZoneLine: "New York, Toronto",
             targetPlaceLabel: "In London",
+            targetPlaceName: "London",
             targetClockDigits: "5:00",
             targetMeridiem: "PM",
             targetZoneLine: "United Kingdom Time (London)",
-            footerSentence: "5 hours ahead of Eastern Time.",
+            footerSentence: "London is 5 hours ahead of Eastern Time.",
+            offsetPhrase: "5 hours ahead",
             daylightSavingNote: nil
         )))
     }
@@ -198,11 +204,17 @@ struct ConverterPresenterTests {
             echoLine: "9:30 am New York (UTC-5) → 2:30 pm Lisbon (UTC+0)",
             detailLine: "America/New_York → Europe/Lisbon",
             sourceEchoLine: "New York · 9:30 AM",
+            sourcePlaceName: "New York",
+            sourceClockDigits: "9:30",
+            sourceMeridiem: "AM",
+            sourceZoneLine: "Eastern Time (New York, Toronto)",
             targetPlaceLabel: "In Lisbon",
+            targetPlaceName: "Lisbon",
             targetClockDigits: "2:30",
             targetMeridiem: "PM",
             targetZoneLine: "Western European Time (Lisbon)",
-            footerSentence: "5 hours ahead of New York.",
+            footerSentence: "Lisbon is 5 hours ahead of New York.",
+            offsetPhrase: "5 hours ahead",
             daylightSavingNote: nil
         )))
     }
@@ -230,7 +242,7 @@ struct ConverterPresenterTests {
         #expect(display.targetClockDigits == "4:00")
         #expect(display.targetMeridiem == "PM")
         #expect(display.targetZoneLine == "Brasilia Standard Time (São Paulo)")
-        #expect(display.footerSentence == "4 hours behind Lisbon.")
+        #expect(display.footerSentence == "Sao Paulo is 4 hours behind Lisbon.")
     }
 
     /// A defaulted side stays visible in the redesign: the `(local)` marker
@@ -245,7 +257,7 @@ struct ConverterPresenterTests {
         let display = try #require(state.convertedDisplay)
         #expect(display.sourceEchoLine == "Los Angeles (local) · 7:00 PM")
         #expect(display.targetPlaceLabel == "In London")
-        #expect(display.footerSentence == "8 hours ahead of Los Angeles.")
+        #expect(display.footerSentence == "London is 8 hours ahead of Los Angeles.")
     }
 
     @Test func aDefaultedTargetKeepsItsLocalMarkerInTheResultLabel() throws {

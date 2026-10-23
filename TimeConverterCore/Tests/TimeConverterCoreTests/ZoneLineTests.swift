@@ -311,11 +311,13 @@ struct ZoneLineTests {
             == "8:00 pm Lisbon (UTC+1) → 4:00 pm Sao Paulo (UTC-3)")
     }
 
-    /// And the footer sentence is untouched: it was never about offsets, only
-    /// about the difference between two of them.
-    @Test func theFooterSentenceIsUnchanged() throws {
+    /// And the footer sentence still carries no offsets: it was never about
+    /// offsets, only about the difference between two of them. It gained a
+    /// subject in item 20, which is a wording change and not an offset one.
+    @Test func theFooterSentenceStillCarriesNoOffsets() throws {
         let display = try display(for: "8pm Lisbon in Sao Paulo", now: FixedDates.summerMidday)
-        #expect(display.footerSentence == "4 hours behind Lisbon.")
+        #expect(display.footerSentence == "Sao Paulo is 4 hours behind Lisbon.")
+        #expect(!display.footerSentence.contains("UTC"))
     }
 
     // MARK: - Re-casing the typed code

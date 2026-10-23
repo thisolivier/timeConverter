@@ -5,9 +5,10 @@ something like `12pm ET in London` or `06:34 Portugal in PST` and see the
 converted time.
 
 **Two native shells over one shared core** (backlog item 16). `TimeConverterCore`
-is a local Swift package holding the parser, the presenter and every rule; the
-iOS app is a window, and the Mac app is a menu-bar utility with a ⌃⌥T global
-hotkey and no persistent window. Mac Catalyst is retired — the platforms want
+is a local Swift package holding the parser, the presenter and every rule —
+plus, since item 20, a second product `TimeConverterUI` holding the SwiftUI
+design layer the two platforms share. The iOS app is a window, and the Mac app
+is a menu-bar utility with a ⌃⌥T global hotkey and no persistent window. Mac Catalyst is retired — the platforms want
 genuinely different access, and Catalyst could deliver neither `MenuBarExtra`
 nor `NSStatusItem` nor Carbon. Behaviour never differs; only access does.
 
@@ -25,12 +26,12 @@ keychain access.
 
 | scheme | platform | what it builds and tests |
 |---|---|---|
-| `TimeConverter` | iOS | the iOS app + the Controls extension; `TimeConverterTests` + the whole `TimeConverterCore` test target, on the simulator |
-| `TimeConverterMac` | macOS | the native menu-bar app; `TimeConverterMacTests` + the same `TimeConverterCore` test target, natively |
+| `TimeConverter` | iOS | the iOS app + the Controls extension; `TimeConverterTests` + both of the package's test targets, on the simulator |
+| `TimeConverterMac` | macOS | the native menu-bar app; `TimeConverterMacTests` + the same two package test targets, natively |
 
 ```bash
-scripts/test.sh                 # unit tests, iOS simulator (202 tests)
-scripts/test.sh --platform mac  # unit tests, native macOS (203 tests)
+scripts/test.sh                 # unit tests, iOS simulator (290 tests)
+scripts/test.sh --platform mac  # unit tests, native macOS (297 tests)
 scripts/test.sh --platform all  # both lanes
 scripts/test.sh PromptTests     # one core suite (bare names mean the core)
 scripts/run-ios.sh              # build, install and launch on a simulator
@@ -40,7 +41,7 @@ cd TimeConverterCore && swift test   # the core alone, fastest loop
 ```
 
 The shared core is deliberately tested **twice**, once per platform, which is
-why the two lanes overlap by 195 tests. Run `--platform all` before shipping
+why the two lanes overlap by 283 tests. Run `--platform all` before shipping
 anything that touches parsing, the presenter or startup wiring — in the sibling
 music projects the Mac build broke twice while the iOS lane stayed green.
 
@@ -97,12 +98,18 @@ Mac experience, which is why `ship-mac.sh` archives `TimeConverterMac`.
 
 ## Layout
 
-- `TimeConverterCore/` — **the local SPM package: everything that is not a
-  view.** `Parsing/` is the headless parser and conversion engine,
-  `Presentation/` is the presenter plus the display driver that owns *when* the
-  output changes, `Launch/` is the launch-request logic and the DEBUG prefill,
-  `Resources/fallback-cities.json` is reached through `Bundle.module`, and
-  `Tests/` holds 217 of the repo's tests. See `TimeConverterCore/readme.md` and
+- `TimeConverterCore/` — **the local SPM package, now two products.**
+  `TimeConverterCore` is everything that is not a view: `Parsing/` is the
+  headless parser and conversion engine, `Presentation/` is the presenter plus
+  the display driver that owns *when* the output changes, `Launch/` is the
+  launch-request logic and the DEBUG prefill, and
+  `Resources/fallback-cities.json` is reached through `Bundle.module`.
+  `Sources/TimeConverterUI/` is the shared SwiftUI design layer (item 20): the
+  poster and glass colour tokens, the typography helpers, the arrow shapes and
+  `ConversionPairView`, the side-by-side FROM/TO pair the iPad and Mac designs
+  both draw. Between them `Tests/` holds 283 of the repo's tests. See
+  `TimeConverterCore/readme.md`,
+  `TimeConverterCore/Sources/TimeConverterUI/readme.md` and
   `TimeConverterCore/Sources/TimeConverterCore/Parsing/readme.md`
 - `TimeConverter/` — the **iOS** shell. `ContentView.swift` lays out the poster
   and owns the behaviour; `Poster/` is the design's visual language (see
@@ -206,12 +213,18 @@ selection somewhere.
   case that matters in iPad multitasking. A launcher
   (below) is the one thing that may take focus mid-session — it is a button
   whose entire meaning is "let me type a time".
-- **Every conversion carries a footer sentence** (spec amendment 2026-10-23):
-  `4 hours behind Lisbon.` / `3 hours ahead of New York.` /
-  `Same time as London.` It is computed in the core's `ConversionEngine` from
-  the two offsets **at the resolved instant**, so it follows daylight saving on
-  the day asked about; half- and quarter-hour zones read decimally
-  (`5.5 hours ahead of London.`).
+- **Every conversion carries a footer sentence** (spec amendment 2026-10-23,
+  re-worded by the iPad/Mac designs in item 20):
+  `São Paulo is 4 hours behind Lisbon.` /
+  `London is 3 hours ahead of New York.` /
+  `Madrid is the same time as Paris.` It is computed in the core's
+  `ConversionEngine` from the two offsets **at the resolved instant**, so it
+  follows daylight saving on the day asked about; half- and quarter-hour zones
+  read decimally (`Kolkata is 5.5 hours ahead of London.`). The sentence names
+  its **target** because the iPad and Mac draw two times side by side, where a
+  bare `4 hours behind Lisbon.` is a riddle about which column it describes;
+  the iPhone adopted the same wording so there is one sentence and one
+  implementation.
 - **Where the design and a feature disagreed, the feature won and got
   restyled.** The mockup draws only the happy path and has no chips in it, so
   the prompts and their tap-to-replace chips are set in the design's own
@@ -292,7 +305,7 @@ Inputs that between them exercise the whole output area:
 |---|---|
 | `8pm Lisbon in Sao Paulo` | The design's own example, footer and all |
 | `9:30 am New York to Lisbon` | A plain conversion, no chips |
-| `9:30am London in India` | A half-hour zone: `4.5 hours ahead of London.` (the offset still shows in the Mac echo) |
+| `9:30am London in India` | A half-hour zone: `Kolkata is 4.5 hours ahead of London.` (the offset still shows in the Mac echo) |
 | `11pm New York to Tokyo` | The day rollover, which rides the zone line |
 | `9am CST to IST` | P4 chips; tapping twice converts |
 | `12pm ET in Lodnon` | P5 did-you-mean chips |

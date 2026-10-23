@@ -1,13 +1,21 @@
 # Poster
 
-The iOS app's visual language, from `docs/design/Time Converter.{pdf,html}`
-(backlog item 18). A retro print poster: cream paper, black condensed display
-type, one rust accent, letterspaced uppercase labels, hard rules.
+The iPhone's half of the poster design, from
+`docs/design/Time Converter.{pdf,html}` (backlog item 18). A retro print
+poster: cream paper, black condensed display type, one rust accent,
+letterspaced uppercase labels, hard rules.
 
-Nothing here knows what a timezone is. These are colours, fonts and shapes,
-plus one view (`PosterResultSection`) that switches over a
-`ConverterDisplayState` whose strings all arrive pre-rendered from
-`TimeConverterCore`.
+**The tokens themselves now live elsewhere.** Item 20 moved `PosterPalette`,
+`PosterTypography` / `.posterLabel()` and the `PosterArrow` shape into the
+`TimeConverterUI` product inside the `TimeConverterCore` package, so the iPad
+layouts and the Mac glass panel draw from the same ones. They moved unchanged
+— this screen renders byte-identically to what it shipped — and the reasoning
+that used to be documented here travelled with them. What stayed in this
+directory is the furniture only the iPhone's vertical poster uses.
+
+Nothing here knows what a timezone is. These are shapes and layout, plus one
+view (`PosterResultSection`) that switches over a `ConverterDisplayState`
+whose strings all arrive pre-rendered from `TimeConverterCore`.
 
 ## Working patterns
 
@@ -20,7 +28,13 @@ plus one view (`PosterResultSection`) that switches over a
 - **Three colour tokens and nothing else.** `paper`, `ink`, `accent`, taken
   verbatim from the design's inline styles. A fourth value, `accentText`,
   exists only because rust-on-cream at body size is 4.04:1 and needed
-  deepening to clear AA; it is the same hue.
+  deepening to clear AA; it is the same hue. All four now come from
+  `TimeConverterUI`.
+- **The footer names its subject** (item 20). `São Paulo is 4 hours behind
+  Lisbon.` rather than the bare `4 hours behind Lisbon.` the iPhone shipped
+  with. The sentence is built in the core and is the same on every platform;
+  nothing in this directory changed to adopt it. It is the one intended
+  difference between this screen today and its last screenshot.
 - **Dark mode is a straight inversion**, not a second palette: ink becomes the
   paper, cream becomes the ink. The accent is lifted (`#E0633F`) because
   `#B5391F` on near-black is 2.4:1 and vanishes. Both modes have a `#Preview`
@@ -58,10 +72,16 @@ plus one view (`PosterResultSection`) that switches over a
 
 | File | Purpose |
 |---|---|
-| `PosterPalette.swift` | The colour tokens, as dynamic colours so both appearances resolve with no view state. Carries the contrast reasoning. |
-| `PosterTypography.swift` | Anton → SF Compressed Black, JetBrains Mono → SF Mono, and the `.posterLabel()` modifier for the 0.16em uppercase labels. |
-| `PosterComponents.swift` | `PosterRule`, `PosterArrowSeparator`, `PosterArrow` (transcribed from the design's own SVG rather than approximated with `arrow.down`), `PosterBox`. |
+| `PosterComponents.swift` | `PosterRule`, `PosterArrowSeparator` and `PosterBox` — this screen's own furniture. The arrow *shape* it strokes comes from `TimeConverterUI`. |
 | `PosterResultSection.swift` | Everything below the arrow: the result band, the hint, or a prompt plus chips. Logic-free. Takes a `PosterLayoutMode` and owns the two display-type sizes that go with it. |
+
+Imported from `TimeConverterUI` rather than defined here: `PosterPalette` (the
+colour tokens, as appearance-reactive colours, carrying the contrast
+reasoning), `PosterTypography` plus the `.posterLabel()` modifier, and
+`PosterArrow` (transcribed from the design's own SVG rather than approximated
+with `arrow.down`). That module also holds the pieces this screen does *not*
+use — the glass palette, the right-pointing arrow and `ConversionPairView` —
+which are for the Mac and iPad layouts in phases B and C.
 
 The layout that assembles these — title, rule, labelled input box with the
 source echo inside it, arrow band, result — is `ContentView.swift`, one level

@@ -3,7 +3,8 @@ import Foundation
 @testable import TimeConverterCore
 
 /// The footer sentence — spec amendment 2026-10-23, the one functional
-/// addition of the design sprint (backlog item 18).
+/// addition of the design sprint (backlog item 18), **re-worded the same day**
+/// by the iPad/Mac designs to name its subject (item 20, phase A).
 ///
 /// Two layers, deliberately: the arithmetic-free string formatting is tested
 /// against raw second counts, so the grammar cases (singular, decimals,
@@ -12,30 +13,71 @@ import Foundation
 /// zones, which is what proves the difference is taken **at the resolved
 /// instant** rather than from a standard offset.
 struct RelativeOffsetSentenceFormattingTests {
+    /// The design's own wording, both ways round: the **target** is the
+    /// subject, the source is what it is measured against.
     @Test func aheadAndBehindAreTheTargetRelativeToTheSource() {
         #expect(RelativeOffsetFormatting.sentence(
-            differenceInSeconds: -4 * 3600, sourcePlaceName: "Lisbon"
-        ) == "4 hours behind Lisbon.")
+            differenceInSeconds: -4 * 3600,
+            targetPlaceName: "São Paulo",
+            sourcePlaceName: "Lisbon"
+        ) == "São Paulo is 4 hours behind Lisbon.")
         #expect(RelativeOffsetFormatting.sentence(
-            differenceInSeconds: 3 * 3600, sourcePlaceName: "New York"
-        ) == "3 hours ahead of New York.")
+            differenceInSeconds: 3 * 3600,
+            targetPlaceName: "London",
+            sourcePlaceName: "New York"
+        ) == "London is 3 hours ahead of New York.")
     }
 
     /// No offset difference gets its own sentence rather than "0 hours ahead",
     /// which is what the spec's third example is for.
     @Test func noDifferenceReadsAsSameTime() {
         #expect(RelativeOffsetFormatting.sentence(
-            differenceInSeconds: 0, sourcePlaceName: "London"
+            differenceInSeconds: 0,
+            targetPlaceName: "Madrid",
+            sourcePlaceName: "Paris"
+        ) == "Madrid is the same time as Paris.")
+    }
+
+    /// The one case that keeps the old bare predicate: naming both sides when
+    /// they are the same word produces "London is the same time as London.",
+    /// which reads as a bug rather than as an answer.
+    @Test func aZoneComparedWithItselfDropsTheSubject() {
+        #expect(RelativeOffsetFormatting.sentence(
+            differenceInSeconds: 0,
+            targetPlaceName: "London",
+            sourcePlaceName: "London"
         ) == "Same time as London.")
     }
 
     @Test func oneHourIsSingularInBothDirections() {
         #expect(RelativeOffsetFormatting.sentence(
-            differenceInSeconds: 3600, sourcePlaceName: "London"
-        ) == "1 hour ahead of London.")
+            differenceInSeconds: 3600,
+            targetPlaceName: "Berlin",
+            sourcePlaceName: "London"
+        ) == "Berlin is 1 hour ahead of London.")
         #expect(RelativeOffsetFormatting.sentence(
-            differenceInSeconds: -3600, sourcePlaceName: "London"
-        ) == "1 hour behind London.")
+            differenceInSeconds: -3600,
+            targetPlaceName: "Lisbon",
+            sourcePlaceName: "London"
+        ) == "Lisbon is 1 hour behind London.")
+    }
+
+    // MARK: - The bare phrase (page 4's labeled arrow)
+
+    /// `ahead`, not `ahead of`: with no object after it the preposition would
+    /// dangle.
+    @Test func thePhraseDropsBothNamesAndTheDanglingPreposition() {
+        #expect(RelativeOffsetFormatting.phrase(differenceInSeconds: -4 * 3600)
+            == "4 hours behind")
+        #expect(RelativeOffsetFormatting.phrase(differenceInSeconds: 3 * 3600)
+            == "3 hours ahead")
+    }
+
+    @Test func thePhraseKeepsTheSameGrammarAsTheSentence() {
+        #expect(RelativeOffsetFormatting.phrase(differenceInSeconds: 0) == "Same time")
+        #expect(RelativeOffsetFormatting.phrase(differenceInSeconds: 3600) == "1 hour ahead")
+        #expect(RelativeOffsetFormatting.phrase(differenceInSeconds: -(5 * 3600 + 45 * 60))
+            == "5.75 hours behind")
     }
 
     /// Quarter, half and three-quarter zones all exist, so all three decimal
@@ -57,8 +99,10 @@ struct RelativeOffsetSentenceFormattingTests {
     /// English.
     @Test func fractionalCountsStayPlural() {
         #expect(RelativeOffsetFormatting.sentence(
-            differenceInSeconds: 30 * 60, sourcePlaceName: "Kathmandu"
-        ) == "0.5 hours ahead of Kathmandu.")
+            differenceInSeconds: 30 * 60,
+            targetPlaceName: "Kathmandu",
+            sourcePlaceName: "Delhi"
+        ) == "Kathmandu is 0.5 hours ahead of Delhi.")
     }
 
     /// The decimal separator is a period on every device. A locale-driven
@@ -77,7 +121,14 @@ struct RelativeOffsetFooterEngineTests {
     private let engine = ConversionEngine()
 
     /// The design's own example: Lisbon in July is UTC+1 and São Paulo is
-    /// UTC-3, so the mockup's footer is reproduced exactly.
+    /// UTC-3, so the mockup's footer is reproduced exactly — subject and all,
+    /// which is what the re-wording added.
+    ///
+    /// Spelled `Sao Paulo` because the name is derived from the tz identifier
+    /// (`America/Sao_Paulo`), which carries no diacritic. Restoring accents to
+    /// derived city names is backlog item 6, not this sprint; recorded here
+    /// rather than quietly papered over, exactly as `ConverterPresenterTests`
+    /// records the matching gap on the input side.
     @Test func theDesignsFooterIsReproducedExactly() {
         let result = engine.convert(makeRequest(
             hour: 20,
@@ -85,7 +136,7 @@ struct RelativeOffsetFooterEngineTests {
             to: "America/Sao_Paulo",
             now: FixedDates.summerMidday
         ))
-        #expect(result.relativeOffsetSentence == "4 hours behind Lisbon.")
+        #expect(result.relativeOffsetSentence == "Sao Paulo is 4 hours behind Lisbon.")
     }
 
     @Test func anEasterlyTargetIsAheadOfTheSource() {
@@ -95,7 +146,7 @@ struct RelativeOffsetFooterEngineTests {
             to: "Europe/London",
             now: FixedDates.winterMidday
         ))
-        #expect(result.relativeOffsetSentence == "5 hours ahead of New York.")
+        #expect(result.relativeOffsetSentence == "London is 5 hours ahead of New York.")
     }
 
     /// A half-hour zone, which is the case a whole-hour implementation gets
@@ -108,7 +159,7 @@ struct RelativeOffsetFooterEngineTests {
             to: "Asia/Kolkata",
             now: FixedDates.winterMidday
         ))
-        #expect(result.relativeOffsetSentence == "5.5 hours ahead of London.")
+        #expect(result.relativeOffsetSentence == "Kolkata is 5.5 hours ahead of London.")
     }
 
     @Test func aHalfHourZoneIsAlsoRightInTheOtherDirection() {
@@ -118,7 +169,7 @@ struct RelativeOffsetFooterEngineTests {
             to: "Europe/London",
             now: FixedDates.winterMidday
         ))
-        #expect(result.relativeOffsetSentence == "5.5 hours behind Kolkata.")
+        #expect(result.relativeOffsetSentence == "London is 5.5 hours behind Kolkata.")
     }
 
     /// Nepal is UTC+5:45 — the three-quarter case, in the wild.
@@ -129,7 +180,7 @@ struct RelativeOffsetFooterEngineTests {
             to: "Asia/Kathmandu",
             now: FixedDates.winterMidday
         ))
-        #expect(result.relativeOffsetSentence == "5.75 hours ahead of London.")
+        #expect(result.relativeOffsetSentence == "Kathmandu is 5.75 hours ahead of London.")
     }
 
     /// Two different places sharing an offset: the sentence says so rather than
@@ -141,7 +192,7 @@ struct RelativeOffsetFooterEngineTests {
             to: "Europe/Madrid",
             now: FixedDates.winterMidday
         ))
-        #expect(result.relativeOffsetSentence == "Same time as Paris.")
+        #expect(result.relativeOffsetSentence == "Madrid is the same time as Paris.")
     }
 
     /// The same zone on both sides is the degenerate version of the above.
@@ -168,7 +219,7 @@ struct RelativeOffsetFooterEngineTests {
             to: "America/New_York",
             now: inTheMismatchedWeeks
         ))
-        #expect(mismatched.relativeOffsetSentence == "4 hours behind London.")
+        #expect(mismatched.relativeOffsetSentence == "New York is 4 hours behind London.")
 
         let ordinary = engine.convert(makeRequest(
             hour: 9,
@@ -176,7 +227,7 @@ struct RelativeOffsetFooterEngineTests {
             to: "America/New_York",
             now: FixedDates.winterMidday
         ))
-        #expect(ordinary.relativeOffsetSentence == "5 hours behind London.")
+        #expect(ordinary.relativeOffsetSentence == "New York is 5 hours behind London.")
     }
 
     /// An abbreviation-resolved source is named by its display name, which is
@@ -188,7 +239,7 @@ struct RelativeOffsetFooterEngineTests {
             now: FixedDates.winterMidday
         )
         let result = try #require(outcome.resultValue)
-        #expect(result.relativeOffsetSentence == "5 hours ahead of Eastern Time.")
+        #expect(result.relativeOffsetSentence == "London is 5 hours ahead of Eastern Time.")
     }
 
     /// A side the user never named still has a name in the footer: the
@@ -200,6 +251,6 @@ struct RelativeOffsetFooterEngineTests {
             localZone: FixedZones.losAngeles
         )
         let result = try #require(outcome.resultValue)
-        #expect(result.relativeOffsetSentence == "8 hours ahead of Los Angeles.")
+        #expect(result.relativeOffsetSentence == "London is 8 hours ahead of Los Angeles.")
     }
 }

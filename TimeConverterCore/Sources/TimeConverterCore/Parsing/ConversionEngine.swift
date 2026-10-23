@@ -90,6 +90,13 @@ struct ZoneReading: Equatable, Sendable {
     /// so threw away the user's own word for the zone.
     var headerDescription: String { zoneLabel.headerDescription }
 
+    /// The same name without the preposition: `São Paulo`, `ET (Eastern Time)`,
+    /// `Los Angeles (local)`.
+    ///
+    /// What the side-by-side pair's columns are headed with (item 20), where
+    /// `FROM` and `TO` have already said which side this is.
+    var placeNameDescription: String { zoneLabel.placeNameDescription }
+
     /// The line under the big time — item 21's replacement for `UTC-3`.
     ///
     /// Two shapes, because the header has already said different things:
@@ -184,17 +191,32 @@ struct ConversionResult: Equatable, Sendable {
         }
     }
 
-    /// The footer sentence (spec amendment 2026-10-23): how the target sits
-    /// relative to the source, named after the source.
+    /// The footer sentence (spec amendment 2026-10-23, re-worded the same day
+    /// by the iPad/Mac designs): how the target sits relative to the source,
+    /// with both sides named — `São Paulo is 4 hours behind Lisbon.`
     ///
     /// Derived from the two offsets **at the resolved instant**, not from the
     /// zones' standard offsets, so a conversion made while one side is on
     /// daylight saving and the other is not tells the truth for that day.
     var relativeOffsetSentence: String {
         RelativeOffsetFormatting.sentence(
-            differenceInSeconds: target.utcOffsetSeconds - source.utcOffsetSeconds,
+            differenceInSeconds: relativeOffsetSeconds,
+            targetPlaceName: target.zoneDisplayName,
             sourcePlaceName: source.zoneDisplayName
         )
+    }
+
+    /// The same relationship with the names stripped — `4 hours behind` — for
+    /// page 4's labeled arrow, which has the two columns either side of it and
+    /// so needs neither name.
+    var relativeOffsetPhrase: String {
+        RelativeOffsetFormatting.phrase(differenceInSeconds: relativeOffsetSeconds)
+    }
+
+    /// Target minus source at the resolved instant. Positive means the target
+    /// is ahead.
+    private var relativeOffsetSeconds: Int {
+        target.utcOffsetSeconds - source.utcOffsetSeconds
     }
 }
 

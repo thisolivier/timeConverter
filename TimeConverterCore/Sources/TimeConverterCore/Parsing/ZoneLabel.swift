@@ -21,19 +21,29 @@ enum ZoneLabel: Equatable, Sendable {
     /// typed and the expansion is what it means.
     case abbreviation(code: String, expandedName: String)
 
-    /// The header above the big time, in natural case:
-    /// `In São Paulo`, `In Los Angeles (local)`, `In ET (Eastern Time)`.
+    /// The zone as a bare name, in natural case: `São Paulo`,
+    /// `Los Angeles (local)`, `ET (Eastern Time)`.
     ///
     /// Natural case rather than shouted: uppercasing and letterspacing it is
     /// typography, and belongs to the view.
-    var headerDescription: String {
+    ///
+    /// Split out from `headerDescription` for the side-by-side pair (item 20):
+    /// the iPhone's single column says `IN SÃO PAULO` because there is nothing
+    /// to contrast it with, while the pair's columns are already captioned
+    /// `FROM` and `TO` — a second preposition on top of those would read as a
+    /// stutter. Same content, two framings, one source.
+    var placeNameDescription: String {
         switch self {
         case let .place(name, isDeviceLocal):
-            return isDeviceLocal ? "In \(name) (local)" : "In \(name)"
+            return isDeviceLocal ? "\(name) (local)" : name
         case let .abbreviation(code, expandedName):
-            return "In \(code) (\(expandedName))"
+            return "\(code) (\(expandedName))"
         }
     }
+
+    /// The header above the big time, in natural case:
+    /// `In São Paulo`, `In Los Angeles (local)`, `In ET (Eastern Time)`.
+    var headerDescription: String { "In \(placeNameDescription)" }
 }
 
 /// Renders the token the user typed back at them as a label.

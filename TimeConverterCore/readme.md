@@ -1,15 +1,21 @@
 # TimeConverterCore
 
-Everything in this app that is not a view. A local-path Swift package (the
-`oym_core` pattern borrowed from `../musicLibrary/iOSnative/NaviAdmin`),
-consumed by three targets: the iOS app, the native macOS app, and the iOS
-Control Center extension.
+A local-path Swift package (the `oym_core` pattern borrowed from
+`../musicLibrary/iOSnative/NaviAdmin`) holding everything the two app shells
+share. **Two products:**
 
-It exists because the two platforms want genuinely different experiences —
-iPhone/iPad screens on one side, a Mac menu-bar utility with no persistent
+| Product | What it is |
+|---|---|
+| `TimeConverterCore` | Everything in this app that is not a view: parsing, presentation, launch. Imports Foundation, never SwiftUI. |
+| `TimeConverterUI` | The shared SwiftUI design layer (item 20, phase A): colour tokens, typography, arrow shapes, `ConversionPairView`. Depends on `TimeConverterCore`. Has [its own readme](Sources/TimeConverterUI/readme.md). |
+
+The core exists because the two platforms want genuinely different experiences
+— iPhone/iPad screens on one side, a Mac menu-bar utility with no persistent
 window on the other — and Mac Catalyst could not deliver the Mac one. Rather
 than fork, the shells got thin and everything behind them moved here (backlog
-item 16).
+item 16). `TimeConverterUI` is the other half of that bargain: the *designs*
+turned out to share a component even where the platforms do not, so the
+component lives here rather than being built twice.
 
 ```
 TimeConverterCore/
@@ -18,15 +24,20 @@ TimeConverterCore/
     Presentation/  parse output → display values, and when to show them
     Launch/        what a launcher asks the app to do, and the DEBUG prefill
     Resources/     fallback-cities.json, reached through Bundle.module
+  Sources/TimeConverterUI/        the shared design layer — has its own readme
   Tests/TimeConverterCoreTests/   every unit test in the repo bar the shells'
+  Tests/TimeConverterUITests/     the design layer's geometry and proportions
 ```
 
 ## Working patterns
 
-- **One SPM target, three source groups.** `Parsing`, `Presentation` and
-  `Launch` are directories, not separate SPM targets, deliberately: splitting
-  them would force the parser's internals to be `public` so the presenter could
-  see them, which is the opposite of the goal.
+- **One SPM target per *layer*, not per directory.** `Parsing`, `Presentation`
+  and `Launch` are directories inside one target, deliberately: splitting them
+  would force the parser's internals to be `public` so the presenter could see
+  them, which is the opposite of the goal. `TimeConverterUI` *is* a second
+  target, because that boundary is load-bearing — it is what keeps the core
+  UI-free, and a folder cannot enforce that. The dependency points one way and
+  nothing under `Sources/TimeConverterCore` imports SwiftUI.
 - **The public surface is tiny and hand-picked.** Only what a *shell* calls is
   `public`: `ConverterDisplayDriver` (with a parameterless `init`),
   `ConverterDisplayState` and its payloads, `ReplacementChip`, `LaunchRequest`,
@@ -77,6 +88,28 @@ Beside them sit the decomposed fields the redesigned iOS layout needs (item 18)
 off one `ConversionResult`; nothing is computed twice. When the Mac gets its
 own design the old pair can go.
 
+### The source side now decomposes like the target (item 20)
+
+The iPad and Mac designs draw source and target as two *identical* columns,
+which made the old asymmetry visible: the target had a place name, a clock
+split into digits and a meridiem, and a zone line, while the source had one
+run-together echo string (`Lisbon · 8:00 PM`) that no column layout can take
+apart. So the source grew the same four slots — `sourcePlaceName`,
+`sourceClockDigits`, `sourceMeridiem`, `sourceZoneLine` — and the target grew
+`targetPlaceName`, which is `targetPlaceLabel` without the `In` (the pair's
+columns are already captioned `FROM` and `TO`; a second preposition reads as a
+stutter). `sourceEchoLine` is untouched: it is what the iPhone draws inside its
+input box, and that screen did not change.
+
+Two rules worth knowing. The source clock is read off the **resolved instant**,
+not off the typed time, so on a spring-forward gap the column shows where the
+clock actually landed. And the day-rollover note stays on `targetZoneLine`
+alone — the rollover is a fact about where the target landed, and repeating it
+on the source would claim the source moved day too.
+
+`offsetPhrase` joins them: the footer sentence with both names stripped
+(`4 hours behind`), for the keyboard-up layout that sets it under the arrow.
+
 Since item 21 the two generations **disagree about UTC offsets**, on purpose.
 The iOS slots dropped them — the result band names the *zone*, and the
 disambiguation chips are the one place an offset actually decides something —
@@ -90,9 +123,10 @@ exactly why taking the offset off that line had to be done carefully.
 
 ## Tests
 
-245 tests, and they are the bulk of the repo's coverage. Both schemes run this
-one test target, so the core is exercised **twice per full run** — once on the
-iOS simulator and once natively on macOS:
+283 tests — 262 in `TimeConverterCoreTests` and 21 in `TimeConverterUITests` —
+and they are the bulk of the repo's coverage. Both schemes run both of this
+package's test targets, so they are exercised **twice per full run** — once on
+the iOS simulator and once natively on macOS:
 
 ```
 scripts/test.sh --platform all   # both lanes

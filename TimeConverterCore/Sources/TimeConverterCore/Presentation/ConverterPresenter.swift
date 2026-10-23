@@ -67,11 +67,17 @@ struct ConverterPresenter: Sendable {
             echoLine: result.summary,
             detailLine: detailLine,
             sourceEchoLine: sourceEchoLine(for: result),
+            sourcePlaceName: result.source.placeNameDescription,
+            sourceClockDigits: result.source.clockDigits,
+            sourceMeridiem: result.source.uppercasedMeridiem,
+            sourceZoneLine: result.source.zoneDetailDescription,
             targetPlaceLabel: result.target.headerDescription,
+            targetPlaceName: result.target.placeNameDescription,
             targetClockDigits: result.target.clockDigits,
             targetMeridiem: result.target.uppercasedMeridiem,
             targetZoneLine: targetZoneLine(for: result),
             footerSentence: result.relativeOffsetSentence,
+            offsetPhrase: result.relativeOffsetPhrase,
             daylightSavingNote: note
         )
     }

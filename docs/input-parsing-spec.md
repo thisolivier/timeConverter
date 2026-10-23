@@ -140,12 +140,20 @@ item 4 renders them.
 - Test fixtures: every example string in this spec, each prompt trigger, the
   lenient-spacing variants, `12 am`/`12 pm`, CST/IST ambiguity, Porto via the
   fallback list, and a DST-transition conversion.
-- **Relative-offset footer** (added 2026-10-23, from the iOS design): every
-  conversion carries a footer sentence derived from the offset difference at
-  the resolved instant: `4 hours behind Lisbon.` / `3 hours ahead of New
-  York.` / `Same time as London.` — "behind/ahead" is the target relative to
-  the source; the place name is the source's display name; non-whole offsets
-  render decimally ("4.5 hours", "5.75 hours").
+- **Relative-offset footer** (added 2026-10-23, from the iOS design; re-worded
+  2026-10-23 by the iPad/Mac designs, item 20): every conversion carries a
+  footer sentence derived from the offset difference at the resolved instant:
+  `São Paulo is 4 hours behind Lisbon.` / `London is 3 hours ahead of New
+  York.` / `Madrid is the same time as Paris.` — "behind/ahead" is the target
+  relative to the source; both place names are the sides' display names;
+  non-whole offsets render decimally ("4.5 hours", "5.75 hours"). The subject
+  was added because the iPad and Mac layouts put two times side by side, where
+  the original bare predicate (`4 hours behind Lisbon.`) does not say which
+  column it describes. One exception: a zone compared with itself keeps the
+  bare predicate, since `London is the same time as London.` reads as a bug.
+  A names-free variant, `relativeOffsetPhrase` (`4 hours behind`, `3 hours
+  ahead`, `Same time`), serves the keyboard-up layout that sets it under the
+  arrow between the two columns.
 - **Result-band labels and de-UTC'd echo** (amended 2026-10-23, item 21): the
   input-box echo subtitle drops the UTC offset (`Lisbon · 8:00 PM`). The line
   under the big time is no longer a UTC offset; it is keyed on how the TARGET

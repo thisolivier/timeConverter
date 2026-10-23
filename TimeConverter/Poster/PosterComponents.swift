@@ -1,4 +1,15 @@
 import SwiftUI
+import TimeConverterUI
+
+/// The pieces of the poster that are **this screen's** furniture rather than
+/// the design system's.
+///
+/// The colour tokens, the typefaces and the arrow *shapes* moved into
+/// `TimeConverterUI` in item 20 so the iPad and the Mac draw from the same
+/// ones. What stayed here is what only the iPhone's vertical poster uses: its
+/// 2pt rules, the rule-and-arrow band that separates input from result, and the
+/// outlined input box. None of it is wrong to share later; none of it has a
+/// second caller today.
 
 /// The design's horizontal rules. Two weights: the 2pt rules that divide the
 /// poster into bands, and the 1pt hairline inside the input box.
@@ -27,33 +38,6 @@ struct PosterArrowSeparator: View {
             PosterRule()
         }
         .accessibilityHidden(true)
-    }
-}
-
-/// The arrow itself, transcribed from the design's own SVG rather than
-/// approximated with an SF Symbol.
-///
-/// `arrow.down` was the obvious shortcut and is wrong: it has rounded caps, a
-/// lighter stroke and a shorter stem, and beside black compressed type it reads
-/// as a UI chevron instead of as printed ink. Ten lines of `Path` against the
-/// design's `0 0 26 32` viewBox is cheaper than the compromise.
-struct PosterArrow: Shape {
-    func path(in rect: CGRect) -> Path {
-        let horizontalScale = rect.width / 26
-        let verticalScale = rect.height / 32
-        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
-            CGPoint(x: rect.minX + x * horizontalScale, y: rect.minY + y * verticalScale)
-        }
-
-        var path = Path()
-        // The stem: M13 0 V26.
-        path.move(to: point(13, 0))
-        path.addLine(to: point(13, 26))
-        // The head: M2 16 L13 28 L24 16.
-        path.move(to: point(2, 16))
-        path.addLine(to: point(13, 28))
-        path.addLine(to: point(24, 16))
-        return path
     }
 }
 

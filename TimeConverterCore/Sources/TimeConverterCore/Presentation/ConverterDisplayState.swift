@@ -44,6 +44,22 @@ public enum ConverterDisplayState: Equatable, Sendable {
 /// *zone*, and the chips are where an offset decides something), while
 /// `echoLine` keeps them for the Mac shell, whose single sentence has nowhere
 /// else to put them.
+///
+/// ## The source side's own slots (item 20)
+///
+/// The iPad and Mac designs draw the source and the target **side by side**, as
+/// two identical columns. That made the asymmetry here visible: the target had
+/// a place name, a clock split into digits and a meridiem, and a zone line,
+/// while the source had one run-together echo string (`Lisbon · 8:00 PM`) that
+/// no column layout can take apart. So the source now carries the same four
+/// slots the target does. `sourceEchoLine` stays exactly as it was — it is what
+/// the iPhone draws inside its input box, and nothing about that screen
+/// changed.
+///
+/// Both sides' zone lines follow item-21 semantics on every platform (working
+/// assumption 1 of `docs/sprint-plan-ipad-mac.md`): the designs drew `UTC+1`
+/// and `UTC−3` there, but item 21 is the newer decision and deliberately
+/// removed UTC from the result in favour of naming the zone.
 public struct ConverterDisplay: Equatable, Sendable {
     /// The spec's canonical echo:
     /// `12:00 pm New York (UTC-5) → 5:00 pm London (UTC+0) +1d`.
@@ -55,11 +71,27 @@ public struct ConverterDisplay: Equatable, Sendable {
     /// What the input box echoes back underneath the typed text:
     /// `Lisbon · 8:00 PM`. No UTC offset since item 21.
     public let sourceEchoLine: String
+    /// The `FROM` column's place name — `Lisbon`, `ET (Eastern Time)`,
+    /// `Los Angeles (local)`. No `In` prefix: the column is already captioned.
+    public let sourcePlaceName: String
+    /// `8:00` — the source at poster scale, split exactly as the target is.
+    public let sourceClockDigits: String
+    /// `PM` — set smaller, on roughly the same baseline.
+    public let sourceMeridiem: String
+    /// The line under the source's big time: `Western European Time (Lisbon)`.
+    /// Item-21 semantics, not a UTC offset. Carries no day-rollover note —
+    /// the rollover is a fact about where the *target* landed, and belongs on
+    /// `targetZoneLine` alone.
+    public let sourceZoneLine: String
     /// The label above the result — `In São Paulo` for a place, or
     /// `In ET (Eastern Time)` when the user named a code (item 21). Natural
     /// case: uppercasing and letterspacing it is typography, which belongs to
     /// the view.
     public let targetPlaceLabel: String
+    /// The `TO` column's place name — the same content as `targetPlaceLabel`
+    /// without the `In`, for a layout whose columns are captioned `FROM` and
+    /// `TO` and where a second preposition would read as a stutter.
+    public let targetPlaceName: String
     /// `4:00` — the design's poster-scale numerals.
     public let targetClockDigits: String
     /// `PM` — set smaller, on roughly the same baseline.
@@ -72,8 +104,12 @@ public struct ConverterDisplay: Equatable, Sendable {
     /// redesigned layout has no echo sentence to hang `+1d` off. Empty for GMT
     /// and UTC, which have no cities by design; the view draws nothing then.
     public let targetZoneLine: String
-    /// The footer sentence: `4 hours behind Lisbon.`
+    /// The footer sentence: `São Paulo is 4 hours behind Lisbon.`
     public let footerSentence: String
+    /// The same relationship with both names stripped out: `4 hours behind`.
+    /// Page 4's keyboard-up layout sets this under the arrow, where there is
+    /// no room for the sentence and no need for the names.
+    public let offsetPhrase: String
     /// The daylight-saving explanation, on the two days a year it applies.
     /// `nil` otherwise, which is the overwhelmingly common case.
     public let daylightSavingNote: String?

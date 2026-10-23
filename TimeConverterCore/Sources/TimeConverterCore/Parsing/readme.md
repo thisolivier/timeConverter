@@ -221,11 +221,25 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   2026-10-23). `ConversionResult.relativeOffsetSentence` subtracts the two
   zones' offsets *on the day asked about*, so for the few weeks each spring
   when the US has changed its clocks and Europe has not, London → New York
-  reads `4 hours behind London.` rather than its usual 5. Non-whole gaps render
-  decimally (`5.5 hours`, `5.75 hours`), an exact hour is singular, and two
-  places on the same offset get `Same time as Paris.` instead of a zero count.
-  The place named is the **source's display name**, which is the same name the
-  echo above it shows.
+  reads `New York is 4 hours behind London.` rather than its usual 5. Non-whole
+  gaps render decimally (`5.5 hours`, `5.75 hours`), an exact hour is singular,
+  and two places on the same offset get `Madrid is the same time as Paris.`
+  instead of a zero count.
+- **The footer names both sides** (item 20, phase A — re-worded the same day by
+  the iPad/Mac designs). It used to be a bare predicate, `4 hours behind
+  Lisbon.`, which works under the iPhone's single huge time where the subject
+  is unmistakable. Pages 2–4 put *two* times side by side, and there the same
+  words become a riddle about which column they describe — so the target is
+  named: `São Paulo is 4 hours behind Lisbon.` Adopted on every platform, one
+  sentence, one implementation. The one exception is a zone compared with
+  itself, which keeps the bare predicate rather than printing `London is the
+  same time as London.`
+- **`relativeOffsetPhrase` is the same relationship with both names stripped**
+  — `4 hours behind`, `3 hours ahead`, `Same time`. Page 4's keyboard-up layout
+  sets it under the arrow between the two columns, where the arrow is already
+  pointing from source to target so no names are needed. Note `ahead` and not
+  the sentence's `ahead of`: with nothing after it the preposition would
+  dangle.
 - **Regex patterns are computed, not stored.** `Regex` is not `Sendable`, so
   Swift 6 forbids it as static stored state; two tiny patterns are rebuilt per
   parse, which is immeasurable against a keystroke.
