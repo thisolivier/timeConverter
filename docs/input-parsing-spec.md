@@ -164,3 +164,11 @@ item 4 renders them.
   TimeZone.localizedName(.generic, en_US). NEXT/PREVIOUS DAY rides the
   sub-line. Chips keep UTC offsets; the relative-offset footer sentence and
   the Mac echoLine (offsets included) are unchanged.
+- **Bare-zone input = now** (added 2026-10-23, backlog item 22): an input that
+  is ONLY a zone token, no time ("ET", "Tokyo", "east coast") converts the
+  CURRENT device clock to that zone: time = now (hours and minutes, injected
+  `now`), source = device local zone, target = the named zone. The echo marks
+  the assumption — the source side renders with the existing `(local)` marker
+  and the current time; prompts P4/P5 apply to the token as usual. P1 keeps
+  firing only for inputs that contain neither a parseable time nor a lone
+  resolvable zone. Existing rule unchanged: "8pm ET" = 8pm in ET → local.
