@@ -184,7 +184,10 @@ selection somewhere.
   does this. That single injection point is what keeps everything below the
   view pure and testable — including local-zone defaulting, where the device
   zone fills in a side the user didn't name (`7pm in London` →
-  `7:00 pm Los Angeles (local, UTC-8) → 3:00 am London (UTC+0) +1d`).
+  `7:00 pm Los Angeles (local, UTC-8) → 3:00 am London (UTC+0) +1d`), and
+  bare-zone input, where a lone `ET` converts the device's *current* clock,
+  minutes included (`3:42 pm Los Angeles (local, UTC-8) → 6:42 pm Eastern Time
+  (New York, Toronto, UTC-5)`).
 - **The view holds no logic.** `ConverterPresenter` renders finished values and
   the view is a `switch` over three `ConverterDisplayState` cases, so UI
   behaviour is covered by ordinary unit tests in the package
@@ -319,6 +322,11 @@ Inputs that between them exercise the whole output area:
 | `7pm` | P2 — a time with no zone anywhere still prompts |
 | `8pm Lisbon in ET` | The abbreviation header: `IN ET (EASTERN TIME)` over `NEW YORK, TORONTO` |
 | `12pm London to UTC` | The one zone with no sub-line at all — GMT and UTC are the datum, not a place |
+| `ET` | Bare zone (item 22): the clock **right now** in ET, source `(local, …)` with the current minutes |
+| `Tokyo` | The same with a city token, usually with `NEXT DAY` on the sub-line |
+| `CST` | A bare ambiguous token — P4 chips; the tap rewrites the whole field |
+| `Lodnon` | A bare unknown token — P5 did-you-mean chips, `London?` rewriting the whole field |
+| `12` | Still P1: digits read as a half-typed time, not as a zone nobody recognises |
 
 ### QA: the collapsed keyboard layout headlessly (iOS)
 

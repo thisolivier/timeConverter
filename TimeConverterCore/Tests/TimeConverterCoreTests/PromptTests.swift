@@ -11,8 +11,15 @@ struct PromptTests {
 
     // MARK: P1 — no parseable time
 
+    /// Narrowed by the 2026-10-23 amendment (item 22): an input that is *only*
+    /// a zone token is now a conversion of the current clock, so a bare
+    /// "hello there" moved out of here and into `BareZoneInputTests` as the P5
+    /// it has become. What is left is everything that structurally cannot be a
+    /// zone token — nothing at all, digits (which read as a half-typed time),
+    /// punctuation with no word in it, and conversion sentences that merely
+    /// forgot their time.
     @Test(arguments: [
-        "", "   ", "hello there", "london to paris",
+        "", "   ", "!!!", "12", "london to paris",
         "6 et in london",       // 24-hour form needs minutes
         "13:00 am et in london", // meridiem contradicts the hour
         "0:30 pm et in london",  // ditto

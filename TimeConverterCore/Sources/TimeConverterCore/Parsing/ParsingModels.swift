@@ -21,6 +21,19 @@ struct ParsedTime: Equatable, Sendable {
     var canonicalDescription: String {
         TimeFormatting.twelveHourDescription(hour: hour, minute: minute)
     }
+
+    /// The wall clock an injected instant shows in an injected zone — what a
+    /// bare-zone input means by "now" (spec amendment 2026-10-23, item 22).
+    ///
+    /// Minutes are kept, not rounded: "ET" typed at 15:42 converts 15:42, since
+    /// a time converter that quietly moved the user's clock to the hour would be
+    /// lying. Still pure — both the instant and the zone are parameters, so the
+    /// bare-zone tests are as deterministic as every other test here.
+    static func wallClock(of instant: Date, in timeZone: TimeZone) -> ParsedTime {
+        let components = GregorianCalendars.calendar(in: timeZone)
+            .dateComponents([.hour, .minute], from: instant)
+        return ParsedTime(hour: components.hour ?? 0, minute: components.minute ?? 0)
+    }
 }
 
 // MARK: - Zones
