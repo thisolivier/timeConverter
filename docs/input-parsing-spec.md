@@ -146,3 +146,13 @@ item 4 renders them.
   York.` / `Same time as London.` — "behind/ahead" is the target relative to
   the source; the place name is the source's display name; non-whole offsets
   render decimally ("4.5 hours", "5.75 hours").
+- **Result-band labels and de-UTC'd echo** (amended 2026-10-23, item 21): the
+  input-box echo subtitle drops the UTC offset (`Lisbon · 8:00 PM`). The line
+  under the big time is no longer a UTC offset; it is keyed on how the TARGET
+  resolved — place (city/country/gazetteer/local-default): header `IN <PLACE>`,
+  sub-line = zone generic name + representative cities (`BRASILIA STANDARD
+  TIME (SÃO PAULO)`); curated abbreviation: header `IN <CODE> (<EXPANDED>)`,
+  sub-line = cities only (`NEW YORK, TORONTO`). Zone names via
+  TimeZone.localizedName(.generic, en_US). NEXT/PREVIOUS DAY rides the
+  sub-line. Chips keep UTC offsets; the relative-offset footer sentence and
+  the Mac echoLine (offsets included) are unchanged.
