@@ -140,3 +140,9 @@ item 4 renders them.
 - Test fixtures: every example string in this spec, each prompt trigger, the
   lenient-spacing variants, `12 am`/`12 pm`, CST/IST ambiguity, Porto via the
   fallback list, and a DST-transition conversion.
+- **Relative-offset footer** (added 2026-10-23, from the iOS design): every
+  conversion carries a footer sentence derived from the offset difference at
+  the resolved instant: `4 hours behind Lisbon.` / `3 hours ahead of New
+  York.` / `Same time as London.` — "behind/ahead" is the target relative to
+  the source; the place name is the source's display name; non-whole offsets
+  render decimally ("4.5 hours", "5.75 hours").
