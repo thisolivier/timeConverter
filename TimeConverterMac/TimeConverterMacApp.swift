@@ -28,7 +28,11 @@ struct TimeConverterMacApp: App {
         // `.window` rather than the default `.menu`: the dropdown contains a
         // text field, and a menu-style extra cannot host editable controls.
         MenuBarExtra {
-            MenuBarConverterView()
+            // The same converter the ⌃⌥T panel shows, at the dropdown's width.
+            // `.menuBarDropdown` is the whole of the difference: narrower
+            // metrics, no glass of our own (the popover already is glass), and
+            // no dismissal hint. See `GlassPresentation`.
+            MenuBarConverterView(presentation: .menuBarDropdown)
         } label: {
             // Template-rendered by default for an SF Symbol, so it tracks the
             // menu bar's light/dark appearance exactly as the retired bundle's
@@ -55,6 +59,12 @@ final class TimeConverterMacDelegate: NSObject, NSApplicationDelegate {
             // ever lost, the app would otherwise acquire a Dock icon and a menu
             // bar of its own, which is the one thing the Mac design rules out.
             NSApp.setActivationPolicy(.accessory)
+            MacAppearanceOverride.applyIfRequested()
+            #if DEBUG
+            // Before the summoner, so a `-renderGlass` run never registers
+            // ⌃⌥T or puts a status item in the menu bar on its way past.
+            GlassPanelRenderer.runIfRequested()
+            #endif
             summoner.start()
         }
     }

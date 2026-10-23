@@ -33,9 +33,23 @@ re-implementation.
 - **System fonts only. No font files are bundled.** The designs set Anton and
   JetBrains Mono; this renders SF Compressed Black and SF Mono. See
   `PosterTypography.swift` for why the substitution is the right one.
-- **One cross-platform `#if`, on purpose.** `PaletteTone.swift` is the only
-  file that knows `UIColor` from `NSColor`. Everything else differs between
-  the two shells by *layout*, which is a design decision, not a platform one.
+- **Two cross-platform `#if`s, on purpose, and no more.** `PaletteTone.swift`
+  is the only file that knows `UIColor` from `NSColor`;
+  `GlassPanelSurface.swift` is the only one that knows `NSVisualEffectView`.
+  Both earn it the same way: there is no cross-platform spelling, because
+  there is no cross-platform *concept*. Everything else differs between the
+  two shells by layout, which is a design decision, not a platform one.
+- **Where the system has a real equivalent, the system wins.** The glass
+  panel's frosting is an `NSVisualEffectView` and its shadow is the window's,
+  rather than a transcription of the CSS. The mapping, declaration by
+  declaration, is a table in `GlassPanelSurface.swift` — including the two
+  design tokens that are deliberately *not* drawn on screen and what supplies
+  them instead.
+- **Layout decisions are derived from measurement, not declared.** The Mac
+  dropdown stacks the conversion pair because
+  `ConversionPairScale.largestFittingSideBySide(in:)` says no step fits at
+  400pt — not because anything says `.stacked`. Pin a layout by hand and it
+  survives the width change that invalidates it.
 - **Two size steps, not free scaling.** `ConversionPairScale` is `.full` or
   `.compact`. A `scaleEffect` driven by leftover space makes the numerals a
   different size on every device and resamples black compressed type into
@@ -57,25 +71,33 @@ re-implementation.
 |---|---|
 | `Tokens/PaletteTone.swift` | One literal colour from a design file, plus `AppearanceReactiveColor` — the single `UIColor`/`NSColor` fork that pairs a light tone with a dark one. |
 | `Tokens/PosterPalette.swift` | The paper design's cream/ink/rust, moved unchanged from the iOS app so the iPad draws from the same tokens the iPhone does. |
-| `Tokens/GlassPalette.swift` | The glass panel's material, rim lights, shadow and ink-on-glass greys, transcribed from page 3 with the CSS-to-token mapping in a table. |
+| `Tokens/GlassPalette.swift` | The glass panel's rim lights, shadow, ink-on-glass greys and chip tokens, transcribed from page 3 with the CSS-to-token mapping in a table. |
+| `Tokens/GlassPanelMetrics.swift` | The same design measured instead of coloured: 740pt wide, `padding: 26px 30px`, the section gaps, the 34pt input. Plus the derived `.narrow` variant for the Mac dropdown, whose pair axis and size step it computes rather than declares. |
 | `Typography/PosterTypography.swift` | Anton → SF Compressed Black, JetBrains Mono → SF Mono, and the `.posterLabel()` modifier for the letterspaced uppercase labels. Shared by both palettes. |
-| `Components/PosterArrows.swift` | `PosterArrow` (the iPhone's stroked down arrow), `PosterRightArrow` (the filled wedge between the pair's columns), and `PosterLabeledArrow` (page 4's variant with a phrase beneath). Colourless — the caller tints them. |
-| `Components/ConversionPairStyle.swift` | The two knobs: `ConversionPairStyle` (paper/glass — inks, arrow tint, label placement) and `ConversionPairScale` (full/compact — every point size). |
-| `Components/ConversionPairView.swift` | The side-by-side pair itself: `FROM`/`TO` columns of label, place, big time + meridiem and zone sub-line, with the arrow between them. One view for pages 2, 3 and 4. |
+| `Components/PosterArrows.swift` | `PosterArrow` (the stroked down arrow, used by the iPhone and by the stacked pair), `PosterRightArrow` (the filled wedge between the pair's columns), and `PosterLabeledArrow` (page 4's variant with a phrase beneath). Colourless — the caller tints them. |
+| `Components/GlassPanelSurface.swift` | Page 3's chrome: the `NSVisualEffectView` frosting, the rim stroke, the two inset highlights, the 30pt radius — in the three containers it can be drawn in (floating window / inside a system popover / offscreen). Plus `GlassHairline`, the design's 1pt rule. |
+| `Components/ConversionPairStyle.swift` | The three knobs: `ConversionPairStyle` (paper/glass — inks, arrow tint, label placement), `ConversionPairScale` (full/compact — every point size, plus the fitting arithmetic) and `ConversionPairAxis` (side by side / stacked). |
+| `Components/ConversionPairCells.swift` | One side's three pieces — caption + place, big time, zone line — shared by both axes, which need the same cells in different containers. |
+| `Components/ConversionPairView.swift` | The pair itself: `FROM`/`TO` columns with the arrow between them (the design) or above and below (the narrow fallback). One view for pages 2, 3 and 4. |
+| `Components/ChipFlowLayout.swift` | Wraps a row of tap-to-replace chips onto as many lines as they need. Pure geometry — both shells pack identically and paint completely differently. |
 
-## Phase A scope
-
-Built here, used by nobody yet except the iPhone (which adopts only the tokens,
-the typography and the arrow shape it already had). `ConversionPairView` has
-previews and tests but no shipping caller: the Mac glass panel is phase B and
-the iPad layouts are phase C. The pair view's API is the contract those two
-phases were extracted against —
+## Consumers
 
 ```swift
 ConversionPairView(
     display: converterDisplay,   // every string pre-rendered by the core
     style: .glass,               // .paper (pages 2, 4) | .glass (page 3)
-    scale: .full,                // .full | .compact (keyboard up)
+    scale: metrics.pairScale,    // .full | .compact — derived, not declared
+    axis: metrics.pairAxis,      // .sideBySide | .stacked — likewise
     arrowLabel: nil              // page 4 passes display.offsetPhrase
 )
 ```
+
+- **iPhone** (phase A): the tokens, the typography and the arrow shape it
+  already had. Its vertical poster is unchanged.
+- **Mac** (phase B, shipping): the glass panel and the menu-bar dropdown are
+  built entirely out of this module — `GlassPanelSurface`, `GlassPanelMetrics`
+  and `ConversionPairView` — with only the state and the window plumbing left
+  in `TimeConverterMac`.
+- **iPad** (phase C, not yet): pages 2 and 4, paper, reusing the same pair at
+  `.paper` and `.compact`.

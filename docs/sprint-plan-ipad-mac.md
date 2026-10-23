@@ -36,7 +36,7 @@ where zero-regression-trivial. The display model already carries source/target
 split fields; the pair view needs source clock digits/meridiem split the way
 the target already is (small core addition + tests).
 
-### B. Mac glass (build after A, verify before C)
+### B. Mac glass — BUILT 2026-10-23, ships as Mac build 11; Olivier verification pending (eyeball checklist in build output + README)
 Replace the placeholder panel + MenuBarExtra dropdown content with the glass
 design: system material background (ultraThin/hud-style), the shared pair
 view, input top, prompts/chips restyled for glass legibility (light+dark).

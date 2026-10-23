@@ -195,12 +195,21 @@ cat <<'MANUAL'
      scripts/run-mac.sh
      # click some other app, then press ⌃⌥T
 
-   Expect: a small floating "Time Converter" panel appears, centred, with the
-   field focused. Press ⌃⌥T again while looking at it and it goes away
-   (SummonPolicy: a toggle only toggles when you can already see it). Press it
-   from another app while the panel is open and it comes forward instead.
-   Clicking the clock glyph must open the dropdown with its own focused field.
-   Every press logs a 'hotkey received' line:
+   Expect: the glass panel of design page 3 appears, centred — 740pt wide,
+   frosted, 30pt corners, NO title bar and no close button, with the cursor in
+   the big mono line at the top. Type "8pm Lisbon in Sao Paulo" and the
+   FROM/TO pair fills the middle side by side, with the footer sentence
+   underneath. The desktop must be visibly blurred *through* the panel, and
+   must change as you drag the panel over different wallpaper — that is the
+   behind-window material, and it is the one thing no offscreen render can
+   prove (see scripts/render-glass.sh for what they can).
+
+   Press ⌃⌥T again while looking at it and it goes away (SummonPolicy: a
+   toggle only toggles when you can already see it). Press it from another app
+   while the panel is open and it comes forward instead. Esc dismisses it.
+   Clicking the clock glyph must open the dropdown with its own focused field,
+   the same design at 400pt with the pair stacked vertically. Every press logs
+   a 'hotkey received' line:
 
      log show --predicate 'subsystem == "dev.thisolivier.timeconverter"' \
        --last 2m --style compact

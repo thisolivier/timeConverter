@@ -200,6 +200,141 @@ struct ConversionPairStyleTests {
     }
 }
 
+/// Does the pair fit? — the arithmetic phase B's narrow fallback turns on.
+struct ConversionPairFittingTests {
+    /// A column has to hold `8:00 PM`, so its minimum width has to grow with
+    /// the numerals. Asserting the *relationship* rather than the number,
+    /// because the number is an estimate from font metrics and is allowed to be
+    /// tuned; what must never happen is a minimum that does not track the type
+    /// it is a minimum for.
+    @Test(arguments: ConversionPairScale.allCases)
+    func aColumnIsWiderThanItsOwnNumerals(scale: ConversionPairScale) {
+        #expect(scale.minimumColumnWidth > scale.clockSize)
+        #expect(scale.minimumColumnWidth < scale.clockSize * 3)
+    }
+
+    @Test func theCompactStepNeedsLessRoomThanTheFullOne() {
+        #expect(
+            ConversionPairScale.compact.minimumSideBySideWidth
+                < ConversionPairScale.full.minimumSideBySideWidth
+        )
+    }
+
+    /// Both columns and the gutter — the whole point of the measurement is
+    /// that the design's fixed 96pt middle column is part of the demand, not
+    /// slack to be eaten.
+    @Test(arguments: ConversionPairScale.allCases)
+    func theGutterCountsTowardsTheDemand(scale: ConversionPairScale) {
+        #expect(
+            scale.minimumSideBySideWidth
+                == scale.minimumColumnWidth * 2 + scale.arrowColumnWidth
+        )
+    }
+
+    /// Largest-first, which is the whole rule: the design is the full step,
+    /// compact is a concession, stacking is a last resort. A caller with room
+    /// for the design gets the design.
+    @Test func theWidestFittingStepIsChosenFirst() {
+        let full = ConversionPairScale.full
+        let compact = ConversionPairScale.compact
+
+        #expect(ConversionPairScale.largestFittingSideBySide(in: 2000) == .full)
+        #expect(ConversionPairScale.largestFittingSideBySide(in: full.minimumSideBySideWidth) == .full)
+        // One point short of the full step falls back rather than shrinking.
+        #expect(
+            ConversionPairScale.largestFittingSideBySide(in: full.minimumSideBySideWidth - 1)
+                == .compact
+        )
+        #expect(
+            ConversionPairScale.largestFittingSideBySide(in: compact.minimumSideBySideWidth - 1)
+                == nil
+        )
+    }
+
+    /// `nil` means "stack", and the only honest way to say it: there is no
+    /// side-by-side step that fits, so the caller has to change axis rather
+    /// than size.
+    @Test func nothingFitsInANarrowColumn() {
+        #expect(ConversionPairScale.largestFittingSideBySide(in: 0) == nil)
+        #expect(ConversionPairScale.largestFittingSideBySide(in: 320) == nil)
+    }
+}
+
+/// The panel's measurements, transcribed from the same markup as its colours.
+struct GlassPanelMetricsTests {
+    /// Page 3's own numbers. These are the ones a reviewer can check against
+    /// the stylesheet with a ruler, which is why they are asserted literally
+    /// while the derived narrow variant below is asserted by relationship.
+    @Test func theWideMetricsAreTheDesignsOwnNumbers() {
+        let wide = GlassPanelMetrics.wide
+        #expect(wide.totalWidth == 740)
+        #expect(wide.horizontalPadding == 30)
+        #expect(wide.verticalPadding == 26)
+        #expect(wide.sectionSpacing == 22)
+        #expect(wide.inputRuleSpacing == 14)
+        #expect(wide.inputTopPadding == 6)
+        #expect(wide.inputLeadingPadding == 4)
+        #expect(wide.inputFontSize == 34)
+        #expect(wide.footerRuleSpacing == 10)
+        #expect(wide.footerFontSize == 15)
+        #expect(GlassPanelMetrics.caretWidth == 2)
+        #expect(GlassPanelMetrics.caretHeight == 38)
+    }
+
+    /// `width: 740px` minus `padding: … 30px` twice.
+    @Test func theContentWidthIsTheWidthInsideThePadding() {
+        #expect(GlassPanelMetrics.wide.contentWidth == 680)
+    }
+
+    /// The narrow variant is a step *down* — every measurement smaller, none
+    /// larger. The same discipline `ConversionPairScale.compact` follows, and
+    /// for the same reason: a variant where one value grew while its
+    /// neighbours shrank is not a smaller panel, it is a different one.
+    @Test func theNarrowVariantIsSmallerInEveryDimension() {
+        let wide = GlassPanelMetrics.wide
+        let narrow = GlassPanelMetrics.narrow
+
+        #expect(narrow.totalWidth < wide.totalWidth)
+        #expect(narrow.horizontalPadding < wide.horizontalPadding)
+        #expect(narrow.verticalPadding < wide.verticalPadding)
+        #expect(narrow.sectionSpacing < wide.sectionSpacing)
+        #expect(narrow.inputRuleSpacing < wide.inputRuleSpacing)
+        #expect(narrow.inputFontSize < wide.inputFontSize)
+        #expect(narrow.footerRuleSpacing < wide.footerRuleSpacing)
+        #expect(narrow.footerFontSize < wide.footerFontSize)
+    }
+
+    /// The design fits in the panel it was drawn for — and with room to spare,
+    /// since the estimate behind `minimumSideBySideWidth` is deliberately
+    /// sized for the common four-character clock.
+    @Test func thePanelHasRoomForTheDesignAtFullScale() {
+        let wide = GlassPanelMetrics.wide
+        #expect(wide.contentWidth >= ConversionPairScale.full.minimumSideBySideWidth)
+        #expect(wide.pairScale == .full)
+        #expect(wide.pairAxis == .sideBySide)
+    }
+
+    /// The dropdown stacks, and stacks *because of the measurement* rather
+    /// than because anyone said so. This is the assertion that would fail if
+    /// the narrow width were ever widened past the point where the pair fits —
+    /// at which point the right answer is to un-stack it, not to re-pin it.
+    @Test func theDropdownStacksAndItIsTheWidthThatDecides() {
+        let narrow = GlassPanelMetrics.narrow
+        #expect(narrow.contentWidth < ConversionPairScale.compact.minimumSideBySideWidth)
+        #expect(narrow.pairAxis == .stacked)
+        // Stacked still draws at a real size step — stacking buys height, it
+        // does not licence shrinking the type as well.
+        #expect(ConversionPairScale.allCases.contains(narrow.pairScale))
+    }
+
+    /// The input is the largest mono on the panel in both variants: it is what
+    /// makes the thing read as a command line rather than as a form.
+    @Test func theTypedLineOutweighsTheFooterEverywhere() {
+        #expect(GlassPanelMetrics.wide.inputFontSize > GlassPanelMetrics.wide.footerFontSize)
+        #expect(GlassPanelMetrics.narrow.inputFontSize > GlassPanelMetrics.narrow.footerFontSize)
+    }
+}
+
 /// The glass tokens, as transcribed from the design's markup.
 struct GlassPaletteTests {
     /// The hairline is 1pt, not the poster's 2pt rule: on a material a heavy
@@ -221,6 +356,62 @@ struct GlassPaletteTests {
     /// `border-radius: 30px`.
     @Test func thePanelKeepsTheDesignsCornerRadius() {
         #expect(GlassPalette.panelCornerRadius == 30)
+    }
+
+    /// Phase B's chip tokens, which the design does not draw and this module
+    /// therefore derived. What matters is not the alphas — those are a
+    /// judgement call about a translucent control — but that the pressed state
+    /// is unmistakably different from the resting one. On a surface already
+    /// showing the desktop through it, a subtle press reads as no press.
+    @Test func aPressedChipIsVisiblyDifferentFromARestingOne() {
+        #expect(GlassPalette.chipFill != GlassPalette.chipPressedFill)
+        // Chips are outlined in the same ink as the panel's two rules, so they
+        // read as part of the same drawing rather than as imported controls.
+        #expect(GlassPalette.chipStroke == GlassPalette.hairline)
+    }
+
+    /// Glass builds a prompt's hierarchy out of contrast, not hue: the caption
+    /// is quiet furniture and the message under it is full-strength ink. That
+    /// inverts the poster, where both are rust — and it has to, because page 3
+    /// has no accent colour at all and inventing one for the error state would
+    /// undo its single loudest decision.
+    @Test func theGlassPromptUsesContrastWhereThePosterUsesRust() {
+        #expect(GlassPalette.promptMessageInk == GlassPalette.ink)
+        #expect(GlassPalette.promptCaptionInk == GlassPalette.secondaryInk)
+        #expect(GlassPalette.promptMessageInk != GlassPalette.promptCaptionInk)
+        // The one thing that would mean the accent crept back in.
+        #expect(GlassPalette.promptMessageInk != PosterPalette.accent)
+    }
+}
+
+/// Which container supplies the glass.
+///
+/// The three cases are three *containers*, not three styles — the panel looks
+/// the same in all of them, and what differs is who provides the blur.
+struct GlassPanelSurfaceStyleTests {
+    /// The dropdown case exists to draw *nothing*: AppKit already made the
+    /// popover out of glass, gave it corners and cast its shadow. The way this
+    /// regresses is someone "fixing" the dropdown by giving it the panel's
+    /// surface, which produces a panel inside a panel.
+    @Test func everyContainerIsAccountedFor() {
+        #expect(GlassPanelSurfaceStyle.allCases.count == 3)
+        #expect(GlassPanelSurfaceStyle.allCases.contains(.hostedInSystemMaterial))
+        #expect(GlassPanelSurfaceStyle.allCases.contains(.floatingWindow))
+        // `.offscreen` is the one with no window at all: previews and
+        // ImageRenderer, where the material cannot sample anything and the
+        // design's own veil stands in.
+        #expect(GlassPanelSurfaceStyle.allCases.contains(.offscreen))
+    }
+}
+
+/// The pair's two axes.
+struct ConversionPairAxisTests {
+    /// Side by side is the design and stacked is the fallback — and there are
+    /// exactly two, because a third would mean the narrow case had grown a
+    /// layout of its own rather than being the same drawing turned ninety
+    /// degrees.
+    @Test func thereAreTwoAxesAndSideBySideIsTheDesign() {
+        #expect(ConversionPairAxis.allCases == [.sideBySide, .stacked])
     }
 }
 

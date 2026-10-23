@@ -1,16 +1,40 @@
 import AppKit
 import SwiftUI
+import TimeConverterUI
+
+/// The summoned panel, which differs from a stock `NSPanel` in exactly two
+/// ways — both of them consequences of having no title bar.
+///
+/// `canBecomeKey` is asserted rather than inherited: `NSPanel` grants it for a
+/// `.titled` window already, but this window's title bar is invisible and the
+/// next person to reach for `.borderless` here would lose the keyboard without
+/// any obvious connection between the two. Saying it out loud costs a line and
+/// documents the constraint.
+///
+/// `cancelOperation` is the esc key arriving at the end of the responder chain.
+/// It only gets there when the field editor has not already consumed it, which
+/// is the behaviour that is wanted: esc inside a text field that is mid-edit
+/// belongs to the field, and esc otherwise means "put this away".
+private final class SummonedGlassPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+
+    override func cancelOperation(_ sender: Any?) {
+        orderOut(nil)
+    }
+}
 
 /// Owns ⌃⌥T and the thing it summons.
 ///
-/// The summoned thing is a **plain floating `NSPanel`** and that is a
-/// deliberate placeholder: `docs/ux-v1-proposal.md` wants a translucent
-/// Spotlight-style modal, which is a design job, not a plumbing job. A panel
-/// was chosen over programmatically opening the `MenuBarExtra` dropdown because
-/// SwiftUI exposes no way to open a `MenuBarExtra` from code — doing it anyway
-/// means synthesising a click on a status item SwiftUI never hands you, which
-/// is more code and more fragile than thirty lines of `NSPanel` for something
-/// that is going to be replaced by the real design anyway.
+/// The summoned thing is the **glass panel of page 3** (backlog item 20, phase
+/// B) — a transparent, chromeless, fixed-width `NSPanel` floating over whatever
+/// the user was looking at. It was a plain titled placeholder until phase B;
+/// the plumbing around it (the toggle rule, the focus ladder, the logging) is
+/// unchanged, and only the window's dress and its contents are new.
+///
+/// A panel rather than a programmatically opened `MenuBarExtra` dropdown
+/// because SwiftUI exposes no way to open a `MenuBarExtra` from code — doing it
+/// anyway means synthesising a click on a status item SwiftUI never hands you,
+/// which is more code and more fragile than forty lines of `NSPanel`.
 ///
 /// Main-actor throughout: AppKit windows require it and the Carbon hotkey
 /// callback is delivered there.
@@ -19,9 +43,28 @@ final class PanelSummoner {
     private var hotKey: GlobalHotKey?
     private var panel: NSPanel?
 
+    /// QA affordance: `-summonOnLaunch 1` opens the panel at launch.
+    ///
+    /// Two jobs, both of them about the one thing a headless machine cannot do.
+    /// Synthetic keystrokes are TCC-blocked (see the header of
+    /// `scripts/qa-menubar.sh`), so without this *nothing automated ever builds
+    /// the panel* — the summon path is reached only by a human pressing ⌃⌥T,
+    /// and a crash in `makePanel` would wait there to be found by hand. And for
+    /// the human, it saves switching to another app first when the thing being
+    /// checked is the glass rather than the hotkey.
+    ///
+    /// **DEBUG only.** A shipped menu-bar utility that opens a window at launch
+    /// is not a menu-bar utility.
+    static let summonOnLaunchKey = "summonOnLaunch"
+
     /// Called once from `applicationDidFinishLaunching`. Idempotent.
     func start() {
         guard hotKey == nil else { return }
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: Self.summonOnLaunchKey) {
+            summon()
+        }
+        #endif
         let hotKey = GlobalHotKey { [weak self] in self?.summon() }
         self.hotKey = hotKey
         let registration = hotKey.register()
@@ -82,18 +125,73 @@ final class PanelSummoner {
         }
     }
 
-    // MARK: - The placeholder panel
+    // MARK: - The glass panel
 
+    /// A window with no chrome of its own, so that the only thing on screen is
+    /// the design.
+    ///
+    /// Each of these lines is load-bearing, and most of them are fighting the
+    /// same battle — AppKit's defaults assume a window wants to look like a
+    /// window:
+    ///
+    /// - **`.titled`, still.** A `.borderless` window cannot become key, and
+    ///   this one's whole job is to take typed input. So the title bar stays in
+    ///   the style mask and is then made invisible: transparent, no title, and
+    ///   its three standard buttons hidden. `.fullSizeContentView` hands the
+    ///   space back to the content.
+    /// - **No close button**, which is why the footer says how to dismiss it
+    ///   (`GlassFooterText`) and why `cancelOperation` is overridden below.
+    ///   A traffic light on a 30pt-radius glass panel is the one piece of
+    ///   chrome that would make it look like a window that lost its title bar.
+    /// - **Transparent and shadowed.** `isOpaque = false` plus a clear
+    ///   background is what lets the rounded corners actually be round, and
+    ///   `hasShadow` then gets AppKit to compute the drop shadow from the
+    ///   content's own alpha — the design's `box-shadow`, drawn by the system,
+    ///   in the system's own idiom. See `GlassPanelSurface` for why that beat
+    ///   drawing it by hand.
+    /// - **A content *controller*, not a content view.** `NSHostingController`
+    ///   makes the window track the SwiftUI content's fitting size, so the
+    ///   panel is exactly as tall as the design needs at 740pt wide and
+    ///   re-sizes itself when a prompt replaces a conversion. `setContentSize`
+    ///   keeps the top-left corner fixed, so it grows downward rather than
+    ///   appearing to jump.
+    /// - **Not resizable.** No `.resizable` in the mask: working assumption 3
+    ///   of the sprint plan. This is a composition at a fixed internal
+    ///   proportion — 124pt numerals against a 12pt label — and a user-dragged
+    ///   width would turn that into an accident.
     private func makePanel() -> NSPanel {
-        let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 220),
-            // `.titled` and not `.nonactivatingPanel`: the panel's whole job is
-            // to take typed input, and a non-activating panel cannot become key.
-            styleMask: [.titled, .closable, .utilityWindow],
+        let hostingController = NSHostingController(
+            rootView: MenuBarConverterView(presentation: .summonedPanel)
+        )
+        // Stated rather than left to the default. Without it the window is
+        // sized once, from whatever the content measured before `onAppear` had
+        // run — which is the empty hint — and then never grows: the 124pt
+        // numerals of an actual conversion get squeezed into the height of a
+        // one-line placeholder. Measured, not theorised: the panel came up
+        // 740×279 for every state until this line existed.
+        hostingController.sizingOptions = .preferredContentSize
+        let panel = SummonedGlassPanel(
+            contentRect: NSRect(
+                x: 0, y: 0, width: GlassPanelMetrics.wide.totalWidth, height: 1
+            ),
+            styleMask: [.titled, .fullSizeContentView, .utilityWindow],
             backing: .buffered,
             defer: false
         )
-        panel.title = "Time Converter"
+        panel.contentViewController = hostingController
+
+        panel.titlebarAppearsTransparent = true
+        panel.titleVisibility = .hidden
+        for button: NSWindow.ButtonType in [.closeButton, .miniaturizeButton, .zoomButton] {
+            panel.standardWindowButton(button)?.isHidden = true
+        }
+
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        // No title bar means no handle, so the glass itself is the handle.
+        panel.isMovableByWindowBackground = true
+
         panel.isFloatingPanel = true
         panel.level = .floating
         // Without this an AppKit panel is deallocated by its own close button
@@ -102,7 +200,6 @@ final class PanelSummoner {
         // Summoned onto whatever Space and full-screen app the user is in,
         // which is the behaviour the hotkey implies.
         panel.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
-        panel.contentView = NSHostingView(rootView: MenuBarConverterView())
         panel.center()
         return panel
     }

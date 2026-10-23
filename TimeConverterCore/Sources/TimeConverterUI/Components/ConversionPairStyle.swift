@@ -55,6 +55,32 @@ public enum ConversionPairStyle: String, Equatable, Sendable, CaseIterable {
     public var stacksLabelAbovePlace: Bool { self == .paper }
 }
 
+/// Whether the two columns sit beside each other or one above the other.
+///
+/// Side by side is the design — all three pages draw it that way, and it is
+/// the composition: two readings of one instant, with an arrow pointing from
+/// the first to the second. `.stacked` exists for one caller, the Mac's
+/// `MenuBarExtra` dropdown, where the design simply cannot be drawn: a menu-bar
+/// popover is around 400pt wide and the pair needs about 600 at full scale and
+/// 440 at compact, so side by side there would mean `minimumScaleFactor`
+/// shrinking the numerals to caption size — which is not a smaller version of
+/// the poster, it is the poster destroyed.
+///
+/// Stacking keeps the type at poster scale and spends height instead, which a
+/// dropdown has and a panel width does not. The arrow turns with it: the
+/// down-pointing `PosterArrow` the iPhone already uses between its input and
+/// its result, which is the same gesture read vertically.
+///
+/// Nobody picks this by hand — `GlassPanelMetrics` derives it from the width it
+/// has, so the stacked layout appears exactly when the side-by-side one will
+/// not fit.
+public enum ConversionPairAxis: String, Equatable, Sendable, CaseIterable {
+    /// Pages 2, 3 and 4: `FROM` ──▶ `TO`.
+    case sideBySide
+    /// The narrow fallback: `FROM` above a down arrow above `TO`.
+    case stacked
+}
+
 /// How big the pair is drawn.
 ///
 /// A **step**, not free scaling, for the reason `PosterResultSection` already
@@ -156,5 +182,47 @@ public enum ConversionPairScale: Equatable, Sendable, CaseIterable {
         case .full: return 14
         case .compact: return 13
         }
+    }
+
+    // MARK: - Does it fit?
+
+    /// Roughly how wide one time column has to be to draw `8:00 PM` at this
+    /// step without shrinking it.
+    ///
+    /// An estimate from font metrics rather than a measurement, and that is the
+    /// right trade: the alternative is laying out a `Text` to ask it, which
+    /// needs a view context, a run loop and a real font, none of which exist
+    /// where this is called (a layout decision made before the window opens)
+    /// and all of which would make it untestable. The arithmetic, in ems of the
+    /// relevant size:
+    ///
+    /// - `8:00` — three digits at SF Compressed Black's ~0.44em advance plus a
+    ///   colon at ~0.25em: **1.57em** of `clockSize`.
+    /// - the gap before the meridiem, set at the meridiem's size: **0.3em**.
+    /// - `PM` — two caps at ~0.55em: **1.1em** of `meridiemSize`.
+    ///
+    /// Deliberately an *under*-estimate of nothing: it is sized for the common
+    /// four-character clock. A rare `12:00` is one digit wider and is exactly
+    /// what `minimumScaleFactor` is for. What this stops is the case where
+    /// *every* conversion renders shrunken, which is a layout bug rather than a
+    /// long-value accommodation.
+    public var minimumColumnWidth: CGFloat {
+        clockSize * 1.57 + meridiemSize * 0.3 + meridiemSize * 1.1
+    }
+
+    /// The narrowest content width this step's side-by-side pair can be drawn
+    /// in: two time columns and the design's fixed gutter between them.
+    public var minimumSideBySideWidth: CGFloat {
+        minimumColumnWidth * 2 + arrowColumnWidth
+    }
+
+    /// The largest step whose side-by-side pair fits `width`, or `nil` when
+    /// even the compact one does not and the caller has to stack.
+    ///
+    /// Ordered largest-first on purpose: the design is the full step, the
+    /// compact step is a concession, and stacking is a last resort. A caller
+    /// that wants the design gets it whenever the design fits.
+    public static func largestFittingSideBySide(in width: CGFloat) -> ConversionPairScale? {
+        [.full, .compact].first { width >= $0.minimumSideBySideWidth }
     }
 }

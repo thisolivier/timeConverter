@@ -19,12 +19,56 @@ ported across unchanged, which is the proof: Carbon was never the hard part.
   chips — is the `TimeConverterCore` package, the same build the iOS app
   consumes. There is no forked model and no second copy of any rule. The
   platforms differ in *access*, never in behaviour.
-- **This view layer is a deliberate placeholder.**
-  `docs/ux-v1-proposal.md` wants a translucent, Spotlight-style summoned modal
-  with its own layout; that is a design sprint. `MenuBarConverterView` is a
-  plain field, a plain output area and a horizontal row of chips, and the
-  summoned panel is an ordinary titled `NSPanel`. Both exist to prove the
-  restructure works end to end, and both are expected to be replaced.
+- **The view layer is the design now** (backlog item 20, phase B). The
+  placeholder — a plain field, a plain output area, an ordinary titled
+  `NSPanel` — is gone, replaced by page 3 of
+  `docs/design/Time Converter-selection.pdf`: a 740pt frosted panel with the
+  typed line at the top, the `FROM`/`TO` pair in the middle and the
+  target-named footer at the bottom. Everything drawn comes from
+  `TimeConverterUI`; what is left here is state and window plumbing.
+- **One design, two containers.** The panel and the dropdown are the *same*
+  view, parameterised by `GlassPresentation`, which carries exactly three
+  differences: how wide, who supplies the glass, and whether it has to say how
+  to dismiss itself. Nothing else branches. That is working assumption 3 of
+  the sprint plan made structural.
+- **The dropdown stacks because the pair does not fit, not because it was
+  told to.** A menu-bar popover is around 400pt; the side-by-side pair needs
+  about 600 at the design's size step and about 440 at the compact one. So
+  `GlassPanelMetrics` asks `ConversionPairScale.largestFittingSideBySide(in:)`
+  and gets `nil`, and the pair turns vertical with the down arrow between the
+  two columns. Drawing it side by side at 400pt would mean
+  `minimumScaleFactor` shrinking 124pt numerals to caption size — not a
+  smaller poster, a destroyed one.
+- **Where the system has a real equivalent, the system wins.** The frosting is
+  an `NSVisualEffectView` at `.hudWindow` with `.behindWindow` blending — the
+  only thing on macOS that samples the actual desktop — and it supplies *both*
+  halves of the design's CSS (the blur and the white veil), because an AppKit
+  material is blur plus tint while `backdrop-filter` is blur alone; stacking
+  the design's extra 42% on top produced a panel you could not see through.
+  The shadow is the window's own, because a transparent `NSWindow` with
+  `hasShadow` computes one from the content's alpha and drawing it by hand
+  would have meant `.compositingGroup()`, which takes the vibrancy with it.
+  The full declaration-by-declaration mapping is in `GlassPanelSurface.swift`.
+- **The panel is as tall as its contents, and saying so out loud is
+  load-bearing.** `NSHostingController.sizingOptions = .preferredContentSize`
+  is set explicitly rather than left to the default: without it the window is
+  measured once, before `onAppear` has run — which is the empty hint — and
+  never grows again, so an actual conversion's 124pt numerals get squeezed
+  into the height of a one-line placeholder. Measured, not theorised: the
+  panel came up 740×279 for every state until that line existed, and now comes
+  up 279 empty, 314 for a prompt and 444 for a conversion. AppKit resizes a
+  window's content from the top-left, so it grows downward rather than
+  appearing to jump.
+- **The panel has no chrome, so it has to say how to leave.** No title bar, no
+  close button, not resizable (a fixed internal proportion is the design).
+  `GlassFooterText` therefore puts `⌃⌥T hides this panel · esc dismisses it`
+  on the footer line whenever there is no conversion sentence to put there —
+  which is the only state in which someone would need it.
+- **Prompts are drawn in the panel's vocabulary, not the poster's.** The
+  iPhone sets its prompts in rust. Glass has no accent — page 3's single
+  loudest decision is that the arrow is *grey* rather than rust — so the
+  hierarchy is built out of contrast instead: a quiet letterspaced caption
+  over a full-strength message, with translucent outlined chips beneath.
 - **A panel, not a programmatically opened dropdown.** SwiftUI exposes no way
   to open a `MenuBarExtra` from code — doing it anyway means synthesising a
   click on an `NSStatusItem` SwiftUI never hands you. Thirty lines of `NSPanel`
@@ -68,11 +112,29 @@ ported across unchanged, which is the proof: Carbon was never the hard part.
 - `TimeConverterMacApp.swift` — `@main`. The `MenuBarExtra(.window)` scene and
   `TimeConverterMacDelegate`, which registers ⌃⌥T and pins `.accessory`
   activation policy.
-- `MenuBarConverterView.swift` — the converter UI, shown both in the dropdown
-  and in the summoned panel. Logic-free: a `switch` over
-  `ConverterDisplayState`.
-- `PanelSummoner.swift` — owns the hotkey and the floating `NSPanel`, and logs
-  what came up.
+- `MenuBarConverterView.swift` — the state the layout refuses to own: the typed
+  sentence, the display driver, and item 17's focus choreography. One view for
+  both containers, parameterised by `GlassPresentation`.
+- `GlassConverterLayout.swift` — page 3 assembled: typed line, hairline,
+  conversion, hairline, footer. Stateless, so the live panel, the live dropdown
+  and the offscreen renderer all drive the same thing. Plus `GlassInputField`
+  (the live line) and `GlassInputEcho` (the same line for `ImageRenderer`,
+  which cannot rasterise a `TextField`).
+- `GlassPanelLayout.swift` — the two decisions that are not drawing:
+  `GlassPresentation` (which container, and what follows), `GlassResultSection`
+  (which section a display state routes to) and `GlassFooterText` (the
+  sentence, or the dismissal hint). View-free, and a member of the test target.
+- `GlassPromptView.swift` — prompts and tap-to-replace chips on glass.
+- `PanelSummoner.swift` — owns the hotkey and the chromeless, transparent,
+  content-sized `NSPanel`, and logs what came up.
+- `MacAppearanceOverride.swift` — `-appearance dark|light`, DEBUG only, so both
+  halves of the design can be looked at without changing the whole machine.
+  (`-summonOnLaunch 1`, on `PanelSummoner`, opens the panel without a keypress
+  — the only way anything automated ever reaches `makePanel`, since synthetic
+  keystrokes are TCC-blocked. It is how the content-sizing bug below was
+  found.)
+- `GlassPanelRenderer.swift` — `-renderGlass <dir>`, DEBUG only. Draws the real
+  views into PNGs and quits; see `scripts/render-glass.sh`.
 - `SummonPolicy.swift` — the show/hide rule and whether it also takes the
   keyboard, plus `SummonFocusRequests` and `SummonFocusLadder` (item 17) and
   `MacMenuBarLog`, the log identity the two shell scripts filter on. These live
@@ -116,8 +178,18 @@ lane. The exact demand, captured from a dry-run archive, is in
 ```
 scripts/run-mac.sh        # build, launch, print the menu-bar log line
 scripts/qa-menubar.sh     # the full headless pass + the one manual keypress
+scripts/render-glass.sh   # PNGs of the panel in both appearances, no screen
 scripts/test.sh --platform mac
 ```
+
+**The glass itself cannot be verified headlessly, and `render-glass.sh` is
+honest about it.** `ImageRenderer` rasterises offscreen, where there is no
+window and therefore no desktop to blur — a behind-window `NSVisualEffectView`
+draws nothing at all there. The renders substitute the design's own 42% veil so
+the ink has something to sit on, which makes them good evidence about layout,
+type, hierarchy and both appearances, and no evidence whatsoever about the
+frosting, the saturation or the shadow. For those: `scripts/run-mac.sh`, ⌃⌥T,
+and drag the panel across some wallpaper.
 
 Item 17's focus fix is as verified as a script can make it — every summon asks
 for focus, the request is observable twice in a row, the ladder is ordered,

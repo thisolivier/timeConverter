@@ -1,18 +1,25 @@
 import SwiftUI
 import TimeConverterCore
+import TimeConverterUI
 
-/// The Mac converter UI — the dropdown's contents, and the summoned panel's.
+/// The Mac converter — the summoned panel's contents, and the dropdown's.
 ///
-/// **Visually plain on purpose.** `docs/ux-v1-proposal.md` has the Mac heading
-/// for a translucent summoned modal with its own layout; that is a design
-/// sprint. What this view proves is the restructure: the native shell drives
-/// the *same* `ConverterDisplayDriver` as the iOS app, so the 600 ms prompt
-/// debounce, the conversions and the tap-to-replace chips are all identical
-/// behaviour from one core, with no forked model.
+/// Everything visible is `GlassConverterLayout` (page 3 of
+/// `docs/design/Time Converter-selection.pdf`). What lives here instead is the
+/// state that layout refuses to own: the typed sentence, the display driver
+/// that debounces it, and the focus choreography of backlog item 17.
 ///
-/// Logic-free, like its iOS counterpart: a `switch` over `ConverterDisplayState`
-/// whose cases arrive fully rendered.
+/// One view for both containers, parameterised by `GlassPresentation` — which
+/// is working assumption 3 of the sprint plan made structural. The dropdown is
+/// not a second design; it is this design at 400pt, and the only reason it
+/// looks different is that the conversion pair does not fit side by side there
+/// and says so for itself.
+///
+/// Logic-free below the state: `GlassResultSection.routing` turns the display
+/// state into what the panel shows, and the layout draws it.
 struct MenuBarConverterView: View {
+    var presentation: GlassPresentation = .menuBarDropdown
+
     @State private var freeformInput: String = LaunchArguments.initialInput ?? ""
     @State private var displayDriver = ConverterDisplayDriver()
     @FocusState private var inputFieldIsFocused: Bool
@@ -30,27 +37,18 @@ struct MenuBarConverterView: View {
     @State private var summonFocusRequests = SummonFocusRequests.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            TextField("e.g. 12pm ET in London", text: $freeformInput)
-                .textFieldStyle(.roundedBorder)
-                .font(.title3)
-                .autocorrectionDisabled()
-                .focused($inputFieldIsFocused)
-                // Submitting is an action, not typing, so it skips the debounce.
-                .onSubmit { showResultWithoutWaiting() }
-
-            outputArea
-
-            Divider()
-
-            // An app with no Dock icon and no windows has no other way out.
-            Button("Quit Time Converter") { NSApplication.shared.terminate(nil) }
-                .buttonStyle(.plain)
-                .font(.callout)
-                .foregroundStyle(.secondary)
+        GlassConverterLayout(
+            presentation: presentation,
+            section: GlassResultSection.routing(for: displayDriver.displayState),
+            onChipTap: apply
+        ) {
+            GlassInputField(
+                text: $freeformInput,
+                metrics: presentation.metrics,
+                onSubmit: showResultWithoutWaiting
+            )
+            .focused($inputFieldIsFocused)
         }
-        .padding(16)
-        .frame(width: 400, alignment: .leading)
         .onChange(of: freeformInput) {
             displayDriver.inputDidChange(
                 to: freeformInput, now: Date(), localZone: TimeZone.current
@@ -97,47 +95,6 @@ struct MenuBarConverterView: View {
         }
     }
 
-    @ViewBuilder
-    private var outputArea: some View {
-        switch displayDriver.displayState {
-        case .hint:
-            Text("Type a time to convert")
-                .foregroundStyle(.secondary)
-
-        case let .converted(display):
-            VStack(alignment: .leading, spacing: 4) {
-                Text(display.echoLine)
-                    .font(.body)
-                    .textSelection(.enabled)
-                Text(display.detailLine)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-        case let .problem(problem):
-            VStack(alignment: .leading, spacing: 8) {
-                Text(problem.message)
-                    .font(.callout)
-                    .foregroundStyle(.red)
-                if !problem.chips.isEmpty {
-                    // A horizontal scroller rather than the iOS shell's
-                    // wrapping flow layout: placeholder styling, and the real
-                    // Mac design decides this properly.
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(problem.chips) { chip in
-                                Button(chip.label) { apply(chip) }
-                                    .font(.callout)
-                            }
-                        }
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
     /// `Date()` and `TimeZone.current` live in the view and nowhere else, so
     /// the core stays pure — the same contract the iOS shell honours.
     private func showResultWithoutWaiting() {
@@ -155,6 +112,45 @@ struct MenuBarConverterView: View {
     }
 }
 
-#Preview {
-    MenuBarConverterView()
+// MARK: - Previews
+
+/// The panel over a stand-in desktop, because a material previewed against
+/// nothing looks like nothing. Both appearances, because the glass tokens'
+/// dark values are derived rather than designed and this is where they get
+/// looked at.
+private struct GlassPanelPreview: View {
+    let presentation: GlassPresentation
+
+    var body: some View {
+        MenuBarConverterView(presentation: presentation)
+            .padding(60)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.31, green: 0.43, blue: 0.62),
+                        Color(red: 0.13, green: 0.22, blue: 0.37)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+    }
+}
+
+#Preview("Panel — light") {
+    GlassPanelPreview(presentation: .summonedPanel)
+}
+
+#Preview("Panel — dark") {
+    GlassPanelPreview(presentation: .summonedPanel)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Dropdown — light") {
+    GlassPanelPreview(presentation: .menuBarDropdown)
+}
+
+#Preview("Dropdown — dark") {
+    GlassPanelPreview(presentation: .menuBarDropdown)
+        .preferredColorScheme(.dark)
 }

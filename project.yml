@@ -299,6 +299,23 @@ targets:
       - TimeConverterMacTests
       - TimeConverterMac/GlobalHotKey.swift
       - TimeConverterMac/SummonPolicy.swift
+      # Phase B. The glass panel's two decisions that are not drawing: which
+      # container is being filled (and therefore how wide, whose glass, and
+      # whether it explains how to dismiss itself), and which section a display
+      # state routes to. Both are view-free by construction so that they can be
+      # members of a host-less test bundle like the two files above.
+      - TimeConverterMac/GlassPanelLayout.swift
+      - TimeConverterMac/MacAppearanceOverride.swift
+    dependencies:
+      # Phase B adds the first Mac-shell logic with opinions about *values* from
+      # the package — `ConverterDisplayState` on one side, `GlassPanelMetrics`
+      # on the other — so the test bundle has to link them. Still no host
+      # application: these are libraries, and linking a library does not launch
+      # a menu-bar app the way a test host would.
+      - package: TimeConverterCore
+        product: TimeConverterCore
+      - package: TimeConverterCore
+        product: TimeConverterUI
     settings:
       base:
         SWIFT_VERSION: "6.0"

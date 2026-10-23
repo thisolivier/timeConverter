@@ -7,10 +7,18 @@
 #
 # What you should see: no Dock icon, no window, a clock glyph in the menu bar.
 # Click it for the converter dropdown; press ⌃⌥T from anywhere for the summoned
-# panel. The script tails the app's own log afterwards so the menu-bar item and
-# the hotkey registration are visible rather than assumed — "hotkey never
-# arrived" and "summon failed" are different bugs and this is how they are told
-# apart.
+# glass panel (design page 3). The script tails the app's own log afterwards so
+# the menu-bar item and the hotkey registration are visible rather than assumed
+# — "hotkey never arrived" and "summon failed" are different bugs and this is
+# how they are told apart.
+#
+# Both appearances, without changing the whole machine's System Settings:
+#
+#   open build/DerivedData/Build/Products/Debug/TimeConverter.app --args -appearance dark
+#
+# The glass palette's dark values are *derived* (the mockup ships light only),
+# so they are the ones worth looking at. For pictures without a screen, see
+# scripts/render-glass.sh.
 #
 # --sandboxed exists because the shipped Mac build will be sandboxed (the Mac
 # App Store requires it) while Debug deliberately is not. It applies the same

@@ -30,18 +30,19 @@ keychain access.
 | `TimeConverterMac` | macOS | the native menu-bar app; `TimeConverterMacTests` + the same two package test targets, natively |
 
 ```bash
-scripts/test.sh                 # unit tests, iOS simulator (290 tests)
-scripts/test.sh --platform mac  # unit tests, native macOS (297 tests)
+scripts/test.sh                 # unit tests, iOS simulator (305 tests)
+scripts/test.sh --platform mac  # unit tests, native macOS (328 tests)
 scripts/test.sh --platform all  # both lanes
 scripts/test.sh PromptTests     # one core suite (bare names mean the core)
 scripts/run-ios.sh              # build, install and launch on a simulator
 scripts/run-mac.sh              # build and launch the native Mac menu-bar app
 scripts/qa-menubar.sh           # Mac-only: QA the menu bar and ⌃⌥T (Debug)
+scripts/render-glass.sh         # Mac-only: PNGs of the glass panel, no screen
 cd TimeConverterCore && swift test   # the core alone, fastest loop
 ```
 
 The shared core is deliberately tested **twice**, once per platform, which is
-why the two lanes overlap by 283 tests. Run `--platform all` before shipping
+why the two lanes overlap by 298 tests. Run `--platform all` before shipping
 anything that touches parsing, the presenter or startup wiring — in the sibling
 music projects the Mac build broke twice while the iOS lane stayed green.
 
@@ -105,9 +106,9 @@ Mac experience, which is why `ship-mac.sh` archives `TimeConverterMac`.
   launch-request logic and the DEBUG prefill, and
   `Resources/fallback-cities.json` is reached through `Bundle.module`.
   `Sources/TimeConverterUI/` is the shared SwiftUI design layer (item 20): the
-  poster and glass colour tokens, the typography helpers, the arrow shapes and
-  `ConversionPairView`, the side-by-side FROM/TO pair the iPad and Mac designs
-  both draw. Between them `Tests/` holds 283 of the repo's tests. See
+  poster and glass colour tokens, the glass panel's measurements and chrome,
+  the typography helpers, the arrow shapes, the chip flow layout and
+  `ConversionPairView`, the FROM/TO pair the iPad and Mac designs both draw. Between them `Tests/` holds 298 of the repo's tests. See
   `TimeConverterCore/readme.md`,
   `TimeConverterCore/Sources/TimeConverterUI/readme.md` and
   `TimeConverterCore/Sources/TimeConverterCore/Parsing/readme.md`
@@ -117,7 +118,7 @@ Mac experience, which is why `ship-mac.sh` archives `TimeConverterMac`.
   correction chips; `InputFocusPolicy.swift` decides when the field takes
   focus; `Launchers/` is the App Shortcut and the intent (see
   `TimeConverter/Launchers/readme.md`)
-- `TimeConverterMac/` — the **macOS** shell: `MenuBarExtra`, the summoned
+- `TimeConverterMac/` — the **macOS** shell: `MenuBarExtra`, the summoned glass
   panel, ⌃⌥T (see `TimeConverterMac/readme.md`)
 - `TimeConverterControls/` — the Control Center widget extension, iOS-only (see
   `TimeConverterControls/readme.md`)
@@ -135,11 +136,13 @@ layer has no module of its own and is documented below instead.
 
 ## UI layer
 
-This section describes the **iOS** shell. The Mac shell deliberately has its
-own, plainer view layer as a placeholder for the translucent summoned design —
-see `TimeConverterMac/readme.md` — but drives the identical
+This section describes the **iOS** shell. The Mac shell has its own visual
+language since item 20 phase B — the glass panel of design page 3, documented
+in `TimeConverterMac/readme.md` — but drives the identical
 `ConverterDisplayDriver`, so every rule below (debounce, chips, instant
-results) holds there too.
+results) holds there too. The two shells share the design *layer*
+(`TimeConverterUI`) and disagree only about which of its two palettes they
+wear.
 
 Since backlog item 18 the iOS shell wears Olivier's design
 (`docs/design/Time Converter.{pdf,html}`): a retro print poster — cream paper
@@ -367,9 +370,17 @@ needs no permission because the WindowServer delivers only the one pre-declared
 chord. The retired Catalyst approach (backlog item 12a) had to load a macOS-SDK
 `.bundle` into the Catalyst process to reach any of that, along with an `@objc`
 hosting protocol whose silent mis-cast was the sharpest trap in the design; all
-of it is gone, and `GlobalHotKey.swift` ported across unchanged. The view layer
-is a deliberate placeholder — `docs/ux-v1-proposal.md` has a translucent
-Spotlight-style modal for the design sprint.
+of it is gone, and `GlobalHotKey.swift` ported across unchanged.
+
+Since item 20 phase B the summoned thing is **the glass panel of design page
+3**: 740pt wide, frosted over the desktop, 30pt corners, no title bar and no
+close button, with the typed line at the top, the side-by-side FROM/TO pair in
+the middle and the target-named footer at the bottom. The menu-bar dropdown is
+the same view at 400pt, where the pair stacks vertically because it measurably
+does not fit side by side. The frosting is an `NSVisualEffectView`
+(`.hudWindow`, behind-window) and the shadow is the window's own — the mapping
+from the design's CSS to what actually draws each declaration is a table in
+`TimeConverterUI/Components/GlassPanelSurface.swift`.
 
 ### QA: the menu bar headlessly
 
@@ -399,17 +410,27 @@ Then: **click another app, and press ⌃⌥T.**
 
 Expect, in order:
 
-1. A small floating "Time Converter" panel appears, centred. **Type without
-   touching the mouse** — the characters land in the field (backlog item 17;
-   the `@FocusState` write is the one part of that fix no test can reach).
+1. The glass panel appears, centred — frosted, chromeless, 740pt wide. **Type
+   without touching the mouse** — the characters land in the big mono line at
+   the top (backlog item 17; the `@FocusState` write is the one part of that
+   fix no test can reach). The desktop must be visibly blurred *through* the
+   panel and must change as you drag it across different wallpaper; that is
+   the behind-window material, and it is the one thing no offscreen render can
+   prove.
 2. Press ⌃⌥T again while looking at it — it hides. Press once more — it comes
    back with the half-typed text **still there**, and typing still goes
    straight in.
 3. Click a *third* app so the panel is behind it, press ⌃⌥T, and type again.
    This is the case window state alone cannot detect, and the one
    `SummonFocusRequests` exists for.
-4. Clicking the clock glyph opens the dropdown, also ready to type.
-5. "Quit Time Converter" in the dropdown — the glyph disappears.
+4. Clicking the clock glyph opens the dropdown, also ready to type — the same
+   design at 400pt, with the pair stacked above and below a down arrow.
+5. "Quit" on the footer line — the glyph disappears.
+
+For the layout and the type without a screen at all, `scripts/render-glass.sh`
+draws the real views into PNGs in both appearances. It cannot show the
+frosting — an offscreen pass has no window and therefore no desktop to blur —
+and says so.
 
 Every press logs a line, which is what separates "the keystroke never arrived"
 from "the summon failed":

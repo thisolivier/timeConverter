@@ -11,12 +11,13 @@ import TimeConverterCore
 ///   Western European Time          Brasilia Standard Time
 /// ```
 ///
-/// One view for all three pages. The differences between them are two
-/// parameters — `ConversionPairStyle` (paper or glass) and
-/// `ConversionPairScale` (full or compact) — plus an optional phrase under the
-/// arrow, which is page 4's way of keeping the relationship visible when the
-/// keyboard has eaten the footer. Nothing else differs, and discovering that is
-/// the whole point of extracting this before building either platform.
+/// One view for all three pages. The differences between them are three
+/// parameters — `ConversionPairStyle` (paper or glass), `ConversionPairScale`
+/// (full or compact) and `ConversionPairAxis` (side by side or stacked) — plus
+/// an optional phrase under the arrow, which is page 4's way of keeping the
+/// relationship visible when the keyboard has eaten the footer. Nothing else
+/// differs, and discovering that is the whole point of extracting this before
+/// building either platform.
 ///
 /// Logic-free, like every other view in this app: every string arrives
 /// pre-rendered on `ConverterDisplay`, including — new in phase A — the source
@@ -44,10 +45,14 @@ import TimeConverterCore
 /// work here, because a guide set inside a `VStack` does not propagate to the
 /// stack's own vertical guide, so it would have to be computed from hard-coded
 /// line heights and would drift the first time a font metric changed.
+///
+/// The stacked axis needs none of that: with one column above the other the
+/// arrow is simply the thing between them.
 public struct ConversionPairView: View {
     private let display: ConverterDisplay
     private let style: ConversionPairStyle
     private let scale: ConversionPairScale
+    private let axis: ConversionPairAxis
     private let arrowLabel: String?
 
     /// - Parameters:
@@ -57,7 +62,11 @@ public struct ConversionPairView: View {
     ///     arrow's colour, and whether `FROM` stacks above the place name or
     ///     sits beside it.
     ///   - scale: `.full` for a full-height layout, `.compact` when a keyboard
-    ///     is taking the bottom of the screen.
+    ///     is taking the bottom of the screen — or when the pair is stacked
+    ///     into a narrow container.
+    ///   - axis: `.sideBySide` is the design. `.stacked` is the fallback for
+    ///     containers too narrow to draw it, and is chosen by measurement
+    ///     rather than by hand — see `GlassPanelMetrics.pairAxis`.
     ///   - arrowLabel: page 4's phrase under the arrow — pass
     ///     `display.offsetPhrase` (`4 hours behind`) to get it, `nil` for the
     ///     plain arrow of pages 2 and 3.
@@ -65,32 +74,25 @@ public struct ConversionPairView: View {
         display: ConverterDisplay,
         style: ConversionPairStyle = .paper,
         scale: ConversionPairScale = .full,
+        axis: ConversionPairAxis = .sideBySide,
         arrowLabel: String? = nil
     ) {
         self.display = display
         self.style = style
         self.scale = scale
+        self.axis = axis
         self.arrowLabel = arrowLabel
     }
 
+    private var cells: ConversionPairCells {
+        ConversionPairCells(style: style, scale: scale)
+    }
+
     public var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 0, verticalSpacing: 0) {
-            GridRow {
-                header(label: "From", placeName: display.sourcePlaceName)
-                arrowColumnSpacer
-                header(label: "To", placeName: display.targetPlaceName)
-            }
-
-            GridRow {
-                clock(digits: display.sourceClockDigits, meridiem: display.sourceMeridiem)
-                arrowCell.gridCellAnchor(.center)
-                clock(digits: display.targetClockDigits, meridiem: display.targetMeridiem)
-            }
-
-            GridRow {
-                subLine(display.sourceZoneLine)
-                arrowColumnSpacer
-                subLine(display.targetZoneLine)
+        Group {
+            switch axis {
+            case .sideBySide: sideBySideBody
+            case .stacked: stackedBody
             }
         }
         // One element per *column* would be ideal, but a `Grid` interleaves the
@@ -103,94 +105,84 @@ public struct ConversionPairView: View {
         .accessibilityLabel(accessibilityDescription)
     }
 
-    // MARK: - Cells
+    // MARK: - The design's axis
 
-    /// `FROM` over `LISBON` on paper; `FROM  LISBON` on one baseline on glass.
-    @ViewBuilder
-    private func header(label: String, placeName: String) -> some View {
-        let labelText = Text(label)
-            .posterLabel(size: scale.labelSize)
-            .foregroundStyle(style.quietInk)
-
-        let placeText = Text(placeName)
-            .font(PosterTypography.display(size: scale.placeSize))
-            .textCase(.uppercase)
-            .foregroundStyle(style.ink)
-            .lineLimit(1)
-            // A long place name (`Eastern Time (New York, Toronto)` set at
-            // 40pt) shrinks rather than truncating: a city name cut mid-word
-            // is the one failure mode that makes the result look wrong rather
-            // than tight.
-            .minimumScaleFactor(0.4)
-
-        if style.stacksLabelAbovePlace {
-            VStack(alignment: .leading, spacing: 2) {
-                labelText
-                placeText
+    private var sideBySideBody: some View {
+        Grid(alignment: .leading, horizontalSpacing: 0, verticalSpacing: 0) {
+            GridRow {
+                cells.header(label: "From", placeName: display.sourcePlaceName)
+                arrowColumnSpacer
+                cells.header(label: "To", placeName: display.targetPlaceName)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        } else {
-            // `.firstTextBaseline`, and the design's own 14px gap: on page 3
-            // the label is tucked into the place name's baseline rather than
-            // floating above it.
-            HStack(alignment: .firstTextBaseline, spacing: 14) {
-                labelText
-                placeText
+
+            GridRow {
+                cells.clock(
+                    digits: display.sourceClockDigits, meridiem: display.sourceMeridiem
+                )
+                arrowCell.gridCellAnchor(.center)
+                cells.clock(
+                    digits: display.targetClockDigits, meridiem: display.targetMeridiem
+                )
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            GridRow {
+                cells.subLine(display.sourceZoneLine)
+                arrowColumnSpacer
+                cells.subLine(display.targetZoneLine)
+            }
         }
     }
 
-    /// `8:00 PM` — numerals at poster scale with the meridiem small beside
-    /// them.
-    ///
-    /// One `Text`, not two in an `HStack`: composing them into a single run
-    /// keeps the numerals and the meridiem on a shared baseline *and* scales
-    /// them together, so `12:30 AM` shrinks as one object rather than the two
-    /// parts drifting apart. Same trick, same reason, as `PosterResultSection`
-    /// on the iPhone — spelled with interpolation rather than that file's `+`,
-    /// which is deprecated as of this OS floor.
-    private func clock(digits: String, meridiem: String) -> some View {
-        let digitsRun = Text(digits)
-            .font(PosterTypography.display(size: scale.clockSize))
-        // The gap is set at the *meridiem's* size, not the numerals', so the
-        // space between `4:00` and `PM` stays a thin gap rather than becoming
-        // a 124pt hole.
-        let gapRun = Text(" ")
-            .font(PosterTypography.display(size: scale.meridiemSize))
-        let meridiemRun = Text(meridiem)
-            .font(PosterTypography.display(size: scale.meridiemSize))
+    // MARK: - The narrow fallback
 
-        return Text("\(digitsRun)\(gapRun)\(meridiemRun)")
-            .foregroundStyle(style.ink)
-        .lineLimit(1)
-        .minimumScaleFactor(0.3)
-        // The design's `margin-top: 2px` between the place name and the time.
-        .padding(.top, 2)
+    /// `FROM` above a down arrow above `TO`.
+    ///
+    /// The arrow is leading-aligned rather than centred, because everything
+    /// else in both designs is: a centred arrow over left-ranged numerals reads
+    /// as a stray mark rather than as the join between two readings. It is
+    /// inset by half the gutter the side-by-side axis would have used, which
+    /// puts it under the numerals it is pointing from.
+    private var stackedBody: some View {
+        VStack(alignment: .leading, spacing: stackedSpacing) {
+            cells.column(
+                label: "From",
+                placeName: display.sourcePlaceName,
+                digits: display.sourceClockDigits,
+                meridiem: display.sourceMeridiem,
+                subLineText: display.sourceZoneLine
+            )
+
+            downArrow
+                .padding(.leading, scale.arrowColumnWidth / 2)
+
+            cells.column(
+                label: "To",
+                placeName: display.targetPlaceName,
+                digits: display.targetClockDigits,
+                meridiem: display.targetMeridiem,
+                subLineText: display.targetZoneLine
+            )
+        }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// The item-21 zone line, where the design drew `UTC+1`.
-    ///
-    /// Empty for GMT and UTC, which have no cities by design. Drawn as an
-    /// empty `Text` rather than skipped, because the two columns are rows of
-    /// one grid: dropping the cell on one side would shorten the row and pull
-    /// the other side's line up with it.
-    private func subLine(_ text: String) -> some View {
-        Text(text)
-            // 0.10em rather than the design's 0.14em, for the reason the
-            // iPhone already tightened the same line: the design was setting
-            // `UTC−3`, five characters where generous letterspacing *is* the
-            // effect. This slot now holds up to about thirty-five, and at
-            // 0.14em it wraps.
-            .posterLabel(size: scale.subLineSize, em: 0.10)
-            .foregroundStyle(style.quietInk)
-            .lineLimit(2)
-            .minimumScaleFactor(0.7)
-            .fixedSize(horizontal: false, vertical: true)
-            // The design's `margin-top: 4px`.
-            .padding(.top, 4)
-            .frame(maxWidth: .infinity, alignment: .leading)
+    /// Tight enough that the two columns read as one object. The sub-line
+    /// above and the caption below already supply their own air.
+    private var stackedSpacing: CGFloat { scale.labelSize / 2 }
+
+    /// The iPhone's stroked down arrow, which is the same gesture read
+    /// vertically — reused rather than re-transcribed, and tinted by the style
+    /// exactly as the horizontal one is.
+    private var downArrow: some View {
+        PosterArrow()
+            .stroke(
+                style.arrowTint,
+                style: StrokeStyle(
+                    lineWidth: scale.arrowSize.height / 8, lineCap: .butt, lineJoin: .miter
+                )
+            )
+            .frame(width: scale.arrowSize.height * 0.62, height: scale.arrowSize.height * 0.76)
+            .accessibilityHidden(true)
     }
 
     // MARK: - The middle column
@@ -232,7 +224,8 @@ public struct ConversionPairView: View {
 
     /// Read as two readings of one instant, in the order the screen puts them:
     /// "From Lisbon, 8:00 PM, Western European Time (Lisbon). To São Paulo,
-    /// 4:00 PM, Brasilia Standard Time (São Paulo)."
+    /// 4:00 PM, Brasilia Standard Time (São Paulo)." Identical on both axes,
+    /// because turning the layout does not change what was said.
     private var accessibilityDescription: String {
         let source = spokenColumn(
             label: "From",
@@ -267,7 +260,7 @@ public struct ConversionPairView: View {
 
 // MARK: - Previews
 
-/// The design's own example, drawn the three ways the design draws it.
+/// The design's own example, drawn the ways the design draws it.
 ///
 /// Built through the real `ConverterDisplayDriver` rather than from a stub
 /// display: that is the module's only public route to a `ConverterDisplay`, and
@@ -277,7 +270,9 @@ public struct ConversionPairView: View {
 private struct ConversionPairPreview: View {
     let style: ConversionPairStyle
     let scale: ConversionPairScale
+    var axis: ConversionPairAxis = .sideBySide
     var showsArrowLabel: Bool = false
+    var width: CGFloat = 900
 
     @State private var displayDriver = ConverterDisplayDriver()
 
@@ -288,6 +283,7 @@ private struct ConversionPairPreview: View {
                     display: display,
                     style: style,
                     scale: scale,
+                    axis: axis,
                     arrowLabel: showsArrowLabel ? display.offsetPhrase : nil
                 )
             } else {
@@ -295,7 +291,7 @@ private struct ConversionPairPreview: View {
             }
         }
         .padding(32)
-        .frame(width: 900)
+        .frame(width: width)
         .background(previewBackground)
         .onAppear {
             displayDriver.showWithoutWaiting(
@@ -317,7 +313,7 @@ private struct ConversionPairPreview: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            .overlay(GlassPalette.panelTint)
+            .overlay(GlassPalette.offscreenPanelTint)
             .background(GlassPalette.panelMaterial)
         }
     }
@@ -333,6 +329,15 @@ private struct ConversionPairPreview: View {
 
 #Preview("Pair — paper, compact + labeled arrow (page 4)") {
     ConversionPairPreview(style: .paper, scale: .compact, showsArrowLabel: true)
+}
+
+#Preview("Pair — glass, compact, stacked (the Mac dropdown)") {
+    ConversionPairPreview(
+        style: .glass,
+        scale: .compact,
+        axis: .stacked,
+        width: GlassPanelMetrics.narrow.totalWidth
+    )
 }
 
 #Preview("Pair — paper, full, dark") {
