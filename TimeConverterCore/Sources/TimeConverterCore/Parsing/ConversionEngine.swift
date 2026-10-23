@@ -8,6 +8,10 @@ struct ZoneReading: Equatable, Sendable {
     let zoneDisplayName: String
     /// Cities shown beside an expanded abbreviation name; empty otherwise.
     let representativeCities: [String]
+    /// How item 21's result band names this zone — carried through from the
+    /// `ResolvedZone`, because the engine is the last place that still knows
+    /// *how* the token resolved.
+    let zoneLabel: ZoneLabel
     /// Canonical 12-hour form, e.g. `5:00 pm`.
     let formattedTime: String
     /// e.g. `UTC+0`, `UTC-5`, `UTC+5:30`.
@@ -24,6 +28,7 @@ struct ZoneReading: Equatable, Sendable {
         timeZoneIdentifier: String,
         zoneDisplayName: String,
         representativeCities: [String] = [],
+        zoneLabel: ZoneLabel,
         formattedTime: String,
         utcOffsetDescription: String,
         utcOffsetSeconds: Int,
@@ -32,6 +37,7 @@ struct ZoneReading: Equatable, Sendable {
         self.timeZoneIdentifier = timeZoneIdentifier
         self.zoneDisplayName = zoneDisplayName
         self.representativeCities = representativeCities
+        self.zoneLabel = zoneLabel
         self.formattedTime = formattedTime
         self.utcOffsetDescription = utcOffsetDescription
         self.utcOffsetSeconds = utcOffsetSeconds
@@ -75,13 +81,51 @@ struct ZoneReading: Equatable, Sendable {
         return "\(zoneDisplayName) (\(qualifiers.joined(separator: ", ")))"
     }
 
-    /// The shortest honest name for this zone: the display name, plus the
-    /// `(local)` marker when the side was defaulted — but never the
-    /// representative cities. Used by the result's place label, which the
-    /// design sets uppercase and letterspaced, where
-    /// `IN EASTERN TIME (NEW YORK, TORONTO)` would run off the screen.
-    var shortPlaceDescription: String {
-        isDeviceLocalZone ? "\(zoneDisplayName) (local)" : zoneDisplayName
+    /// The result band's header, in natural case: `In São Paulo`,
+    /// `In ET (Eastern Time)`, `In Los Angeles (local)`.
+    ///
+    /// Item 21 made this a function of *how the token resolved* rather than of
+    /// the zone — see `ZoneLabel`. Before that it was the display name plus a
+    /// `(local)` marker, which read as `IN EASTERN TIME` for a typed `ET` and
+    /// so threw away the user's own word for the zone.
+    var headerDescription: String { zoneLabel.headerDescription }
+
+    /// The line under the big time — item 21's replacement for `UTC-3`.
+    ///
+    /// Two shapes, because the header has already said different things:
+    ///
+    /// - a **place** header (`IN SÃO PAULO`) has named a city but not the zone,
+    ///   so this names the zone and makes it concrete with its cities:
+    ///   `Brasilia Standard Time (São Paulo)`.
+    /// - an **abbreviation** header (`IN ET (EASTERN TIME)`) has already named
+    ///   the zone twice over, so this adds only the cities: `New York, Toronto`.
+    ///
+    /// Empty only for the reference zones, GMT and UTC, which have no cities by
+    /// design — they are the datum, not a place. The view drops the line rather
+    /// than printing a lone bracket.
+    var zoneDetailDescription: String {
+        switch zoneLabel {
+        case .place:
+            // `cities(forIdentifier:)` is never empty — it falls back to the
+            // identifier's own city — so a place always has both halves.
+            let cities = ZoneRepresentativeCities.cities(forIdentifier: timeZoneIdentifier)
+                .joined(separator: ", ")
+            return "\(ZoneNameFormatting.genericName(for: timeZone)) (\(cities))"
+
+        case .abbreviation:
+            // The abbreviation's own curated cities, not the identifier's: the
+            // user asked about `CST`, and Chicago *and* Dallas are what make
+            // the choice they made legible.
+            return representativeCities.joined(separator: ", ")
+        }
+    }
+
+    /// Rebuilt from the identifier, because `ZoneReading` deliberately keeps a
+    /// string rather than a `TimeZone` — every other field it carries is
+    /// already rendered, and the engine resolves the offsets before this type
+    /// exists. Non-nil for anything the resolver chain could produce.
+    private var timeZone: TimeZone {
+        TimeZone(identifier: timeZoneIdentifier) ?? TimeZone(secondsFromGMT: 0)!
     }
 
     /// `8:00 PM` — the design sets the meridiem in caps.
@@ -191,6 +235,7 @@ struct ConversionEngine: Sendable {
             timeZoneIdentifier: zone.timeZone.identifier,
             zoneDisplayName: zone.displayName,
             representativeCities: zone.representativeCities,
+            zoneLabel: zone.zoneLabel,
             formattedTime: TimeFormatting.twelveHourDescription(
                 hour: components.hour ?? 0,
                 minute: components.minute ?? 0

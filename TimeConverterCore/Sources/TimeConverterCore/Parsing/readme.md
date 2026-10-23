@@ -19,11 +19,15 @@ an `InputParser`, only the rendered values the presenter hands them.
   `Date()` in `ContentView` (iOS) and `MenuBarConverterView` (macOS). Tests
   inject fixed dates and fixed zones (`FixedZones`) and assert exact UTC
   offsets.
-- **No `Locale`, no `DateFormatter`.** The spec pins exact output shapes
-  (`12:00 pm`, `UTC-5`, `UTC+5:30`), so formatting is hand-rolled in
-  `Formatting.swift` and calendars are always `Calendar(identifier: .gregorian)`
-  pinned to an explicit zone. A device set to a 24-hour German locale produces
-  byte-identical output.
+- **No `DateFormatter`, and only one pinned `Locale`.** The spec pins exact
+  output shapes (`12:00 pm`, `UTC-5`, `UTC+5:30`), so formatting is hand-rolled
+  in `Formatting.swift` and calendars are always
+  `Calendar(identifier: .gregorian)` pinned to an explicit zone. A device set to
+  a 24-hour German locale produces byte-identical output. The one exception is
+  item 21's zone name, which comes from `TimeZone.localizedName` because naming
+  443 zones by hand is not an editorial decision worth making — and it is read
+  through `ZoneNameFormatting.locale`, a hard-pinned `en_US`, so the rule still
+  holds: output does not vary by device.
 - **Prompts are values.** The parser never formats UI. `Prompt` carries the
   offending token, the side it came from, the raw character range to rewrite and
   the picker rows; the spec's copy lives in `PromptMessages.swift` as a computed
@@ -81,6 +85,8 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 | `Prompt.swift` | The prompts as values (P1, P2, P4, P5 — P3 is retired), plus `ZoneChoice`. |
 | `PromptMessages.swift` | The spec's prompt copy. |
 | `AbbreviationDisplay.swift` | Expanded zone name + representative cities, for the echo. |
+| `ZoneLabel.swift` | How the result band names a zone (item 21): `.place` or `.abbreviation(code:expandedName:)`, plus the re-casing that turns a lowercased `et` back into `ET`. |
+| `ZoneRepresentativeCities.swift` | Which two or three cities stand for a zone — the two abbreviation tables read backwards, with the self-consistency rule that rejects their loose ends. |
 | `ZoneResolver.swift` | The `ZoneResolver` protocol, `ZoneResolution`, and the ordered `ZoneResolverChain`. |
 | `ZoneVocabulary.swift` | `ZoneVocabularyEntry` — what a resolver can match, and whether it is a code or a place. |
 | `EditDistance.swift` | Bounded Levenshtein. |
@@ -162,6 +168,42 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   `ReplacementChipTests.everyAmbiguityChipWritesATokenTheChainCanResolve` is
   exhaustive over every P4-producing token, so the next one is caught rather
   than shipped.
+- **The result band's label is keyed on *how the token resolved*, not on the
+  zone** (item 21, 2026-10-23). `America/New_York` is `IN NEW YORK` when the
+  user typed a city and `IN ET (EASTERN TIME)` when they typed the code,
+  because those are two different questions about the same zone and answering
+  them identically throws away the user's own word for it. The sub-line
+  underneath follows: a place header names the zone and makes it concrete
+  (`Brasilia Standard Time (São Paulo)`), while an abbreviation header — which
+  has already named the zone twice — adds only the cities (`New York,
+  Toronto`). `ResolvedZone.zoneLabel` is the whole rule, and it has two cases
+  rather than five: everything that is not a curated abbreviation is a place,
+  including countries, gazetteer hits, abbreviations our tables do not cover,
+  and the device-local default, which keeps its `(local)` marker instead of
+  growing a third case.
+- **The zone name comes from Foundation; the cities come from us.**
+  `TimeZone.localizedName(for: .generic)` — verified at runtime, not guessed:
+  `America/Sao_Paulo` is "Brasilia Standard Time", `Europe/London` is "United
+  Kingdom Time", `Asia/Tokyo` is "Japan Standard Time", `America/New_York` is
+  "Eastern Time". `.standard` was the other candidate and is wrong for exactly
+  the reason the line exists — it names today's offset rather than the zone, so
+  London would read "Greenwich Mean Time" in July. Pinned to `en_US`, like
+  every other string the app renders. The *cities* stay hand-curated, because
+  naming 443 zones is not an editorial decision worth making: `ZoneRepresentative
+  Cities` reads the two abbreviation tables backwards, keeping an entry only when
+  the zone's own city appears in it. That rule is load-bearing — Foundation maps
+  `MST` to `America/Phoenix`, whose curated cities are Denver and Calgary, two
+  cities that observe daylight saving where Phoenix does not — and it folds
+  diacritics, because the tables spell `São Paulo` properly and an identifier
+  can only ever yield `Sao Paulo`.
+- **UTC offsets left the result band and the box echo, and stayed everywhere
+  else** (item 21). The echo subtitle is `Lisbon · 8:00 PM`, not `… · UTC+1`:
+  the box echoes back what the user *typed*, and `UTC+1` is not something they
+  typed. Disambiguation chips keep their offsets, because there the offset is
+  the entire basis for choosing between two meanings of `CST`. The footer
+  sentence is untouched — it was never about offsets, only the difference
+  between two of them. And `ConversionResult.summary` (the Mac shell's one
+  sentence) keeps every offset it had.
 - **The source reading comes from the resolved instant**, not the requested
   time. On a spring-forward gap the echo therefore shows the shifted time
   (`2:30 am` typed → `3:00 am New York (UTC-4)`), which is how the user sees
@@ -197,7 +239,10 @@ contradictory meridiems, CST/IST ambiguity, Porto through the real bundled file
 and day rollover both ways. On top of that: raw-range mapping through case
 folding, collapsed whitespace and emoji (`RawTextRangeTests`); the did-you-mean
 suggester including eight typo rows lifted from `docs/qa-input-candidates.md`
-§3 and the abbreviation guard (`ZoneSuggestionEngineTests`); the expanded echo
+§3 and the abbreviation guard (`ZoneSuggestionEngineTests`); item 21's header and
+sub-line as a matrix with one row per resolution kind, the Foundation
+zone-name assertions, the city index's self-consistency and determinism, and
+the offsets that stayed (`ZoneLineTests`); the expanded echo
 with its table-integrity checks (`AbbreviationEchoTests`); and local-zone
 defaulting with injected device zones — both conjunction cases, the `(local)`
 echo, the coast aliases, rollover on a defaulted side and chips on the one named

@@ -15,13 +15,39 @@ import TimeConverterCore
 /// `TimeConverterCore`.
 struct PosterResultSection: View {
     let displayState: ConverterDisplayState
+    /// Item 19: `.compact` steps the numerals down so the band fits above the
+    /// keyboard.
+    var layoutMode: PosterLayoutMode = .full
     let onChipTap: (ReplacementChip) -> Void
 
     /// The design's 156pt, pulled back a little so the common `4:00` sits at
     /// full size inside an iPhone's content width instead of starting out
     /// scaled down.
-    private let clockSize: CGFloat = 140
-    private let meridiemSize: CGFloat = 40
+    private let fullClockSize: CGFloat = 140
+    private let fullMeridiemSize: CGFloat = 40
+
+    /// ## Why a size *step* and not free scaling
+    ///
+    /// The obvious implementation of "squish the big time" is a `scaleEffect`
+    /// driven by the space left over, and it was the wrong call twice over. It
+    /// makes the numerals a different size on every device and at every
+    /// keyboard height, so the poster's one fixed proportion — huge display
+    /// type against 14pt mono — stops being a composition and becomes an
+    /// accident; and a scaled `Text` renders at the unscaled size and is then
+    /// resampled, which on black compressed type at this scale is visible as
+    /// softened edges. Two deliberate sizes keep both the proportion and the
+    /// crispness, and 92pt is still unmistakably poster type rather than a
+    /// label. The meridiem comes down with it, in the same ratio.
+    private let compactClockSize: CGFloat = 92
+    private let compactMeridiemSize: CGFloat = 28
+
+    private var clockSize: CGFloat {
+        layoutMode.usesCompactResultType ? compactClockSize : fullClockSize
+    }
+
+    private var meridiemSize: CGFloat {
+        layoutMode.usesCompactResultType ? compactMeridiemSize : fullMeridiemSize
+    }
 
     var body: some View {
         switch displayState {
@@ -62,13 +88,35 @@ struct PosterResultSection: View {
             .padding(.top, 6)
             .accessibilityLabel("\(display.targetClockDigits) \(display.targetMeridiem)")
 
-            Text(display.targetOffsetLine)
-                .posterLabel(size: 14, em: 0.14)
-                .foregroundStyle(PosterPalette.ink)
-                .padding(.top, 6)
+            // The zone line (item 21), where `UTC-3` used to be. Hidden when
+            // empty, which only happens for GMT and UTC — printing a blank
+            // letterspaced line would still take 14pt of height and leave the
+            // rule floating.
+            if !display.targetZoneLine.isEmpty {
+                Text(display.targetZoneLine)
+                    // 13pt at 0.10em rather than the design's 15pt at 0.14em.
+                    // The design was setting `UTC−3`: five characters, where
+                    // generous letterspacing is the whole effect. This line is
+                    // now up to about thirty-five — `BRASILIA STANDARD TIME
+                    // (SÃO PAULO)` — and at the design's tracking it wraps to
+                    // two lines on an iPhone. Tightened, it fits on one and
+                    // still reads as the same family of label.
+                    .posterLabel(size: 13, em: 0.10)
+                    .foregroundStyle(PosterPalette.ink)
+                    // Halved from 6 (item 21): the zone line is a caption on
+                    // the numerals above it, and the design's gap read as a
+                    // gap between two separate things.
+                    .padding(.top, 3)
+                    // Wraps rather than truncates if it still overflows — a
+                    // city name cut mid-word would be worse than two lines.
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             PosterRule()
-                .padding(.top, 18)
+                // Halved from 18, same instruction, same reason — the rule
+                // closes this band, and pulling it up ties the three lines
+                // together as one block.
+                .padding(.top, 9)
 
             Text(display.footerSentence)
                 .font(PosterTypography.mono(size: 14, weight: .regular))

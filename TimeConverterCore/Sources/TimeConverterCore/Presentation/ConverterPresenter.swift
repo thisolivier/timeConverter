@@ -67,31 +67,46 @@ struct ConverterPresenter: Sendable {
             echoLine: result.summary,
             detailLine: detailLine,
             sourceEchoLine: sourceEchoLine(for: result),
-            targetPlaceLabel: "In \(result.target.shortPlaceDescription)",
+            targetPlaceLabel: result.target.headerDescription,
             targetClockDigits: result.target.clockDigits,
             targetMeridiem: result.target.uppercasedMeridiem,
-            targetOffsetLine: targetOffsetLine(for: result),
+            targetZoneLine: targetZoneLine(for: result),
             footerSentence: result.relativeOffsetSentence,
             daylightSavingNote: note
         )
     }
 
-    /// `Lisbon · 8:00 PM · UTC+1`, the line the design puts *inside* the input
-    /// box under a hairline rule — the source side only, because the target
-    /// side is the whole bottom half of the screen.
+    /// `Lisbon · 8:00 PM`, the line the design puts *inside* the input box
+    /// under a hairline rule — the source side only, because the target side is
+    /// the whole bottom half of the screen.
+    ///
+    /// The UTC offset left this line in item 21. It was the design's own third
+    /// field, but in use it is the one thing here nobody reads: the user is
+    /// echoing back *what they typed*, and `UTC+1` is not something they typed.
+    /// The offsets that do earn their place are the ones on the disambiguation
+    /// chips, where they are the whole basis for choosing. The Mac shell's
+    /// one-sentence `echoLine` keeps its offsets untouched — the Mac UI is
+    /// unchanged this sprint, and there the offset is doing the work the
+    /// result band does on iOS.
     static func sourceEchoLine(for result: ConversionResult) -> String {
         [
             result.source.placeDescription,
             result.source.uppercasedTime,
-            result.source.utcOffsetDescription,
         ].joined(separator: " · ")
     }
 
-    static func targetOffsetLine(for result: ConversionResult) -> String {
-        guard let rollover = result.dayRolloverNote else {
-            return result.target.utcOffsetDescription
-        }
-        return "\(result.target.utcOffsetDescription) · \(rollover)"
+    /// The line under the big time (item 21): the zone's name and cities, or
+    /// just the cities when the header already expanded an abbreviation.
+    ///
+    /// The day-rollover note still rides here. It used to ride the offset, and
+    /// the redesigned layout has no echo sentence to hang `+1d` off, so losing
+    /// the offset must not take `next day` with it — a conversion that silently
+    /// lands on tomorrow is the worst thing this app could do.
+    static func targetZoneLine(for result: ConversionResult) -> String {
+        let zoneDetail = result.target.zoneDetailDescription
+        guard let rollover = result.dayRolloverNote else { return zoneDetail }
+        guard !zoneDetail.isEmpty else { return rollover }
+        return "\(zoneDetail) · \(rollover)"
     }
 
     /// Explains the DST policy in passing, on the two days a year it applies.

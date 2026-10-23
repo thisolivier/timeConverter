@@ -47,6 +47,47 @@ enum ZoneDisplayName {
     }
 }
 
+/// The zone's own name, for item 21's sub-line (`Brasilia Standard Time`).
+///
+/// The one place in this file that *does* lean on Foundation, because naming
+/// 443 zones by hand is not an editorial decision anyone should make — only the
+/// ~30 abbreviations people actually type are worth curating, and those already
+/// live in the two abbreviation tables.
+enum ZoneNameFormatting {
+    /// Pinned, like every other string this app renders.
+    ///
+    /// Every label in the app is hand-written English (`Type a time to convert`,
+    /// `4 hours behind Lisbon.`), so a zone name that localised itself would be
+    /// the one translated word on an otherwise English screen — and it would
+    /// make these assertions depend on the machine's region. If the app is ever
+    /// localised, this constant is the single place that changes.
+    static let locale = Locale(identifier: "en_US")
+
+    /// `.generic` rather than `.standard`, verified against the live database:
+    ///
+    /// | identifier         | `.generic`                | `.standard`                     |
+    /// |--------------------|---------------------------|---------------------------------|
+    /// | `America/New_York` | Eastern Time              | Eastern Standard Time           |
+    /// | `Europe/London`    | United Kingdom Time       | Greenwich Mean Time             |
+    /// | `America/Sao_Paulo`| Brasilia Standard Time    | Brasilia Standard Time          |
+    /// | `Asia/Tokyo`       | Japan Standard Time       | Japan Standard Time             |
+    ///
+    /// `.standard` is actively wrong half the year — a London conversion in
+    /// July is not on Greenwich Mean Time — and the sub-line is naming the
+    /// *zone*, not today's offset within it. `.generic` is also the form that
+    /// gives the North American zones the names people use.
+    static func genericName(for timeZone: TimeZone) -> String {
+        guard let name = timeZone.localizedName(for: .generic, locale: locale),
+              !name.isEmpty
+        else {
+            // Unreachable against the shipped database (all 443 identifiers
+            // answer), and a quiet, readable degradation if one ever doesn't.
+            return "\(ZoneDisplayName.forIdentifier(timeZone.identifier)) Time"
+        }
+        return name
+    }
+}
+
 enum UTCOffsetFormatting {
     /// Renders a zone's offset at a given instant the way the spec's examples
     /// do: `UTC+0`, `UTC-5`, and `UTC+5:30` only when the offset has minutes.

@@ -111,7 +111,16 @@ struct AbbreviationEchoTests {
         let candidate = try #require(candidates.first)
         #expect(candidate.abbreviationDisplay == nil)
         #expect(candidate.echoDisplayName == candidate.representativeCityName)
-        #expect(candidate.echoRepresentativeCities.isEmpty)
+
+        // Item 21 leans on the same distinction: with no curated expansion
+        // there is nothing to put in `IN <CODE> (<NAME>)`, so an uncurated
+        // abbreviation is labelled as the place it resolved to rather than
+        // expanding into its own identifier's city.
+        guard case let .resolved(zone) = ZoneResolverChain.standard.resolve(abbreviation) else {
+            Issue.record("\(abbreviation) should resolve to exactly one zone")
+            return
+        }
+        #expect(zone.zoneLabel == .place(name: zone.displayName, isDeviceLocal: false))
     }
 
     /// The uppercase keys are what Foundation's dictionary uses; a lowercase

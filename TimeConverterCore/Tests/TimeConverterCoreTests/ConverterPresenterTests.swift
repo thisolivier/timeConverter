@@ -23,11 +23,11 @@ struct ConverterPresenterTests {
             echoLine: "12:00 pm Eastern Time (New York, Toronto, UTC-5) "
                 + "→ 5:00 pm London (UTC+0)",
             detailLine: "America/New_York → Europe/London",
-            sourceEchoLine: "Eastern Time (New York, Toronto) · 12:00 PM · UTC-5",
+            sourceEchoLine: "Eastern Time (New York, Toronto) · 12:00 PM",
             targetPlaceLabel: "In London",
             targetClockDigits: "5:00",
             targetMeridiem: "PM",
-            targetOffsetLine: "UTC+0",
+            targetZoneLine: "United Kingdom Time (London)",
             footerSentence: "5 hours ahead of Eastern Time.",
             daylightSavingNote: nil
         )))
@@ -158,8 +158,14 @@ struct ConverterPresenterTests {
 
     // MARK: Launch argument
 
+    /// A suite name of its own, like every other launch-argument test: Swift
+    /// Testing runs these in parallel, and the sibling test below shared this
+    /// one's `UserDefaults` suite until it started flaking — its `defer`
+    /// cleanup was deleting this test's prefill mid-read.
     @Test func launchArgumentPrefillIsReadFromUserDefaults() throws {
-        let defaults = try #require(UserDefaults(suiteName: "ConverterPresenterTests"))
+        let defaults = try #require(
+            UserDefaults(suiteName: "ConverterPresenterTests.prefill")
+        )
         defer { defaults.removeObject(forKey: LaunchArguments.initialInputKey) }
 
         #expect(LaunchArguments.initialInput(readingFrom: defaults) == nil)
@@ -174,7 +180,9 @@ struct ConverterPresenterTests {
     }
 
     @Test func blankLaunchArgumentIsTreatedAsAbsent() throws {
-        let defaults = try #require(UserDefaults(suiteName: "ConverterPresenterTests"))
+        let defaults = try #require(
+            UserDefaults(suiteName: "ConverterPresenterTests.blankPrefill")
+        )
         defer { defaults.removeObject(forKey: LaunchArguments.initialInputKey) }
 
         defaults.set("   ", forKey: LaunchArguments.initialInputKey)
@@ -189,11 +197,11 @@ struct ConverterPresenterTests {
         #expect(state == .converted(ConverterDisplay(
             echoLine: "9:30 am New York (UTC-5) → 2:30 pm Lisbon (UTC+0)",
             detailLine: "America/New_York → Europe/Lisbon",
-            sourceEchoLine: "New York · 9:30 AM · UTC-5",
+            sourceEchoLine: "New York · 9:30 AM",
             targetPlaceLabel: "In Lisbon",
             targetClockDigits: "2:30",
             targetMeridiem: "PM",
-            targetOffsetLine: "UTC+0",
+            targetZoneLine: "Western European Time (Lisbon)",
             footerSentence: "5 hours ahead of New York.",
             daylightSavingNote: nil
         )))
@@ -203,7 +211,8 @@ struct ConverterPresenterTests {
 
     /// The design's own example, end to end, on a date where the real zones
     /// produce the mockup's own numbers: everything the poster layout draws
-    /// comes off one parse, and the box echo is the source side only.
+    /// comes off one parse, and the box echo is the source side only — now
+    /// without the design's own `· UTC+1`, which item 21 removed.
     ///
     /// Spelled without the diacritic because that is what today's parser
     /// resolves — `São Paulo` currently lands on P5 and offers `Sao Paulo?` as
@@ -216,11 +225,11 @@ struct ConverterPresenterTests {
             now: FixedDates.summerMidday
         )
         let display = try #require(state.convertedDisplay)
-        #expect(display.sourceEchoLine == "Lisbon · 8:00 PM · UTC+1")
+        #expect(display.sourceEchoLine == "Lisbon · 8:00 PM")
         #expect(display.targetPlaceLabel == "In Sao Paulo")
         #expect(display.targetClockDigits == "4:00")
         #expect(display.targetMeridiem == "PM")
-        #expect(display.targetOffsetLine == "UTC-3")
+        #expect(display.targetZoneLine == "Brasilia Standard Time (São Paulo)")
         #expect(display.footerSentence == "4 hours behind Lisbon.")
     }
 
@@ -234,7 +243,7 @@ struct ConverterPresenterTests {
             localZone: TimeZone(identifier: "America/Los_Angeles")!
         )
         let display = try #require(state.convertedDisplay)
-        #expect(display.sourceEchoLine == "Los Angeles (local) · 7:00 PM · UTC-8")
+        #expect(display.sourceEchoLine == "Los Angeles (local) · 7:00 PM")
         #expect(display.targetPlaceLabel == "In London")
         #expect(display.footerSentence == "8 hours ahead of Los Angeles.")
     }
@@ -250,19 +259,20 @@ struct ConverterPresenterTests {
     }
 
     /// The rollover cannot simply vanish because the new layout has no echo
-    /// sentence to carry `+1d`, so it rides the offset line instead.
-    @Test func theDayRolloverRidesTheOffsetLine() throws {
+    /// sentence to carry `+1d`, so it rides the zone line instead — and it had
+    /// to survive item 21 taking the UTC offset off that line with it.
+    @Test func theDayRolloverRidesTheZoneLine() throws {
         let forward = try #require(
             presenter.displayState(for: "11pm new york to tokyo", now: FixedDates.winterMidday)
                 .convertedDisplay
         )
-        #expect(forward.targetOffsetLine == "UTC+9 · next day")
+        #expect(forward.targetZoneLine == "Japan Standard Time (Tokyo) · next day")
 
         let backward = try #require(
             presenter.displayState(for: "1am tokyo to new york", now: FixedDates.winterMidday)
                 .convertedDisplay
         )
-        #expect(backward.targetOffsetLine == "UTC-5 · previous day")
+        #expect(backward.targetZoneLine == "Eastern Time (New York, Toronto) · previous day")
     }
 
     /// The DST explanation moves out of `detailLine` into a slot of its own so

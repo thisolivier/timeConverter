@@ -145,7 +145,21 @@ is a straight inversion of the same three tokens. The details, including why
 the arrow is a hand-drawn `Path` and where the palette was adjusted for
 contrast, are in `TimeConverter/Poster/readme.md`.
 
-**The redesign changed no behaviour.** Everything below is as it was.
+Two sprints have refined that band since. **Item 21** replaced the design's
+bare `UTC−3` under the big time with the *zone*, keyed on how the target was
+asked for: name a place and the header stays `IN SÃO PAULO` over
+`BRASILIA STANDARD TIME (SÃO PAULO)`; name a code and the header expands it,
+`IN ET (EASTERN TIME)` over `NEW YORK, TORONTO`. The box echo lost its offset
+too (`Lisbon · 8:00 PM`). Disambiguation chips kept theirs, because there an
+offset is the whole basis for choosing. **Item 19** added the keyboard
+choreography: with something typed and the keyboard up, the title and the rule
+under it collapse away and the numerals step down, so the input box through the
+footer stay above the keyboard. An empty field keeps the full poster. The
+keyboard is dismissible by dragging the poster or tapping anywhere
+non-interactive.
+
+**Neither sprint changed any behaviour below the surface.** Everything below is
+as it was.
 
 **The guiding rule is that the typed sentence is the single source of truth, on
 every platform.** Every interaction edits that sentence rather than introducing
@@ -278,8 +292,8 @@ Inputs that between them exercise the whole output area:
 |---|---|
 | `8pm Lisbon in Sao Paulo` | The design's own example, footer and all |
 | `9:30 am New York to Lisbon` | A plain conversion, no chips |
-| `9:30am London in India` | A half-hour zone: `UTC+5:30`, `4.5 hours ahead of London.` |
-| `11pm New York to Tokyo` | The day rollover, which rides the offset line |
+| `9:30am London in India` | A half-hour zone: `4.5 hours ahead of London.` (the offset still shows in the Mac echo) |
+| `11pm New York to Tokyo` | The day rollover, which rides the zone line |
 | `9am CST to IST` | P4 chips; tapping twice converts |
 | `12pm ET in Lodnon` | P5 did-you-mean chips |
 | `12pm ET in London` | The expanded abbreviation echo |
@@ -287,6 +301,34 @@ Inputs that between them exercise the whole output area:
 | `7pm in London` | Local-zone defaulting: the *source* is `(local, …)` |
 | `7pm east coast` | The same the other way round: the *target* is `(local, …)` |
 | `7pm` | P2 — a time with no zone anywhere still prompts |
+| `8pm Lisbon in ET` | The abbreviation header: `IN ET (EASTERN TIME)` over `NEW YORK, TORONTO` |
+| `12pm London to UTC` | The one zone with no sub-line at all — GMT and UTC are the datum, not a place |
+
+### QA: the collapsed keyboard layout headlessly (iOS)
+
+With something typed and the keyboard up, the title and the rule under it
+collapse away and the result numerals step down to 92pt, so the input box
+through the footer stay above the keyboard (backlog item 19). The simulator
+usually has its software keyboard switched off, which means that state is
+unreachable from a script — so DEBUG builds also read **`-forceCompact 1`**,
+which makes the app behave as though the keyboard were up.
+
+```bash
+scripts/run-ios.sh    # build, install, launch; then:
+xcrun simctl launch booted dev.thisolivier.timeconverter \
+  -initialInput "8pm Lisbon in Sao Paulo" -forceCompact 1
+```
+
+It forces the *input* to the layout rule, not the answer, so it has to be
+paired with `-initialInput` — on an empty field the rule correctly keeps the
+full poster, keyboard or no keyboard. Without `-forceCompact`, `-initialInput`
+still renders the full un-collapsed poster exactly as it always did.
+
+To see the real thing rather than the forced one, turn the simulator's software
+keyboard on (Simulator → I/O → Keyboard → uncheck *Connect Hardware Keyboard*,
+or `defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool
+false` before booting) and launch with `-initialInput` alone: item 10's
+autofocus raises the keyboard and the collapse animates on arrival.
 
 ## Getting into the app on the Mac (menu bar + ⌃⌥T)
 

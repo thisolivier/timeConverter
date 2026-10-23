@@ -30,6 +30,22 @@ plus one view (`PosterResultSection`) that switches over a
   independently destroys it. Long results stay legible through
   `minimumScaleFactor` instead. This is the thing to revisit if accessibility
   sizes are asked for.
+- **Two size steps, not free scaling** (item 19). When the keyboard collapses
+  the layout, the numerals go 140 → 92pt and the meridiem 40 → 28pt, as a
+  *step*. A `scaleEffect` driven by the space left over was the obvious
+  implementation and is wrong twice: it makes the numerals a different size on
+  every device and at every keyboard height, so the fixed proportion above
+  stops being a composition and becomes an accident, and a scaled `Text`
+  renders at its unscaled size and is resampled, which is visible as softened
+  edges on black compressed type at this scale.
+- **The zone line is set tighter than the design's offset was** (item 21). The
+  design set `UTC−3` at 15pt / 0.14em, where generous letterspacing across five
+  characters *is* the effect. That slot now holds up to about thirty-five
+  characters — `BRASILIA STANDARD TIME (SÃO PAULO)` — which wraps to two lines
+  at the design's tracking, so it is 13pt / 0.10em here. The gaps below the big
+  time (6 → 3) and below the zone line (18 → 9) are halved, which pulls the
+  header, numerals and zone line together into one block instead of three
+  stacked things.
 - **Square corners everywhere.** A corner radius on the input box is the one
   change that would make the whole screen look like a form instead of a print.
 - **Our features get styled, never dropped.** The mockup draws only the happy
@@ -45,9 +61,12 @@ plus one view (`PosterResultSection`) that switches over a
 | `PosterPalette.swift` | The colour tokens, as dynamic colours so both appearances resolve with no view state. Carries the contrast reasoning. |
 | `PosterTypography.swift` | Anton → SF Compressed Black, JetBrains Mono → SF Mono, and the `.posterLabel()` modifier for the 0.16em uppercase labels. |
 | `PosterComponents.swift` | `PosterRule`, `PosterArrowSeparator`, `PosterArrow` (transcribed from the design's own SVG rather than approximated with `arrow.down`), `PosterBox`. |
-| `PosterResultSection.swift` | Everything below the arrow: the result band, the hint, or a prompt plus chips. Logic-free. |
+| `PosterResultSection.swift` | Everything below the arrow: the result band, the hint, or a prompt plus chips. Logic-free. Takes a `PosterLayoutMode` and owns the two display-type sizes that go with it. |
 
 The layout that assembles these — title, rule, labelled input box with the
 source echo inside it, arrow band, result — is `ContentView.swift`, one level
 up, because it also owns the behaviour (focus, scene phase, the launcher
-mailbox) that the redesign deliberately left untouched.
+mailbox, and since item 19 the keyboard choreography) that the redesign
+deliberately left untouched. `KeyboardVisibility.swift` beside it supplies the
+one platform fact that choreography needs; the decision it feeds is
+`PosterLayoutMode`, in `TimeConverterCore`, where it is unit-tested.

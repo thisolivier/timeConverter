@@ -35,9 +35,15 @@ public enum ConverterDisplayState: Equatable, Sendable {
 /// the parsing tests assert against. The fields below them decompose the *same*
 /// conversion into the slots the redesigned iOS layout needs (item 18) — a
 /// source echo for inside the input box, a target place label, the time split
-/// into poster-scale digits and a small meridiem, the offset, and the footer
-/// sentence. Nothing is computed twice: both generations come off one
-/// `ConversionResult`.
+/// into poster-scale digits and a small meridiem, the zone line beneath them,
+/// and the footer sentence. Nothing is computed twice: both generations come
+/// off one `ConversionResult`.
+///
+/// The two generations also now disagree about UTC offsets, and that is the
+/// point of item 21: the iOS slots dropped them (the result band says which
+/// *zone*, and the chips are where an offset decides something), while
+/// `echoLine` keeps them for the Mac shell, whose single sentence has nowhere
+/// else to put them.
 public struct ConverterDisplay: Equatable, Sendable {
     /// The spec's canonical echo:
     /// `12:00 pm New York (UTC-5) → 5:00 pm London (UTC+0) +1d`.
@@ -47,19 +53,25 @@ public struct ConverterDisplay: Equatable, Sendable {
     public let detailLine: String
 
     /// What the input box echoes back underneath the typed text:
-    /// `Lisbon · 8:00 PM · UTC+1`.
+    /// `Lisbon · 8:00 PM`. No UTC offset since item 21.
     public let sourceEchoLine: String
-    /// The label above the result — `In São Paulo`. Natural case: uppercasing
-    /// and letterspacing it is typography, which belongs to the view.
+    /// The label above the result — `In São Paulo` for a place, or
+    /// `In ET (Eastern Time)` when the user named a code (item 21). Natural
+    /// case: uppercasing and letterspacing it is typography, which belongs to
+    /// the view.
     public let targetPlaceLabel: String
     /// `4:00` — the design's poster-scale numerals.
     public let targetClockDigits: String
     /// `PM` — set smaller, on roughly the same baseline.
     public let targetMeridiem: String
-    /// `UTC-3`, or `UTC+9 · next day` when the date rolls over. The redesigned
-    /// layout has no echo sentence to hang `+1d` off, so the rollover rides
-    /// here instead of being lost.
-    public let targetOffsetLine: String
+    /// The line under the big time. Was the bare `UTC-3` the design drew;
+    /// since item 21 it names the zone instead —
+    /// `Brasilia Standard Time (São Paulo)` under a place header, or just
+    /// `New York, Toronto` under a header that already expanded a code. The
+    /// day-rollover note still rides here (`… · next day`), because the
+    /// redesigned layout has no echo sentence to hang `+1d` off. Empty for GMT
+    /// and UTC, which have no cities by design; the view draws nothing then.
+    public let targetZoneLine: String
     /// The footer sentence: `4 hours behind Lisbon.`
     public let footerSentence: String
     /// The daylight-saving explanation, on the two days a year it applies.

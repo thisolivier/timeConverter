@@ -34,12 +34,49 @@ struct LaunchArgumentsTests {
     /// Blank and whitespace-only values are "no prefill", not an empty
     /// sentence — otherwise `-initialInput ""` would look like a launcher press.
     @Test func blankValuesAreNoPrefillAtAll() throws {
-        let defaults = try #require(UserDefaults(suiteName: "LaunchArgumentsTests"))
+        let defaults = try #require(UserDefaults(suiteName: "LaunchArgumentsTests.blank"))
         defer { defaults.removeObject(forKey: LaunchArguments.initialInputKey) }
 
         for blank in ["", "   ", "\n"] {
             defaults.set(blank, forKey: LaunchArguments.initialInputKey)
             #expect(LaunchArguments.initialInput(readingFrom: defaults) == nil)
         }
+    }
+
+    // MARK: - `-forceCompact` (item 19)
+
+    /// The QA hook for the keyboard choreography. All the spellings a person
+    /// might type, because the whole value of the flag is that it works first
+    /// time from a terminal.
+    @Test(arguments: ["1", "YES", "true"])
+    func forceCompactIsAcceptedInEveryUsualSpelling(value: String) throws {
+        let defaults = try #require(
+            UserDefaults(suiteName: "LaunchArgumentsTests.forceCompact.\(value)")
+        )
+        defer { defaults.removeObject(forKey: LaunchArguments.forceCompactKey) }
+        defaults.set(value, forKey: LaunchArguments.forceCompactKey)
+
+        #if DEBUG
+        #expect(LaunchArguments.forcesKeyboardVisible(readingFrom: defaults))
+        #else
+        // A shipped build must never let a launch argument drive its layout,
+        // for the same reason it must never drive its input.
+        #expect(!LaunchArguments.forcesKeyboardVisible(readingFrom: defaults))
+        #endif
+    }
+
+    @Test func forceCompactIsOffWhenUnset() throws {
+        let defaults = try #require(UserDefaults(suiteName: "LaunchArgumentsTests.unset"))
+        #expect(!LaunchArguments.forcesKeyboardVisible(readingFrom: defaults))
+    }
+
+    /// The flag forces the *input* to the layout rule, not the outcome — so it
+    /// cannot make the app show a state the rule would not. With an empty field
+    /// a forced keyboard still means the full poster, which is why the QA
+    /// recipe pairs it with `-initialInput`.
+    @Test func forceCompactStillObeysTheLayoutRule() {
+        #expect(PosterLayoutMode.mode(forInput: "", keyboardIsVisible: true) == .full)
+        #expect(PosterLayoutMode.mode(forInput: "8pm Lisbon in Sao Paulo",
+                                      keyboardIsVisible: true) == .compact)
     }
 }

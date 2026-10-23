@@ -16,10 +16,17 @@ import TimeConverterCore
 /// tappable chips, autofocus, the launcher mailbox and the DEBUG
 /// `-initialInput` hook are all exactly as they were; only their clothes
 /// changed.
+///
+/// Item 19 added the keyboard choreography: with something typed and the
+/// keyboard up, the title and the rule under it collapse away and the result
+/// numerals step down, so the input box through the footer all stay above the
+/// keyboard. The *decision* is `PosterLayoutMode`, in the core package; what
+/// lives here is the observation and the animation.
 struct ContentView: View {
     /// Prefilled from `-initialInput` in DEBUG builds, empty otherwise.
     @State private var freeformInput: String = LaunchArguments.initialInput ?? ""
     @State private var displayDriver = ConverterDisplayDriver()
+    @State private var keyboardIsVisible: Bool = KeyboardVisibility.initialValue
     @FocusState private var inputFieldIsFocused: Bool
     @Environment(\.scenePhase) private var scenePhase
 
@@ -33,18 +40,43 @@ struct ContentView: View {
     /// keeps the composition and centres it instead.
     private let posterWidth: CGFloat = 430
 
+    /// Item 19's decision, taken in the core package and read here.
+    private var layoutMode: PosterLayoutMode {
+        PosterLayoutMode.mode(forInput: freeformInput, keyboardIsVisible: keyboardIsVisible)
+    }
+
     var body: some View {
         ScrollView {
             poster
                 .padding(.horizontal, 28)
-                .padding(.top, 64)
+                // The design's 64pt of air exists to let the title breathe.
+                // With the title collapsed it is 64pt of nothing between the
+                // status bar and a text field, so it comes down with it.
+                .padding(.top, layoutMode.showsTitleBlock ? 64 : 20)
                 .padding(.bottom, 40)
                 .frame(maxWidth: posterWidth, alignment: .leading)
                 .frame(maxWidth: .infinity)
+                // One animation for the whole collapse, out here rather than
+                // on the poster itself so the top padding travels with the
+                // title instead of jumping under it. Driven by the mode rather
+                // than by the keyboard notification, so a change of mind —
+                // type, delete, type again — never leaves two animations
+                // fighting over the same layout.
+                .animation(.easeInOut(duration: 0.24), value: layoutMode)
         }
         .scrollBounceBehavior(.basedOnSize)
+        // Drag the content and the keyboard follows your finger — the gesture
+        // people already use to get a keyboard out of the way.
+        .scrollDismissesKeyboard(.interactively)
+        // And the other one: tap anything that isn't interactive. Attached to
+        // the scroll view, i.e. the *ancestor*, so it only ever sees taps its
+        // children declined — the chips and the text field are buttons and a
+        // field, they handle their own taps, and this never fires for them.
+        .contentShape(Rectangle())
+        .onTapGesture { inputFieldIsFocused = false }
         .background(PosterPalette.paper.ignoresSafeArea())
         .tint(PosterPalette.accent)
+        .observingKeyboardVisibility(into: $keyboardIsVisible)
         .onChange(of: freeformInput) {
             displayDriver.inputDidChange(
                 to: freeformInput, now: Date(), localZone: TimeZone.current
@@ -82,24 +114,44 @@ struct ContentView: View {
 
     private var poster: some View {
         VStack(alignment: .leading, spacing: 0) {
-            titleBlock
+            if layoutMode.showsTitleBlock {
+                // Title and rule in one group, inserted and removed together:
+                // the rule's whole job is to close the title block, so a rule
+                // left behind would be ruled under nothing.
+                VStack(alignment: .leading, spacing: 0) {
+                    titleBlock
 
-            PosterRule()
-                .padding(.top, 22)
+                    PosterRule()
+                        .padding(.top, 22)
+                }
+                // Fades on the way out while the stack contracts under it,
+                // which reads as the poster being pushed up by the keyboard
+                // rather than as a view disappearing. Quicker out than in: a
+                // collapse should feel like it is making room, and a slow one
+                // feels like a glitch.
+                .transition(.asymmetric(
+                    insertion: .opacity.animation(.easeOut(duration: 0.22).delay(0.04)),
+                    removal: .opacity.animation(.easeIn(duration: 0.12))
+                ))
+            }
 
             Text("Time & places")
                 .posterLabel(size: 12)
                 .foregroundStyle(PosterPalette.ink)
-                .padding(.top, 20)
+                .padding(.top, layoutMode.showsTitleBlock ? 20 : 0)
 
             inputBox
                 .padding(.top, 10)
 
             PosterArrowSeparator()
-                .padding(.top, 26)
+                .padding(.top, layoutMode.showsTitleBlock ? 26 : 18)
 
-            PosterResultSection(displayState: displayDriver.displayState, onChipTap: apply)
-                .padding(.top, 22)
+            PosterResultSection(
+                displayState: displayDriver.displayState,
+                layoutMode: layoutMode,
+                onChipTap: apply
+            )
+            .padding(.top, layoutMode.showsTitleBlock ? 22 : 16)
         }
     }
 
@@ -215,4 +267,52 @@ struct ContentView: View {
 #Preview("Poster — dark") {
     ContentView()
         .preferredColorScheme(.dark)
+}
+
+/// Item 19's collapsed state, without needing a keyboard.
+///
+/// The preview cannot raise one, and the simulator usually has its software
+/// keyboard switched off, so the band this sprint is *about* would otherwise be
+/// unviewable anywhere but a device. Same escape hatch as the
+/// `-forceCompact 1` launch argument, for the same reason.
+#Preview("Poster — compact (keyboard up)") {
+    PosterCompactPreview()
+}
+
+private struct PosterCompactPreview: View {
+    @State private var displayDriver = ConverterDisplayDriver()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Time & places")
+                .posterLabel(size: 12)
+                .foregroundStyle(PosterPalette.ink)
+
+            PosterBox {
+                Text("8pm Lisbon in Sao Paulo")
+                    .font(PosterTypography.mono(size: 21))
+                    .foregroundStyle(PosterPalette.ink)
+            }
+            .padding(.top, 10)
+
+            PosterArrowSeparator()
+                .padding(.top, 18)
+
+            PosterResultSection(
+                displayState: displayDriver.displayState,
+                layoutMode: .compact,
+                onChipTap: { _ in }
+            )
+            .padding(.top, 16)
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, 20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PosterPalette.paper.ignoresSafeArea())
+        .onAppear {
+            displayDriver.showWithoutWaiting(
+                for: "8pm Lisbon in Sao Paulo", now: Date(), localZone: TimeZone.current
+            )
+        }
+    }
 }

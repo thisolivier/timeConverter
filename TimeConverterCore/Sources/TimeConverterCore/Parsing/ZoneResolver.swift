@@ -58,7 +58,7 @@ struct ZoneResolverChain: Sendable {
                 return .resolved(ResolvedZone(
                     timeZone: timeZone,
                     displayName: onlyCandidate.echoDisplayName,
-                    representativeCities: onlyCandidate.echoRepresentativeCities,
+                    abbreviationDisplay: onlyCandidate.abbreviationDisplay,
                     matchSource: onlyCandidate.matchSource,
                     originalToken: normalizedZoneToken
                 ))

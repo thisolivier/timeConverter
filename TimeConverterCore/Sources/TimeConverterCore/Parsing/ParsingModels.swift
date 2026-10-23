@@ -86,21 +86,18 @@ struct ZoneCandidate: Equatable, Sendable {
     var echoDisplayName: String {
         abbreviationDisplay?.name ?? representativeCityName
     }
-
-    /// Extra cities the echo line should show beside `echoDisplayName`. Empty
-    /// for city and country tokens, which already *are* a place name.
-    var echoRepresentativeCities: [String] {
-        abbreviationDisplay?.representativeCities ?? []
-    }
 }
 
 /// A zone token that resolved to exactly one meaning.
 struct ResolvedZone: Equatable, Sendable {
     let timeZone: TimeZone
     let displayName: String
-    /// Cities to show beside `displayName` in the echo — populated only when
-    /// the token resolved through an abbreviation (item 13).
-    let representativeCities: [String]
+    /// The curated metadata for the abbreviation the user typed, when they
+    /// typed one the tables cover (item 13). `nil` for every place token — and
+    /// also for an abbreviation Foundation knows but our tables do not, which
+    /// is exactly the distinction item 21's labelling turns on. Stored rather
+    /// than just its cities, because `zoneLabel` needs the expanded name too.
+    let abbreviationDisplay: AbbreviationDisplay?
     let matchSource: ZoneMatchSource
     /// The token the user actually typed (normalised to lowercase), kept for
     /// echoing back and for prompt copy.
@@ -109,15 +106,38 @@ struct ResolvedZone: Equatable, Sendable {
     init(
         timeZone: TimeZone,
         displayName: String,
-        representativeCities: [String] = [],
+        abbreviationDisplay: AbbreviationDisplay? = nil,
         matchSource: ZoneMatchSource,
         originalToken: String
     ) {
         self.timeZone = timeZone
         self.displayName = displayName
-        self.representativeCities = representativeCities
+        self.abbreviationDisplay = abbreviationDisplay
         self.matchSource = matchSource
         self.originalToken = originalToken
+    }
+
+    /// Cities to show beside `displayName` in the echo — populated only when
+    /// the token resolved through an abbreviation the tables cover (item 13).
+    var representativeCities: [String] {
+        abbreviationDisplay?.representativeCities ?? []
+    }
+
+    /// How the result band names this zone (item 21).
+    ///
+    /// The whole rule, in one place: a curated abbreviation shows its code and
+    /// its expansion, and *everything else* is a place — a typed city, a
+    /// country, a gazetteer hit, an uncurated abbreviation that can only offer
+    /// its identifier's city anyway, and the device-local default, which keeps
+    /// its `(local)` marker rather than growing a third case.
+    var zoneLabel: ZoneLabel {
+        guard let abbreviationDisplay else {
+            return .place(name: displayName, isDeviceLocal: isDeviceLocalZone)
+        }
+        return .abbreviation(
+            code: ZoneTokenDisplay.label(forToken: originalToken),
+            expandedName: abbreviationDisplay.name
+        )
     }
 
     /// The injected device zone standing in for a side the user left unnamed
