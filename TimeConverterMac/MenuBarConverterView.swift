@@ -17,6 +17,18 @@ struct MenuBarConverterView: View {
     @State private var displayDriver = ConverterDisplayDriver()
     @FocusState private var inputFieldIsFocused: Bool
 
+    /// Item 17's two triggers, between them covering both ways the Mac UI can
+    /// arrive.
+    ///
+    /// `controlActiveState` is the general one: it turns `.key` the moment this
+    /// view's window takes the keyboard, which happens for the `MenuBarExtra`
+    /// dropdown and for the summoned panel alike, and happens again every time
+    /// the panel is re-raised. `summonFocusRequests` is the specific one, for
+    /// the press that reaches a panel which is *already* key — no window state
+    /// changes there, so nothing else would fire.
+    @Environment(\.controlActiveState) private var controlActiveState
+    @State private var summonFocusRequests = SummonFocusRequests.shared
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             TextField("e.g. 12pm ET in London", text: $freeformInput)
@@ -48,7 +60,40 @@ struct MenuBarConverterView: View {
             // The dropdown and the panel are both "arrival": for a typed-input
             // tool, landing ready to type *is* the access story.
             showResultWithoutWaiting()
-            inputFieldIsFocused = true
+            focusTheFieldAsSoonAsTheWindowWillAllowIt()
+        }
+        // A window that has just been ordered front becomes key *after* the
+        // hosting view appears, so `onAppear` alone was landing the focus write
+        // too early — the complaint behind item 17.
+        .onChange(of: controlActiveState) { _, state in
+            guard state == .key else { return }
+            focusTheFieldAsSoonAsTheWindowWillAllowIt()
+        }
+        // ⌃⌥T aimed at a panel that is already key: no window state changes, so
+        // the summoner says so directly.
+        .onChange(of: summonFocusRequests.requestCount) {
+            focusTheFieldAsSoonAsTheWindowWillAllowIt()
+        }
+    }
+
+    /// Writes `@FocusState` repeatedly over a short, bounded ladder.
+    ///
+    /// One write is not enough and cannot be made enough from here: whether it
+    /// takes depends on how far AppKit has got with making the window key and
+    /// how far SwiftUI has got with installing its responder chain, and the
+    /// view has no way to observe either. The rungs and the reasoning live in
+    /// `SummonFocusLadder`; a rung that fires after focus already landed
+    /// assigns `true` to something already `true` and does nothing.
+    private func focusTheFieldAsSoonAsTheWindowWillAllowIt() {
+        for delay in SummonFocusLadder.attemptDelays {
+            if delay == .zero {
+                inputFieldIsFocused = true
+                continue
+            }
+            Task { @MainActor in
+                try? await Task.sleep(for: delay)
+                inputFieldIsFocused = true
+            }
         }
     }
 

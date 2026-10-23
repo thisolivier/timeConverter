@@ -22,7 +22,14 @@ struct ConverterPresenterTests {
         #expect(state == .converted(ConverterDisplay(
             echoLine: "12:00 pm Eastern Time (New York, Toronto, UTC-5) "
                 + "→ 5:00 pm London (UTC+0)",
-            detailLine: "America/New_York → Europe/London"
+            detailLine: "America/New_York → Europe/London",
+            sourceEchoLine: "Eastern Time (New York, Toronto) · 12:00 PM · UTC-5",
+            targetPlaceLabel: "In London",
+            targetClockDigits: "5:00",
+            targetMeridiem: "PM",
+            targetOffsetLine: "UTC+0",
+            footerSentence: "5 hours ahead of Eastern Time.",
+            daylightSavingNote: nil
         )))
     }
 
@@ -181,7 +188,116 @@ struct ConverterPresenterTests {
         let state = presenter.displayState(for: prefilledInput, now: FixedDates.winterMidday)
         #expect(state == .converted(ConverterDisplay(
             echoLine: "9:30 am New York (UTC-5) → 2:30 pm Lisbon (UTC+0)",
-            detailLine: "America/New_York → Europe/Lisbon"
+            detailLine: "America/New_York → Europe/Lisbon",
+            sourceEchoLine: "New York · 9:30 AM · UTC-5",
+            targetPlaceLabel: "In Lisbon",
+            targetClockDigits: "2:30",
+            targetMeridiem: "PM",
+            targetOffsetLine: "UTC+0",
+            footerSentence: "5 hours ahead of New York.",
+            daylightSavingNote: nil
         )))
+    }
+
+    // MARK: - The redesigned layout's slots (item 18)
+
+    /// The design's own example, end to end, on a date where the real zones
+    /// produce the mockup's own numbers: everything the poster layout draws
+    /// comes off one parse, and the box echo is the source side only.
+    ///
+    /// Spelled without the diacritic because that is what today's parser
+    /// resolves — `São Paulo` currently lands on P5 and offers `Sao Paulo?` as
+    /// a chip. That gap belongs to backlog item 6 (QA candidates, punctuation
+    /// and accents), not to the design sprint, so it is recorded rather than
+    /// quietly fixed here.
+    @Test func theDesignsOwnExampleFillsEverySlot() throws {
+        let state = presenter.displayState(
+            for: "8pm Lisbon in Sao Paulo",
+            now: FixedDates.summerMidday
+        )
+        let display = try #require(state.convertedDisplay)
+        #expect(display.sourceEchoLine == "Lisbon · 8:00 PM · UTC+1")
+        #expect(display.targetPlaceLabel == "In Sao Paulo")
+        #expect(display.targetClockDigits == "4:00")
+        #expect(display.targetMeridiem == "PM")
+        #expect(display.targetOffsetLine == "UTC-3")
+        #expect(display.footerSentence == "4 hours behind Lisbon.")
+    }
+
+    /// A defaulted side stays visible in the redesign: the `(local)` marker
+    /// survives into both the box echo and the result label, because an
+    /// assumption the user cannot see is the one bug this app cannot afford.
+    @Test func aDefaultedSourceKeepsItsLocalMarkerInTheBoxEcho() throws {
+        let state = presenter.displayState(
+            for: "7pm in London",
+            now: FixedDates.winterMidday,
+            localZone: TimeZone(identifier: "America/Los_Angeles")!
+        )
+        let display = try #require(state.convertedDisplay)
+        #expect(display.sourceEchoLine == "Los Angeles (local) · 7:00 PM · UTC-8")
+        #expect(display.targetPlaceLabel == "In London")
+        #expect(display.footerSentence == "8 hours ahead of Los Angeles.")
+    }
+
+    @Test func aDefaultedTargetKeepsItsLocalMarkerInTheResultLabel() throws {
+        let state = presenter.displayState(
+            for: "7pm London",
+            now: FixedDates.winterMidday,
+            localZone: TimeZone(identifier: "America/Los_Angeles")!
+        )
+        let display = try #require(state.convertedDisplay)
+        #expect(display.targetPlaceLabel == "In Los Angeles (local)")
+    }
+
+    /// The rollover cannot simply vanish because the new layout has no echo
+    /// sentence to carry `+1d`, so it rides the offset line instead.
+    @Test func theDayRolloverRidesTheOffsetLine() throws {
+        let forward = try #require(
+            presenter.displayState(for: "11pm new york to tokyo", now: FixedDates.winterMidday)
+                .convertedDisplay
+        )
+        #expect(forward.targetOffsetLine == "UTC+9 · next day")
+
+        let backward = try #require(
+            presenter.displayState(for: "1am tokyo to new york", now: FixedDates.winterMidday)
+                .convertedDisplay
+        )
+        #expect(backward.targetOffsetLine == "UTC-5 · previous day")
+    }
+
+    /// The DST explanation moves out of `detailLine` into a slot of its own so
+    /// the redesign can place it, and is `nil` the other 363 days of the year.
+    @Test func theDaylightSavingNoteIsItsOwnField() throws {
+        let onATransitionDay = try #require(
+            presenter.displayState(
+                for: "2:30 am ET in London",
+                now: FixedDates.newYorkSpringForwardDay
+            ).convertedDisplay
+        )
+        #expect(onATransitionDay.daylightSavingNote
+            == "2:30 am doesn't exist today in New York — clocks went forward")
+
+        let ordinary = try #require(
+            presenter.displayState(for: "12pm ET in London", now: FixedDates.winterMidday)
+                .convertedDisplay
+        )
+        #expect(ordinary.daylightSavingNote == nil)
+    }
+
+    /// Midnight and noon are where a naive digits/meridiem split goes wrong.
+    @Test(arguments: [
+        ("12am London to London", "12:00", "AM"),
+        ("12pm London to London", "12:00", "PM"),
+    ])
+    func theClockSplitsIntoDigitsAndMeridiem(
+        input: String,
+        expectedDigits: String,
+        expectedMeridiem: String
+    ) throws {
+        let display = try #require(
+            presenter.displayState(for: input, now: FixedDates.winterMidday).convertedDisplay
+        )
+        #expect(display.targetClockDigits == expectedDigits)
+        #expect(display.targetMeridiem == expectedMeridiem)
     }
 }

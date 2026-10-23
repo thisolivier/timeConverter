@@ -102,12 +102,14 @@ Mac experience, which is why `ship-mac.sh` archives `TimeConverterMac`.
   `Presentation/` is the presenter plus the display driver that owns *when* the
   output changes, `Launch/` is the launch-request logic and the DEBUG prefill,
   `Resources/fallback-cities.json` is reached through `Bundle.module`, and
-  `Tests/` holds 195 of the repo's tests. See `TimeConverterCore/readme.md` and
+  `Tests/` holds 217 of the repo's tests. See `TimeConverterCore/readme.md` and
   `TimeConverterCore/Sources/TimeConverterCore/Parsing/readme.md`
-- `TimeConverter/` — the **iOS** shell. `ContentView.swift` is the whole
-  interface; `PromptChipRow.swift` renders the correction chips;
-  `InputFocusPolicy.swift` decides when the field takes focus; `Launchers/` is
-  the App Shortcut and the intent (see `TimeConverter/Launchers/readme.md`)
+- `TimeConverter/` — the **iOS** shell. `ContentView.swift` lays out the poster
+  and owns the behaviour; `Poster/` is the design's visual language (see
+  `TimeConverter/Poster/readme.md`); `PromptChipRow.swift` renders the
+  correction chips; `InputFocusPolicy.swift` decides when the field takes
+  focus; `Launchers/` is the App Shortcut and the intent (see
+  `TimeConverter/Launchers/readme.md`)
 - `TimeConverterMac/` — the **macOS** shell: `MenuBarExtra`, the summoned
   panel, ⌃⌥T (see `TimeConverterMac/readme.md`)
 - `TimeConverterControls/` — the Control Center widget extension, iOS-only (see
@@ -132,8 +134,18 @@ see `TimeConverterMac/readme.md` — but drives the identical
 `ConverterDisplayDriver`, so every rule below (debounce, chips, instant
 results) holds there too.
 
-Still deliberately minimal: one text field, one output area, content
-constrained to ~480pt so an iPad window reads as a small utility.
+Since backlog item 18 the iOS shell wears Olivier's design
+(`docs/design/Time Converter.{pdf,html}`): a retro print poster — cream paper
+`#EBD3A9`, ink `#141210`, one rust accent `#B5391F`, giant condensed
+`TIME CONVERTER`, letterspaced uppercase labels, an outlined input box with the
+parsed source echoed *inside* it, a rule-and-arrow separator, the result at
+poster scale, and a footer sentence. System fonts only — Anton renders as SF
+Compressed Black, JetBrains Mono as SF Mono, and nothing is bundled. Dark mode
+is a straight inversion of the same three tokens. The details, including why
+the arrow is a hand-drawn `Path` and where the palette was adjusted for
+contrast, are in `TimeConverter/Poster/readme.md`.
+
+**The redesign changed no behaviour.** Everything below is as it was.
 
 **The guiding rule is that the typed sentence is the single source of truth, on
 every platform.** Every interaction edits that sentence rather than introducing
@@ -180,10 +192,19 @@ selection somewhere.
   case that matters in iPad multitasking. A launcher
   (below) is the one thing that may take focus mid-session — it is a button
   whose entire meaning is "let me type a time".
-- **Styling is interim and knowingly so.** Prompt copy stays verbose, the text
-  stays red, messages stay broken onto their own lines; a design sprint comes
-  later. P4 also still lists its candidates inline above the chips, which is
-  redundant but is the agreed interim copy.
+- **Every conversion carries a footer sentence** (spec amendment 2026-10-23):
+  `4 hours behind Lisbon.` / `3 hours ahead of New York.` /
+  `Same time as London.` It is computed in the core's `ConversionEngine` from
+  the two offsets **at the resolved instant**, so it follows daylight saving on
+  the day asked about; half- and quarter-hour zones read decimally
+  (`5.5 hours ahead of London.`).
+- **Where the design and a feature disagreed, the feature won and got
+  restyled.** The mockup draws only the happy path and has no chips in it, so
+  the prompts and their tap-to-replace chips are set in the design's own
+  vocabulary — letterspaced rust label, rust mono body, square outlined chips
+  that invert when pressed — rather than dropped. Prompt *copy* is still the
+  verbose multi-line spec wording, and P4 still lists its candidates inline
+  above the chips; only the setting changed.
 
 ## Getting into the app (iOS launchers)
 
@@ -255,7 +276,10 @@ Inputs that between them exercise the whole output area:
 
 | `-initialInput` | Shows |
 |---|---|
+| `8pm Lisbon in Sao Paulo` | The design's own example, footer and all |
 | `9:30 am New York to Lisbon` | A plain conversion, no chips |
+| `9:30am London in India` | A half-hour zone: `UTC+5:30`, `4.5 hours ahead of London.` |
+| `11pm New York to Tokyo` | The day rollover, which rides the offset line |
 | `9am CST to IST` | P4 chips; tapping twice converts |
 | `12pm ET in Lodnon` | P5 did-you-mean chips |
 | `12pm ET in London` | The expanded abbreviation echo |
@@ -320,11 +344,17 @@ Then: **click another app, and press ⌃⌥T.**
 
 Expect, in order:
 
-1. A small floating "Time Converter" panel appears, centred, field focused.
-2. Type half a sentence, press ⌃⌥T again while looking at it — it hides. Press
-   once more — it comes back with the half-typed text **still there**.
-3. Clicking the clock glyph opens the dropdown, with its own focused field.
-4. "Quit Time Converter" in the dropdown — the glyph disappears.
+1. A small floating "Time Converter" panel appears, centred. **Type without
+   touching the mouse** — the characters land in the field (backlog item 17;
+   the `@FocusState` write is the one part of that fix no test can reach).
+2. Press ⌃⌥T again while looking at it — it hides. Press once more — it comes
+   back with the half-typed text **still there**, and typing still goes
+   straight in.
+3. Click a *third* app so the panel is behind it, press ⌃⌥T, and type again.
+   This is the case window state alone cannot detect, and the one
+   `SummonFocusRequests` exists for.
+4. Clicking the clock glyph opens the dropdown, also ready to type.
+5. "Quit Time Converter" in the dropdown — the glyph disappears.
 
 Every press logs a line, which is what separates "the keystroke never arrived"
 from "the summon failed":

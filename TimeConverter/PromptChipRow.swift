@@ -3,10 +3,15 @@ import TimeConverterCore
 
 /// The tap-to-replace chips under a prompt (backlog items 7 and 9).
 ///
-/// Identical on iPhone, iPad and Mac: plain SwiftUI buttons, so a tap and a
-/// click are the same gesture and there is no forked model. Every chip arrives
-/// fully prepared by the presenter — a label and the edit it performs — so this
-/// view decides nothing.
+/// Every chip arrives fully prepared by the presenter — a label and the edit it
+/// performs — so this view decides nothing.
+///
+/// The design (item 18) has no chips in it, because its mockup only draws the
+/// happy path. Dropping them was never on the table: they are how a user gets
+/// out of an ambiguous or misspelled zone. So they are drawn in the design's
+/// own vocabulary instead — square outlined boxes, ink on cream, mono label,
+/// inverting to rust when pressed. They read as the little printed tickets the
+/// rest of the poster implies.
 struct PromptChipRow: View {
     let chips: [ReplacementChip]
     let onTap: (ReplacementChip) -> Void
@@ -15,10 +20,26 @@ struct PromptChipRow: View {
         ChipFlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
             ForEach(chips) { chip in
                 Button(chip.label) { onTap(chip) }
-                    .buttonStyle(.bordered)
-                    .font(.callout)
+                    .buttonStyle(PosterChipButtonStyle())
             }
         }
+    }
+}
+
+/// Square, outlined, mono — and inverted while held, which is the only
+/// animation anywhere in this design.
+private struct PosterChipButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(PosterTypography.mono(size: 13))
+            .foregroundStyle(
+                configuration.isPressed ? PosterPalette.paper : PosterPalette.ink
+            )
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(configuration.isPressed ? PosterPalette.accent : Color.clear)
+            .overlay(Rectangle().strokeBorder(PosterPalette.ink, lineWidth: 1.5))
+            .contentShape(Rectangle())
     }
 }
 

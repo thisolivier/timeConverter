@@ -89,6 +89,71 @@ struct SummonPolicyTests {
     }
 }
 
+/// Backlog item 17 — the keyboard lands in the field on summon.
+///
+/// The `@FocusState` write itself needs a running app and a real window, so
+/// what is proven here is everything *around* it: that every summon asks for
+/// focus (including the one that merely raises a buried panel), that the
+/// request is observable more than once in a row, and that the retry ladder is
+/// short and finite rather than a loop that would fight the user for the
+/// cursor.
+@MainActor
+struct SummonFocusTests {
+    /// Both ways the panel can be shown ask for focus. The second is the one
+    /// that matters: the panel is already open behind the editor, so nothing
+    /// about the window changes and only this flag would ever reach the view.
+    @Test func everyShowAsksForFocus() {
+        #expect(SummonPolicy.requestsInputFocus(
+            for: SummonPolicy.action(panelIsVisible: false, appIsActive: false)
+        ))
+        #expect(SummonPolicy.requestsInputFocus(
+            for: SummonPolicy.action(panelIsVisible: true, appIsActive: false)
+        ))
+    }
+
+    /// Putting the panel away must not also grab the keyboard on the way out.
+    @Test func hidingDoesNotAskForFocus() {
+        #expect(!SummonPolicy.requestsInputFocus(
+            for: SummonPolicy.action(panelIsVisible: true, appIsActive: true)
+        ))
+    }
+
+    /// The reason the request is a counter and not a `Bool`: two summons in a
+    /// row have to be two observable events, or SwiftUI's `onChange` sleeps
+    /// through the second one and the hotkey looks broken exactly when the
+    /// user pressed it twice.
+    @Test func consecutiveRequestsAreEachObservable() {
+        let requests = SummonFocusRequests()
+        let start = requests.requestCount
+        requests.request()
+        requests.request()
+        requests.request()
+        #expect(requests.requestCount == start + 3)
+    }
+
+    /// More than one attempt, because one is what fails; and a first attempt
+    /// at zero delay, because the overwhelmingly common case is that the
+    /// window is ready and the user should not wait for a timer.
+    @Test func theLadderTriesImmediatelyAndThenAgain() {
+        #expect(SummonFocusLadder.attemptDelays.first == .zero)
+        #expect(SummonFocusLadder.attemptDelays.count > 1)
+    }
+
+    /// Finite and fast: the whole ladder is over inside a quarter of a second,
+    /// well before anyone could have typed a character for it to steal.
+    @Test func theLadderIsOverBeforeAnyoneCouldType() {
+        #expect(SummonFocusLadder.lastAttemptDelay <= .milliseconds(250))
+        #expect(SummonFocusLadder.attemptDelays.count <= 4)
+    }
+
+    /// Strictly increasing, so the rungs are genuinely spread out rather than
+    /// three writes in the same run-loop turn — which would be one write.
+    @Test func theLadderIsOrderedAndDistinct() {
+        let delays = SummonFocusLadder.attemptDelays
+        #expect(zip(delays, delays.dropFirst()).allSatisfy { $0 < $1 })
+    }
+}
+
 struct MacMenuBarLogTests {
     /// The log identity is a contract with two shell scripts: `run-mac.sh` and
     /// `qa-menubar.sh` both filter the unified log on exactly this pair, and it

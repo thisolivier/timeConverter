@@ -58,11 +58,40 @@ struct ConverterPresenter: Sendable {
     // MARK: - Rendering
 
     static func display(for result: ConversionResult) -> ConverterDisplay {
+        let note = daylightSavingNote(for: result)
         var detailLine = "\(result.source.timeZoneIdentifier) → \(result.target.timeZoneIdentifier)"
-        if let note = daylightSavingNote(for: result) {
+        if let note {
             detailLine += " · \(note)"
         }
-        return ConverterDisplay(echoLine: result.summary, detailLine: detailLine)
+        return ConverterDisplay(
+            echoLine: result.summary,
+            detailLine: detailLine,
+            sourceEchoLine: sourceEchoLine(for: result),
+            targetPlaceLabel: "In \(result.target.shortPlaceDescription)",
+            targetClockDigits: result.target.clockDigits,
+            targetMeridiem: result.target.uppercasedMeridiem,
+            targetOffsetLine: targetOffsetLine(for: result),
+            footerSentence: result.relativeOffsetSentence,
+            daylightSavingNote: note
+        )
+    }
+
+    /// `Lisbon · 8:00 PM · UTC+1`, the line the design puts *inside* the input
+    /// box under a hairline rule — the source side only, because the target
+    /// side is the whole bottom half of the screen.
+    static func sourceEchoLine(for result: ConversionResult) -> String {
+        [
+            result.source.placeDescription,
+            result.source.uppercasedTime,
+            result.source.utcOffsetDescription,
+        ].joined(separator: " · ")
+    }
+
+    static func targetOffsetLine(for result: ConversionResult) -> String {
+        guard let rollover = result.dayRolloverNote else {
+            return result.target.utcOffsetDescription
+        }
+        return "\(result.target.utcOffsetDescription) · \(rollover)"
     }
 
     /// Explains the DST policy in passing, on the two days a year it applies.

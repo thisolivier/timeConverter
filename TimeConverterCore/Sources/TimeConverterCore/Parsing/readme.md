@@ -175,6 +175,15 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   when it conflicts (`13:00 am`, `0:30 pm`). A contradictory meridiem must fail
   outright rather than fall through to the 24-hour pattern, which would parse
   the time and push the stray `am`/`pm` into the zone token.
+- **The footer sentence is taken at the resolved instant too** (spec amendment
+  2026-10-23). `ConversionResult.relativeOffsetSentence` subtracts the two
+  zones' offsets *on the day asked about*, so for the few weeks each spring
+  when the US has changed its clocks and Europe has not, London → New York
+  reads `4 hours behind London.` rather than its usual 5. Non-whole gaps render
+  decimally (`5.5 hours`, `5.75 hours`), an exact hour is singular, and two
+  places on the same offset get `Same time as Paris.` instead of a zero count.
+  The place named is the **source's display name**, which is the same name the
+  echo above it shows.
 - **Regex patterns are computed, not stored.** `Regex` is not `Sendable`, so
   Swift 6 forbids it as static stored state; two tiny patterns are rebuilt per
   parse, which is immeasurable against a keystroke.
@@ -192,7 +201,10 @@ suggester including eight typo rows lifted from `docs/qa-input-candidates.md`
 with its table-integrity checks (`AbbreviationEchoTests`); and local-zone
 defaulting with injected device zones — both conjunction cases, the `(local)`
 echo, the coast aliases, rollover on a defaulted side and chips on the one named
-zone (`LocalZoneDefaultingTests`). Run with `scripts/test.sh --platform all`.
+zone (`LocalZoneDefaultingTests`); and the relative-offset footer, both as
+pure string formatting over raw second counts and end to end through the engine
+against real half-hour, three-quarter-hour and same-offset zone pairs
+(`RelativeOffsetFooterTests`). Run with `scripts/test.sh --platform all`.
 
 The UI layers that consume this module are documented in the repo-root
 `README.md`: `TimeConverter/` (iOS) and `TimeConverterMac/` (the native

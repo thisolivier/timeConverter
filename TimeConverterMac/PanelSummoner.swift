@@ -72,6 +72,14 @@ final class PanelSummoner {
             NSApp.activate(ignoringOtherApps: true)
             panel.makeKeyAndOrderFront(nil)
         }
+
+        // Item 17. Raised *after* the window work, so by the time the view
+        // reacts the panel is already key and the first rung of the focus
+        // ladder has a chance of landing. The later rungs cover the case where
+        // it does not.
+        if SummonPolicy.requestsInputFocus(for: action) {
+            SummonFocusRequests.shared.request()
+        }
     }
 
     // MARK: - The placeholder panel

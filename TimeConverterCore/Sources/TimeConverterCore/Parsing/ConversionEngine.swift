@@ -12,6 +12,10 @@ struct ZoneReading: Equatable, Sendable {
     let formattedTime: String
     /// e.g. `UTC+0`, `UTC-5`, `UTC+5:30`.
     let utcOffsetDescription: String
+    /// The same offset as a raw number, kept because the footer sentence is
+    /// arithmetic on two offsets and parsing it back out of `UTC+5:30` would be
+    /// absurd.
+    let utcOffsetSeconds: Int
     /// True when the user never named this side and it was filled in from the
     /// device zone, which the echo marks as `(local, …)`.
     let isDeviceLocalZone: Bool
@@ -22,6 +26,7 @@ struct ZoneReading: Equatable, Sendable {
         representativeCities: [String] = [],
         formattedTime: String,
         utcOffsetDescription: String,
+        utcOffsetSeconds: Int,
         isDeviceLocalZone: Bool = false
     ) {
         self.timeZoneIdentifier = timeZoneIdentifier
@@ -29,6 +34,7 @@ struct ZoneReading: Equatable, Sendable {
         self.representativeCities = representativeCities
         self.formattedTime = formattedTime
         self.utcOffsetDescription = utcOffsetDescription
+        self.utcOffsetSeconds = utcOffsetSeconds
         self.isDeviceLocalZone = isDeviceLocalZone
     }
 
@@ -54,6 +60,41 @@ struct ZoneReading: Equatable, Sendable {
         let parenthetical = (localMarker + representativeCities + [utcOffsetDescription])
             .joined(separator: ", ")
         return "\(formattedTime) \(zoneDisplayName) (\(parenthetical))"
+    }
+
+    /// The place on its own, with whatever qualifies it: `Lisbon`,
+    /// `Eastern Time (New York, Toronto)`, `Los Angeles (local)`.
+    ///
+    /// Same vocabulary as `echoDescription` minus the time and the offset,
+    /// because the redesigned iOS layout (item 18) puts those in their own
+    /// slots instead of running them into one sentence.
+    var placeDescription: String {
+        let localMarker = isDeviceLocalZone ? ["local"] : []
+        let qualifiers = localMarker + representativeCities
+        guard !qualifiers.isEmpty else { return zoneDisplayName }
+        return "\(zoneDisplayName) (\(qualifiers.joined(separator: ", ")))"
+    }
+
+    /// The shortest honest name for this zone: the display name, plus the
+    /// `(local)` marker when the side was defaulted — but never the
+    /// representative cities. Used by the result's place label, which the
+    /// design sets uppercase and letterspaced, where
+    /// `IN EASTERN TIME (NEW YORK, TORONTO)` would run off the screen.
+    var shortPlaceDescription: String {
+        isDeviceLocalZone ? "\(zoneDisplayName) (local)" : zoneDisplayName
+    }
+
+    /// `8:00 PM` — the design sets the meridiem in caps.
+    var uppercasedTime: String { formattedTime.uppercased() }
+
+    /// `4:00` from `4:00 pm`: the part the design sets at poster scale.
+    var clockDigits: String {
+        String(formattedTime.split(separator: " ").first ?? "")
+    }
+
+    /// `PM` from `4:00 pm`: the part that sits small beside the digits.
+    var uppercasedMeridiem: String {
+        String(formattedTime.split(separator: " ").last ?? "").uppercased()
     }
 }
 
@@ -85,6 +126,31 @@ struct ConversionResult: Equatable, Sendable {
         let line = "\(source.echoDescription) → \(target.echoDescription)"
         guard let dayRolloverMarker else { return line }
         return "\(line) \(dayRolloverMarker)"
+    }
+
+    /// The rollover in words rather than in `+1d` shorthand, for the redesigned
+    /// layout's offset line (`UTC+9 · next day`), where there is no echo
+    /// sentence to hang a marker off.
+    var dayRolloverNote: String? {
+        switch dayOffset {
+        case 0: return nil
+        case 1: return "next day"
+        case -1: return "previous day"
+        default: return dayOffset > 0 ? "+\(dayOffset) days" : "\(dayOffset) days"
+        }
+    }
+
+    /// The footer sentence (spec amendment 2026-10-23): how the target sits
+    /// relative to the source, named after the source.
+    ///
+    /// Derived from the two offsets **at the resolved instant**, not from the
+    /// zones' standard offsets, so a conversion made while one side is on
+    /// daylight saving and the other is not tells the truth for that day.
+    var relativeOffsetSentence: String {
+        RelativeOffsetFormatting.sentence(
+            differenceInSeconds: target.utcOffsetSeconds - source.utcOffsetSeconds,
+            sourcePlaceName: source.zoneDisplayName
+        )
     }
 }
 
@@ -130,6 +196,7 @@ struct ConversionEngine: Sendable {
                 minute: components.minute ?? 0
             ),
             utcOffsetDescription: UTCOffsetFormatting.description(for: zone.timeZone, at: instant),
+            utcOffsetSeconds: zone.timeZone.secondsFromGMT(for: instant),
             isDeviceLocalZone: zone.isDeviceLocalZone
         )
     }

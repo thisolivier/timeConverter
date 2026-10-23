@@ -12,9 +12,32 @@ public enum ConverterDisplayState: Equatable, Sendable {
     /// Any prompt — P1, P2, P4 or P5: the spec's message, plus the
     /// tap-to-replace chips that P4 and P5 can offer.
     case problem(ConverterProblem)
+
+    /// The conversion, when there is one.
+    ///
+    /// Public because the redesigned iOS layout (item 18) draws one piece of
+    /// the conversion — the source echo — *inside the input box*, far away from
+    /// the `switch` that renders the result band. Reaching for it there is
+    /// cheaper and clearer than threading the whole display state through two
+    /// subviews.
+    public var convertedDisplay: ConverterDisplay? {
+        guard case let .converted(display) = self else { return nil }
+        return display
+    }
 }
 
 /// Pre-rendered strings for the output area, so the view holds no logic.
+///
+/// Two generations of fields live here side by side, on purpose.
+///
+/// `echoLine` and `detailLine` are the original one-sentence rendering: still
+/// the spec's canonical echo, still what the Mac shell draws and what most of
+/// the parsing tests assert against. The fields below them decompose the *same*
+/// conversion into the slots the redesigned iOS layout needs (item 18) — a
+/// source echo for inside the input box, a target place label, the time split
+/// into poster-scale digits and a small meridiem, the offset, and the footer
+/// sentence. Nothing is computed twice: both generations come off one
+/// `ConversionResult`.
 public struct ConverterDisplay: Equatable, Sendable {
     /// The spec's canonical echo:
     /// `12:00 pm New York (UTC-5) → 5:00 pm London (UTC+0) +1d`.
@@ -22,6 +45,26 @@ public struct ConverterDisplay: Equatable, Sendable {
     /// Quieter supporting detail: the zones actually used, plus a note when the
     /// DST policy had to move the time.
     public let detailLine: String
+
+    /// What the input box echoes back underneath the typed text:
+    /// `Lisbon · 8:00 PM · UTC+1`.
+    public let sourceEchoLine: String
+    /// The label above the result — `In São Paulo`. Natural case: uppercasing
+    /// and letterspacing it is typography, which belongs to the view.
+    public let targetPlaceLabel: String
+    /// `4:00` — the design's poster-scale numerals.
+    public let targetClockDigits: String
+    /// `PM` — set smaller, on roughly the same baseline.
+    public let targetMeridiem: String
+    /// `UTC-3`, or `UTC+9 · next day` when the date rolls over. The redesigned
+    /// layout has no echo sentence to hang `+1d` off, so the rollover rides
+    /// here instead of being lost.
+    public let targetOffsetLine: String
+    /// The footer sentence: `4 hours behind Lisbon.`
+    public let footerSentence: String
+    /// The daylight-saving explanation, on the two days a year it applies.
+    /// `nil` otherwise, which is the overwhelmingly common case.
+    public let daylightSavingNote: String?
 }
 
 /// A prompt, ready to render: the message exactly as the spec words it, and

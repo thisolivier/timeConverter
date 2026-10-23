@@ -61,6 +61,19 @@ TimeConverterCore/
 | `Parsing/` | `docs/input-parsing-spec.md` in code: string in, conversion or prompt out. See `Parsing/readme.md`. |
 | `Presentation/ConverterPresenter.swift` | The only place parse output becomes display strings. Internal — shells go through the driver. |
 | `Presentation/ConverterDisplayState.swift` | The three things a UI can show, plus `ConverterDisplay`, `ConverterProblem` and `ReplacementChip`. |
+
+`ConverterDisplay` carries **two generations of fields at once**, and that is
+deliberate. `echoLine` / `detailLine` are the original one-sentence rendering,
+still the spec's canonical echo and still what the Mac shell draws. Beside them
+sit the decomposed fields the redesigned iOS layout needs (item 18) —
+`sourceEchoLine`, `targetPlaceLabel`, `targetClockDigits`, `targetMeridiem`,
+`targetOffsetLine`, `footerSentence`, `daylightSavingNote`. Both generations
+come off one `ConversionResult`; nothing is computed twice. When the Mac gets
+its own design the old pair can go.
+
+One consequence worth knowing: the redesigned layout has no echo sentence to
+hang `+1d` off, so the day rollover rides `targetOffsetLine` as
+`UTC+9 · next day`. It is never dropped.
 | `Presentation/ConverterDisplayDriver.swift` | *When* the output changes: results instantly, prompts after 600 ms, bypasses for submit/chip-tap/launch. The shells' one entry point. |
 | `Launch/LaunchRequest.swift` | `.startFreshConversion` vs `.summonWithoutReset`, their `inputToStartFrom` rule, and the one-slot `LaunchRequestInbox`. |
 | `Launch/LaunchURLRouter.swift` | `timeconverter://convert` → a request. A QA and fallback route, not a feature. |
@@ -68,7 +81,7 @@ TimeConverterCore/
 
 ## Tests
 
-195 tests, and they are the bulk of the repo's coverage. Both schemes run this
+217 tests, and they are the bulk of the repo's coverage. Both schemes run this
 one test target, so the core is exercised **twice per full run** — once on the
 iOS simulator and once natively on macOS:
 

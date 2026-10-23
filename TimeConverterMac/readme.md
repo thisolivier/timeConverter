@@ -33,6 +33,18 @@ ported across unchanged, which is the proof: Carbon was never the hard part.
   one judgement call in the summon path, extracted so it can be unit-tested:
   visible *and* frontmost → hide; visible but another app is active → bring
   forward, because hiding there makes the hotkey look broken.
+- **A summon lands the cursor in the field** (backlog item 17, user-reported
+  from real use). `@FocusState` only takes hold once the hosting view's window
+  is key and SwiftUI has installed its responder chain, and neither has
+  necessarily happened when `onAppear` runs on a window AppKit is still
+  ordering front — so a single write landed *usually*, which is the complaint.
+  The fix is two triggers and a short ladder: `controlActiveState` turning
+  `.key` covers the dropdown, the panel, and every re-raise;
+  `SummonFocusRequests` (a counter, because `true → true` is not an `onChange`)
+  covers the press that reaches a panel which is already key. Each trigger
+  writes the focus three times over 200 ms, because the attempt that works
+  cannot be predicted and the ones that follow it are no-ops. The ladder is
+  deliberately finite — an endless retry would fight the user for the cursor.
 - **Carbon for the hotkey, because it needs no permission.**
   `RegisterEventHotKey` has the WindowServer deliver one pre-declared chord, so
   the process never sees the keystream and there is nothing for TCC to protect.
@@ -61,8 +73,11 @@ ported across unchanged, which is the proof: Carbon was never the hard part.
   `ConverterDisplayState`.
 - `PanelSummoner.swift` — owns the hotkey and the floating `NSPanel`, and logs
   what came up.
-- `SummonPolicy.swift` — the show/hide rule, plus `MacMenuBarLog`, the log
-  identity the two shell scripts filter on.
+- `SummonPolicy.swift` — the show/hide rule and whether it also takes the
+  keyboard, plus `SummonFocusRequests` and `SummonFocusLadder` (item 17) and
+  `MacMenuBarLog`, the log identity the two shell scripts filter on. These live
+  together because they are all members of the test target, and because they
+  are the same question: what a press of ⌃⌥T should actually do.
 - `GlobalHotKey.swift` — ⌃⌥T via Carbon. Ported verbatim from the retired
   bundle.
 - `Info.plist` — **generated** by xcodegen from `project.yml` (and gitignored).
@@ -103,6 +118,16 @@ scripts/run-mac.sh        # build, launch, print the menu-bar log line
 scripts/qa-menubar.sh     # the full headless pass + the one manual keypress
 scripts/test.sh --platform mac
 ```
+
+Item 17's focus fix is as verified as a script can make it — every summon asks
+for focus, the request is observable twice in a row, the ladder is ordered,
+immediate and finite — but **the `@FocusState` write itself needs a running app
+and a real window**, and synthetic keystrokes are off the table here (see the
+header of `qa-menubar.sh`). The five-second manual check: launch with
+`scripts/run-mac.sh`, switch to another app, press ⌃⌥T, and type without
+touching the mouse. The characters should appear in the field. Press ⌃⌥T again
+from a third app while the panel is still open and type again — that second
+press is the case `controlActiveState` alone does not cover.
 
 `TimeConverterMacTests` is a standalone logic bundle with **no host
 application**: `GlobalHotKey.swift` and `SummonPolicy.swift` are members of the

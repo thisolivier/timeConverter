@@ -205,10 +205,9 @@ extension ConverterDisplayState {
         return problem.chips
     }
 
-    var convertedDisplay: ConverterDisplay? {
-        guard case let .converted(display) = self else { return nil }
-        return display
-    }
+    // `convertedDisplay` used to live here; it is public API on
+    // `ConverterDisplayState` now, because the redesigned iOS layout needs it
+    // too (item 18).
 }
 
 /// A `.problem` state with no chips — the shape P1 and P2 always take, and the
