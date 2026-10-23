@@ -14,7 +14,8 @@ an `InputParser`, only the rendered values the presenter hands them.
 - **Nothing reads the clock, and nothing reads the device zone.**
   `InputParser.parse(_:now:localZone:)` takes both as parameters; the date
   travels onward on `ConversionRequest.referenceDate`, so `ConversionEngine` is
-  pure too, and the zone is used only to fill in a side the user didn't name.
+  pure too, and the zone is used to fill in a side the user didn't name — and,
+  since item 22, to read the current wall clock a bare-zone input converts.
   `TimeZone.current` is read in exactly two places in the whole repo — next to
   `Date()` in `ContentView` (iOS) and `MenuBarConverterView` (macOS). Tests
   inject fixed dates and fixed zones (`FixedZones`) and assert exact UTC
@@ -56,7 +57,9 @@ NormalizedInput     trim + collapse + lowercase, keeping a per-character map
   ↓
 InputTokenizer      match time at start → split on first standalone in/to →
                     time + up to two zone tokens, each with a RawTextRange.
-                    One side may legitimately be empty (or P1/P2)
+                    One side may legitimately be empty (or P1/P2). No time at
+                    all → the whole input is one target-side token and the time
+                    is nil ("ET" = now), or P1 if it cannot be a token
   ↓
 ZoneResolverChain   each *named* zone token through five resolvers in order,
                     stopping at the first with ≥1 candidate → resolved /
@@ -76,8 +79,8 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 
 | File | Purpose |
 |---|---|
-| `InputParser.swift` | Entry point. `parse(_:now:localZone:) -> ParseOutcome`, plus `parseAndConvert` for callers that want the rendered result. Also the one place local defaulting happens. |
-| `InputTokenizer.swift` | The first-standalone-conjunction split, emitting range-carrying zone tokens — either side may be empty. |
+| `InputParser.swift` | Entry point. `parse(_:now:localZone:) -> ParseOutcome`, plus `parseAndConvert` for callers that want the rendered result. Also the one place local defaulting happens, and the one place a bare-zone input's missing time becomes the current clock. |
+| `InputTokenizer.swift` | The first-standalone-conjunction split, emitting range-carrying zone tokens — either side may be empty, and so may the time (`bareZoneTokens`, item 22). |
 | `NormalizedInput.swift` | Normalisation plus the normalised→raw offset map. |
 | `RawTextRange.swift` | A character range into the raw input, and `RawTextEditing` to apply one. |
 | `TimeTokenParser.swift` | The `<time>` grammar: `H[H]:mm` 24-hour and `H[H][:mm] [space] am/pm`, with lenient spacing and the redundant-meridiem rule. |
@@ -111,6 +114,39 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   job is to say which side the named zone is on. Only a time with no zone on
   either side (`7pm`, `7pm in`) prompts, and that prompt is **P2**, reworded;
   **P3 is retired** and no `Prompt` case reports it.
+- **A bare zone token means "now, over there"** (spec amendment 2026-10-23,
+  item 22). `ET`, `Tokyo`, `east coast` with no time at all converts the
+  **current device clock** — hours *and* minutes — into the named zone: the
+  time is `ParsedTime.wallClock(of: now, in: localZone)`, the source is the
+  device zone (so the echo carries the same `(local)` marker item 14 added) and
+  the target is the named token. Nothing downstream knows: the request it
+  produces is shaped exactly like `7pm in London`'s, so the pair view, the
+  footer, the zone lines and the chips all work unchanged. Note the direction
+  is the *opposite* of a time with one zone — `8pm ET` is still 8pm in ET
+  converted to local.
+- **The bare-zone test is structural, never "did it resolve".** The tokenizer's
+  `bareZoneTokens` offers the whole trimmed, normalised input as one zone token
+  whenever the time match failed, so long as the text structurally *could* name
+  a place; otherwise P1. It must not ask the chain, because a bare `Lodnon` has
+  to reach P5's did-you-mean chips and a bare `CST` has to reach P4's picker —
+  gating on resolution success would turn both into "couldn't find a time". The
+  three rejections, each a shape rather than a lookup:
+  - **starts with a digit** — no zone name does, and somebody who has typed
+    digits is partway through a time (`12`, `13:00 am`, `25:00`, `6 et in
+    london`);
+  - **contains no letter** — names are made of words (`!!!`);
+  - **contains a standalone conjunction** — the user wrote a conversion
+    sentence and left out the time, so P1's "start with e.g. 14:30" is the
+    useful answer, not "don't recognize 'london to paris'". Multi-word zone
+    names are untouched: `east coast` and `south africa` contain no standalone
+    `in`/`to`, and `porto` never did.
+- **Digit-only input stays P1** (decided with item 22). `12` is not a time —
+  the 24-hour form requires its minutes — and it is not a zone name either, so
+  it could defensibly have become a P5 unknown zone. It does not: the first
+  rejection above covers it, because "Couldn't find a time — start with e.g.
+  14:30" is the useful half of the truth for a half-typed time, and
+  "Don't recognize '12'" is not. `BareZoneInputTests
+  .digitOnlyInputsStayP1RatherThanBecomingUnknownZones` pins it.
 - **The defaulted side is marked, never silent.** A defaulted `ResolvedZone`
   carries `matchSource == .deviceLocalZone`, and the echo leads its existing
   parenthetical with `local` — `7:00 pm Los Angeles (local, UTC-8) → 3:00 am
@@ -260,7 +296,11 @@ the offsets that stayed (`ZoneLineTests`); the expanded echo
 with its table-integrity checks (`AbbreviationEchoTests`); and local-zone
 defaulting with injected device zones — both conjunction cases, the `(local)`
 echo, the coast aliases, rollover on a defaulted side and chips on the one named
-zone (`LocalZoneDefaultingTests`); and the relative-offset footer, both as
+zone (`LocalZoneDefaultingTests`); bare-zone input against a fixed `now` with
+minutes on it — every token shape, the minute-exact clock read in the injected
+device zone, the `(local)` echo, P4 and P5 with a chip that rewrites the whole
+bare token, DST correctness in both seasons, the structural rejections and the
+digit-only decision (`BareZoneInputTests`); and the relative-offset footer, both as
 pure string formatting over raw second counts and end to end through the engine
 against real half-hour, three-quarter-hour and same-offset zone pairs
 (`RelativeOffsetFooterTests`). Run with `scripts/test.sh --platform all`.

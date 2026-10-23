@@ -17,6 +17,13 @@ import Foundation
 /// `NormalizedInput`, which keeps the normalised/raw correspondence rather than
 /// re-locating tokens by searching — `9am CST to CST` must rewrite the side the
 /// prompt is about, and a search cannot know which that is.
+///
+/// Since the 2026-10-23 amendment (item 22) the **time** may also be absent: an
+/// input that is only a zone token ("ET", "Tokyo", "east coast") converts the
+/// current clock, so the time is left nil here and filled in by `InputParser`
+/// from the injected `now`. Deciding *whether* the input is such a token is
+/// purely structural — see `bareZoneTokens` — because resolution must still be
+/// allowed to fail into P4 or P5 rather than silently falling back to P1.
 enum InputTokenizer {
     /// One zone token: the normalised text the resolvers see, and where it came
     /// from in the raw input.
@@ -28,7 +35,11 @@ enum InputTokenizer {
     /// At least one of `sourceZone` and `targetZone` is always non-nil: a time
     /// with no zone at all is P2, so the tokenizer never emits two empty sides.
     struct Tokens: Equatable, Sendable {
-        let time: ParsedTime
+        /// Nil for a bare-zone input ("ET"), which means "the current clock":
+        /// `InputParser` substitutes the wall clock of the injected `now` read
+        /// in the injected device zone. Never nil when any zone side was typed
+        /// alongside a time, so "8pm ET" is unaffected.
+        let time: ParsedTime?
         /// Nil when the user named only the target (`7pm in London`), in which
         /// case the source defaults to the injected device zone.
         let sourceZone: ZoneToken?
@@ -59,7 +70,13 @@ enum InputTokenizer {
         let normalizedInput = normalized.normalizedText
 
         guard let timeMatch = TimeTokenParser.match(atStartOf: normalizedInput) else {
-            return .prompt(.timeNotFound(input: normalizedInput))
+            // No time: the whole input may still be a bare zone token naming
+            // where to read the current clock (item 22). P1 is what's left when
+            // it structurally cannot be one.
+            guard let bareZone = bareZoneTokens(in: normalized) else {
+                return .prompt(.timeNotFound(input: normalizedInput))
+            }
+            return .tokens(bareZone)
         }
 
         let remainingWords = words(
@@ -110,6 +127,52 @@ enum InputTokenizer {
             conjunction: conjunction,
             targetZone: targetZone
         ))
+    }
+
+    // MARK: - Bare zone (item 22)
+
+    /// Treats the entire normalised input as one zone token — the target, with
+    /// the source left to default to the device zone — when it could plausibly
+    /// name a place, and returns nil to mean P1 when it could not.
+    ///
+    /// The test is deliberately **structural**, never "did it resolve": a bare
+    /// `Lodnon` has to reach P5's did-you-mean chips and a bare `CST` has to
+    /// reach P4's picker, which it cannot do if an unresolvable token quietly
+    /// becomes "couldn't find a time". So the three rejections below are all
+    /// about the *shape* of the text:
+    ///
+    /// - **Starts with a digit** (`12`, `13:00 am`, `25:00 london`, `6 et in
+    ///   london`): no zone name begins with a digit, and a user who has typed
+    ///   digits is partway through a time — which is exactly what P1 says. This
+    ///   is why bare `12` stays P1 rather than becoming an unknown zone.
+    /// - **Contains no letter at all** (`!!!`, `---`): names are made of words.
+    /// - **Contains a standalone conjunction** (`london to paris`): the user has
+    ///   written a conversion sentence and left out the time, so P1's "start
+    ///   with e.g. 14:30" is the useful answer, not "don't recognize 'london to
+    ///   paris'". Multi-word zone names are untouched — `east coast` and `south
+    ///   africa` contain no standalone `in`/`to`, and `porto` never did.
+    private static func bareZoneTokens(in normalized: NormalizedInput) -> Tokens? {
+        let normalizedInput = normalized.normalizedText
+        guard let firstCharacter = normalizedInput.first,
+              !firstCharacter.isNumber,
+              normalizedInput.contains(where: \.isLetter)
+        else { return nil }
+
+        let allWords = words(in: normalizedInput, startingAtNormalizedOffset: 0)
+        guard !allWords.contains(where: { Conjunction(rawValue: $0.text) != nil }) else {
+            return nil
+        }
+        guard let bareZoneToken = zoneToken(from: allWords, in: normalized) else { return nil }
+
+        // The named zone is the *target*: "ET" asks what the local clock reads
+        // over there, so the source is the device zone — the same shape as
+        // "7pm in London", and the same `(local)` marker on the echo.
+        return Tokens(
+            time: nil,
+            sourceZone: nil,
+            conjunction: nil,
+            targetZone: bareZoneToken
+        )
     }
 
     // MARK: - Word scanning

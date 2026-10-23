@@ -123,8 +123,11 @@ struct ConversionEngineTests {
             + "→ 5:00 pm London (UTC+0)")
     }
 
+    /// `12` rather than the `hello` this used to use: since item 22 a bare word
+    /// is a zone token and prompts P5, while digits still mean a half-typed
+    /// time and so still prompt P1.
     @Test func parseAndConvertPassesPromptsStraightThrough() throws {
-        let outcome = makeParser().parseAndConvert("hello", now: FixedDates.winterMidday)
+        let outcome = makeParser().parseAndConvert("12", now: FixedDates.winterMidday)
         #expect(outcome.promptValue?.specIdentifier == "P1")
         #expect(outcome.resultValue == nil)
     }

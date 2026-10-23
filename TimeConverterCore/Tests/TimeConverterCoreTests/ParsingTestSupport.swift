@@ -38,6 +38,17 @@ enum FixedDates {
     /// UK clocks go forward at 2026-03-29 01:00 UTC — local 01:00–01:59 never
     /// happens in London that day.
     static let londonSpringForwardDay = utc(year: 2026, month: 3, day: 29)
+
+    /// A January afternoon whose Los Angeles wall clock is **15:42** — minutes
+    /// on purpose, because a bare-zone input converts "now" to the minute
+    /// (item 22) and an on-the-hour fixture could not tell that apart from a
+    /// rounded one.
+    static let winterAfternoonWithMinutes = utc(year: 2026, month: 1, day: 15, hour: 23, minute: 42)
+
+    /// The *same* Los Angeles wall clock in July (15:42 PDT rather than PST),
+    /// so a bare-zone conversion can be shown to follow daylight saving rather
+    /// than a fixed offset.
+    static let summerAfternoonWithMinutes = utc(year: 2026, month: 7, day: 15, hour: 22, minute: 42)
 }
 
 /// Device-zone fixtures for the local-defaulting rule (item 14).

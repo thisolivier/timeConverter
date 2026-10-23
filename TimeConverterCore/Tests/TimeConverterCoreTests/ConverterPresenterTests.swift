@@ -121,13 +121,15 @@ struct ConverterPresenterTests {
 
     /// P3 is retired, so the single-zone strings that used to stand for it are
     /// now conversions; `3pm in` takes its place as the other way to name no
-    /// zone at all.
+    /// zone at all. P1's stand-in is `12` rather than `hello there`, which
+    /// item 22 turned into a bare-zone P5.
     @Test(arguments: [
-        ("hello there", "P1"),
+        ("12", "P1"),
         ("3pm", "P2"),
         ("3pm in", "P2"),
         ("9am CST in London", "P4"),
         ("9am Narnia in London", "P5"),
+        ("Lodnon", "P5"),
     ])
     func everyPromptBecomesAProblemLine(input: String, specIdentifier: String) throws {
         let state = presenter.displayState(for: input, now: FixedDates.winterMidday)
@@ -139,7 +141,7 @@ struct ConverterPresenterTests {
     }
 
     @Test func plainPromptsUseTheirSpecCopyUnchanged() {
-        #expect(presenter.displayState(for: "hello there", now: FixedDates.winterMidday)
+        #expect(presenter.displayState(for: "12", now: FixedDates.winterMidday)
             == plainProblem("Couldn't find a time — start with e.g. 14:30 or 2:30 pm"))
         #expect(presenter.displayState(for: "3pm", now: FixedDates.winterMidday)
             == plainProblem("Convert 3:00 pm where? Add a timezone, city, or country"))

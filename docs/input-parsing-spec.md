@@ -52,6 +52,9 @@ Implementation is item 3; UI wiring is item 4.
 
 1. Trim, collapse whitespace, lowercase a working copy.
 2. Match the time at the start of the string (regex above, longest match).
+   **No match** (amended 2026-10-23, item 22): the whole working copy becomes a
+   single target-side zone token and the time becomes "now" — unless it fails
+   the structural test in Architecture notes, in which case P1.
 3. Scan the remaining words for the **first** standalone conjunction (`in`/`to`).
    Words before it are the source-zone token; words after it are the target-zone
    token. (First-match scan means a city containing "in"/"to" as a *whole word*
@@ -105,7 +108,7 @@ Outcomes per token:
 
 | ID | Trigger | Prompt behavior |
 |---|---|---|
-| P1 | No parseable time at start of input | "Couldn't find a time — start with e.g. 14:30 or 2:30 pm" |
+| P1 | No parseable time at start of input **and** the input cannot be a bare zone token (narrowed 2026-10-23, item 22 — see the bare-zone rule in Architecture notes) | "Couldn't find a time — start with e.g. 14:30 or 2:30 pm" |
 | P2 | No zone anywhere in the input (amended 2026-10-22: single missing sides no longer prompt — they default to local) | "Convert {time} where? Add a timezone, city, or country" |
 | P3 | *(retired 2026-10-22 — absorbed by the local-default rule; a conjunction with nothing after it still renders P2)* | |
 | P4 | Ambiguous zone token | Picker listing every candidate with its current UTC offset and a representative city; selection completes the conversion |
@@ -172,3 +175,21 @@ item 4 renders them.
   and the current time; prompts P4/P5 apply to the token as usual. P1 keeps
   firing only for inputs that contain neither a parseable time nor a lone
   resolvable zone. Existing rule unchanged: "8pm ET" = 8pm in ET → local.
+  - **The rule is structural, not resolution-dependent** (implementation
+    decision, item 22). When the time match fails, the whole trimmed/normalised
+    input is offered to the resolver chain as a single **target**-side zone
+    token — the chain is never consulted to decide *whether* it is one, because
+    a bare unknown token ("Lodnon") must reach P5's did-you-mean chips and a
+    bare ambiguous one ("CST") must reach P4's picker. Three structural
+    rejections fall back to P1: the input is empty or whitespace; it begins with
+    a digit (no zone name does, and digits read as a half-typed time — "12",
+    "13:00 am", "25:00", "6 et in london"); it contains no letter at all
+    ("!!!"); or it contains a standalone conjunction, meaning the user wrote a
+    conversion sentence and omitted the time ("london to paris" → P1, not an
+    unknown zone). Multi-word zone names are unaffected — "east coast" and
+    "south africa" contain no standalone "in"/"to".
+  - **Digit-only input is P1, deliberately.** Bare "12" is not a time (the
+    24-hour form requires minutes) and is not a zone name, so either prompt
+    could be argued. It resolves to P1: a user typing digits is starting a
+    time, and "Couldn't find a time — start with e.g. 14:30" is the useful
+    answer where "Don't recognize '12'" is not.

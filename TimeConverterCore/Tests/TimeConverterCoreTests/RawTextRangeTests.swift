@@ -94,8 +94,9 @@ struct RawTextRangeTests {
     /// P1 and P2 have no single token to rewrite, so they offer no range (and,
     /// in the presenter, no chips). The two single-zone strings that used to
     /// live here now convert, so the cases left are a missing time and a time
-    /// with no zone anywhere.
-    @Test(arguments: ["hello there", "3pm", "3pm in"])
+    /// with no zone anywhere. The P1 example is `12` rather than `hello there`:
+    /// item 22 made a bare word a zone token, which *does* carry a range.
+    @Test(arguments: ["12", "3pm", "3pm in"])
     func promptsWithoutAnOffendingTokenCarryNoRange(input: String) throws {
         let prompt = try #require(makeParser().parse(input, now: FixedDates.winterMidday).promptValue)
         #expect(prompt.offendingTokenRange == nil)
