@@ -1,6 +1,7 @@
 # Favourites and the world clock — spec
 
-Agreed in outline 2026-10-28 (Olivier): "Being able to favourite destinations,
+Reviewed with Olivier 2026-10-28 (decisions 1–8, 10, 11 accepted as written;
+9 and 12 amended below). Agreed in outline 2026-10-28 (Olivier): "Being able to favourite destinations,
 these add to a second tab, which shows by default the world clock in these
 time zones, with a slider at the bottom which allows you to shift the time
 forwards and backwards (input time)." iOS first, then Android. Mac untouched
@@ -53,13 +54,19 @@ open; each is marked **(decision)** so they are easy to reverse.
   shifted local instant read in its own zone. This is exactly a conversion
   from local at the shifted wall-clock time to each favourite, so it reuses
   `ConversionEngine` and inherits its DST policy for free.
-- **Range and step**: −24 h … +24 h in 15-minute steps, snapping, centred on
-  zero. **(decision)** Wider than a working day in either direction, narrow
-  enough that one swipe is still precise with snapping.
-- **Readout** above the slider: the shifted local time and its day,
-  `Today 2:30 PM` / `Tomorrow 9:15 AM` / `Yesterday 11:00 PM`, plus the signed
-  offset `+5 h` / `−45 min` once non-zero. A **Now** button resets to zero;
-  it is hidden at zero.
+- **Range**: unbounded in both directions (Olivier, 2026-10-28: "shift
+  indefinitely into the future or past, useful for DST change conditions").
+  **Mechanic (decision)**: the offset is `days + minutes`. A stock `Slider`
+  covers −24 h … +24 h of *minutes* in 15-minute snapping steps; a stock
+  `Stepper` beside the readout moves the *day anchor* by whole days with no
+  limit. So any instant is reachable (step the days, slide the hours) and the
+  slider keeps 15-minute precision at any distance. A **tap** on the slider
+  (not a drag) resets days and minutes to zero: that is the "back to now"
+  gesture Olivier asked for, so no separate Now button in the MVP.
+- **Readout** above the slider: the shifted local time and its day —
+  `Today 2:30 PM`, `Tomorrow 9:15 AM`, `Yesterday 11:00 PM`, and beyond one day
+  the weekday and date, `Fri 31 Oct, 9:15 AM` — plus the signed offset once
+  non-zero: `+5 h`, `−45 min`, `+3 d 2 h`.
 - **Base**: the real current time keeps advancing underneath the offset, so a
   slider left at +2 h for ten minutes shows +2 h from the new now.
 
@@ -93,7 +100,8 @@ The MVP keeps every behaviour above and drops only the styling and the
 polish that would want a design pass:
 
 - **Kept**: star on the result header, persistence, two tabs, local row
-  first, the slider with snapping and the readout, Now reset, live ticking,
+  first, the slider with snapping and the day stepper, the readout,
+  tap-to-reset, live ticking,
   day markers, zone lines, offset phrases, swipe to delete, fixtures.
 - **System chrome, poster content**: the Clocks tab is a plain SwiftUI `List`
   with system row chrome and a standard `Slider`. Inside each row the
@@ -106,8 +114,11 @@ polish that would want a design pass:
 
 ## Out of scope this phase
 
-Mac UI, iCloud sync, adding a favourite by typing in the Clocks tab (the
-converter is the one input), widgets, Android (phase 2, item 32).
+Mac UI **and the Mac ship** (Olivier, 2026-10-28: the Mac shortcut was
+designed as a quick utility, not a multi-page app; keep the Mac part unbuilt
+until further notice — the Mac lane stays behind in `docs/releases.md` on
+purpose this phase), iCloud sync, adding a favourite by typing in the Clocks
+tab (the converter is the one input), widgets, Android (phase 2, item 32).
 
 ## Items
 
