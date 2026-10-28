@@ -40,11 +40,11 @@ is the one resolver without a direct twin).
 
 ## Next
 
-- **24b. Parser port** — the resolver chain (alias table, abbreviation table,
-  tz-db cities, country table, offline gazetteer — ship `fallback-cities.json`
-  as an Android asset or a core resource), prompts P1–P5 with the spec copy,
-  chips with raw-text ranges, local defaulting, bare zones, `now`, did-you-mean.
-  Done when `SharedFixtureParserTests` un-ignores and passes every fixture.
+- **24b. Parser port — DONE 2026-10-28.** The Swift parser ported file for
+  file into `:core` (resolver chain, `fallback-cities.json` as a core classpath
+  resource from the Swift file, prompts, chips, bare zones, `now`,
+  did-you-mean); the interim parser is gone and `SharedFixtureParserTests`
+  passes all 43 fixtures exactly.
 - **24c. Presenter + UI parity** — `ConverterDisplay` slots, the debounce,
   chips row, keyboard choreography; the design's fonts (Anton/JetBrains Mono
   equivalents are free to bundle on Android, unlike iOS).

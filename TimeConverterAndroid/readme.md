@@ -9,7 +9,7 @@ rule. Phones are the scope, sideloaded from GitHub Releases through Obtainium
 
 ```
 TimeConverterAndroid/
-  core/   plain Kotlin/JVM library — parser, engine, presenter-to-be. No Android imports.
+  core/   plain Kotlin/JVM library — parser, engine, presenter. No Android imports (see core/readme.md).
   app/    the Compose shell: one activity, one screen. Strings in, layout out.
   gradle/libs.versions.toml   every tool and library version, pinned.
 ```
@@ -18,23 +18,24 @@ TimeConverterAndroid/
 already carries the IANA database and DST rules, so nothing in the engine needs
 Android, and a JVM module runs its tests in a second with no emulator. It is
 the Kotlin twin of the Swift package `TimeConverterCore`, file for file where
-that makes sense (`TimeTokenParser`, `WallClockResolver`, `ConversionEngine`,
-`Formatting`).
+that makes sense (`InputTokenizer`, `InputParser`, the resolver chain,
+`TimeTokenParser`, `WallClockResolver`, `ConversionEngine`, `Formatting`).
 
 **The shared contract is `fixtures/conversion-cases.json`** at the repository
 root (see `fixtures/readme.md`). The Swift core generates it; both cores assert
 against it. There is no shared runtime — two implementations, one behaviour,
-held together by one fixture file. `SharedFixtureEngineTests` is the engine
-half of that contract and passes today; `SharedFixtureParserTests` is the
-parser half and stays `@Ignore`d until the parser port lands.
+held together by one fixture file. `SharedFixtureParserTests` renders every
+case end to end (typed string → display or prompt + chips) and compares it
+exactly; `SharedFixtureEngineTests` checks the zone arithmetic from the
+resolved requests alone.
 
-**`InterimInputParser` is a stand-in**, clearly marked as such: enough grammar
-to make the emulator show real conversions and real prompts (time + zone
-in|to zone, the Swift alias table incl. the ambiguous `cst`/`ist`, a few
-Foundation-style codes, the tz database's own city names, local defaulting),
-emitting P1/P2/P4/P5 with the spec's copy and raw-text token ranges. It is
-replaced wholesale by the port (backlog 24b); the presenter takes the parser
-as a function parameter, so that swap touches nothing above it.
+**The parser is a full port** (backlog 24b, 2026-10-28): the five-step
+resolver chain, the country table, the offline gazetteer, representative
+cities, local defaulting, bare zones, `now` and did-you-mean all behave as on
+iOS. Two inputs Foundation answers and the JVM cannot are documented
+snapshots: the abbreviation dictionary (51 entries, captured on macOS 26.2)
+and the list of tzdata backward links that Apple's identifier list omits. See
+`core/readme.md`.
 
 **The presentation layer is a full port** (`core/.../presentation/`): the
 `ConverterDisplay` slots under their Swift names, `ConverterProblem` /
@@ -109,15 +110,9 @@ each other; `run-android.sh` uninstalls and retries when switching.
 
 ## Main components
 
-- `core/.../parsing/TimeTokenParser.kt` — the `<time>` grammar, ported.
-- `core/.../parsing/InterimInputParser.kt`, `InterimZoneTable.kt` — the
-  stand-in parser and its vocabulary (see above).
-- `core/.../parsing/Prompt.kt`, `RawTextRange.kt`, `NormalizedInput.kt` — the
-  prompts as values with the spec's copy; raw-input ranges and the map from
-  the normalised copy back to them.
-- `core/.../parsing/ZoneSuggestionEngine.kt` — did-you-mean with the Swift
-  policy (≤2 edits, ≤1 on short tokens, no code-for-code guesses, top 3,
-  never auto-accepted) plus the bounded `EditDistance`.
+- `core/.../parsing/` — the parser port: `InputParser`, `InputTokenizer`,
+  `NormalizedInput`, `TimeTokenParser`, the resolver chain and its tables,
+  `Prompt`, `ZoneSuggestionEngine`. Component table in `core/readme.md`.
 - `core/.../presentation/` — `ConverterDisplayState` (state, display slots,
   problem, chip), `ConverterPresenter`, `ConverterDisplayDriver` +
   `PromptScheduler`, `PosterLayoutMode`.
@@ -144,12 +139,9 @@ each other; `run-android.sh` uninstalls and retries when switching.
 
 ## Not yet / still interim
 
-- Parser port (24b): resolver chain, country table, offline gazetteer, `now`,
-  bare zones. Until then `hello`, `Portugal`, `Porto`, `now in …` don't parse.
-- Zone sub-line naming: `ZoneNames` uses `java.time`'s names, which on Android
-  come out as `London Time (London)` / `Kolkata Time (Kolkata)`, and lists only
-  the zone's own city where Swift lists `(New York, Toronto)`. A shared name
-  table is coming separately; the presenter fixture test wildcards that part.
+- Chip ranges count UTF-16 units where Swift counts Characters; they differ
+  only with an emoji or other multi-unit character before the token, and each
+  side is self-consistent (see `core/readme.md`).
 - Fonts (bundle Anton / JetBrains Mono equivalents), a Compose UI test on the
   emulator. See `docs/android-plan.md`.
 - The keyboard's suggestion strip still shows (Gboard ignores

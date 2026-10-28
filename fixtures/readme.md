@@ -15,8 +15,10 @@ cores are tested against.
 2. `scripts/regenerate-fixtures.sh` — renders the catalog through the Swift core.
 3. `scripts/test.sh` — `SharedFixtureTests` verifies the file against the core
    (so an un-regenerated file fails on the Apple side).
-4. `scripts/test-android.sh` — the Kotlin suites assert the same file. A diff
-   in this file is the Android port's to-do list.
+4. `scripts/test-android.sh` — the Kotlin suites assert the same file:
+   `SharedFixtureParserTests` renders every case end to end through the
+   ported parser and presenter and compares it exactly. A diff in this file is
+   the Android port's to-do list.
 5. Commit the JSON with the code.
 
 Add a case by adding a catalog row; the file's order is the catalog's order,
