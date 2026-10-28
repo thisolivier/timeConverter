@@ -66,6 +66,18 @@ struct ContentView: View {
                 .animation(.easeInOut(duration: 0.24), value: layoutMode)
         }
         .scrollBounceBehavior(.basedOnSize)
+        // Item 31: under the floating tab bar the full poster is ~70pt taller
+        // than the room left above it, so a top-anchored poster puts the
+        // footer sentence under the bar at rest. (The bar's inset *is*
+        // applied — scrolled down, everything clears it.) Anchoring to the
+        // bottom on first layout and on every size change — the result
+        // appearing, the keyboard going away and the poster returning to
+        // `.full` — lands the result and footer in view; the title's top air
+        // is what scrolls off. When the content fits (empty field, compact
+        // mode above the keyboard) there is nothing to scroll and this is
+        // inert, so item 19's choreography is unchanged.
+        .defaultScrollAnchor(.bottom, for: .initialOffset)
+        .defaultScrollAnchor(.bottom, for: .sizeChanges)
         // Drag the content and the keyboard follows your finger — the gesture
         // people already use to get a keyboard out of the way.
         .scrollDismissesKeyboard(.interactively)
