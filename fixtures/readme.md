@@ -9,10 +9,40 @@ cores are tested against.
   outcome (every `ConverterDisplay` field for a conversion; prompt id, message
   and chips for a prompt).
 
+- `world-clock-cases.json` — **generated, do not hand-edit** (item 30). One
+  case per row of `SharedWorldClockCatalog.swift`: the injected clock and
+  device zone, the offset, the favourites, and the expected `WorldClockDisplay`.
+
+### `world-clock-cases.json` schema
+
+```
+{ schemaVersion: 1, generatedBy, cases: [ {
+    id, note?, now (ISO-8601), localZone (IANA),
+    offsetSeconds,            // slider + day stepper, whole minutes, unbounded
+    favourites: [ { timeZoneIdentifier,
+                    labelKind: "place" | "code",
+                    name?,                    // place
+                    code?, expandedName? } ], // code
+    expected: { readout,                       // "Today 3:42 PM", "Sun 18 Jan, 5:42 PM"
+                offsetDescription?,            // "+19 h", "−45 min" (U+2212); absent at zero
+                rows: [ { isLocal, placeName, clockDigits, meridiem,
+                          zoneLine,            // item-21 line + " · next day"/" · previous day" vs the local row
+                          offsetPhrase } ] }   // "" on the local row
+} ] }
+```
+
+The offset shifts the local *wall clock* and is resolved with the converter's
+DST policy (see `TimeConverterCore/Sources/TimeConverterCore/WorldClock/readme.md`);
+at zero the real instant is read directly. `SharedWorldClockFixtureTests`
+verifies the file both ways: the catalog renders to it exactly, and each
+stored case replayed from its own `favourites` and `offsetSeconds` produces its
+`expected`. The Android twin (`SharedFixtureWorldClockTests`) comes with item 32.
+
 ## The loop
 
 1. Change parser or presenter behaviour on the Swift side, with its own tests.
-2. `scripts/regenerate-fixtures.sh` — renders the catalog through the Swift core.
+2. `scripts/regenerate-fixtures.sh` — renders both catalogs through the Swift core
+   and rewrites both files.
 3. `scripts/test.sh` — `SharedFixtureTests` verifies the file against the core
    (so an un-regenerated file fails on the Apple side).
 4. `scripts/test-android.sh` — the Kotlin suites assert the same file:

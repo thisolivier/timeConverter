@@ -1,0 +1,534 @@
+{
+  "cases" : [
+    {
+      "expected" : {
+        "readout" : "Today 3:42 PM",
+        "rows" : [
+          {
+            "clockDigits" : "3:42",
+            "isLocal" : true,
+            "meridiem" : "PM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          }
+        ]
+      },
+      "favourites" : [
+
+      ],
+      "id" : "no-favourites",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Only the local row. Device zone Los Angeles, 3:42 PM on Thu 15 Jan.",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : 0
+    },
+    {
+      "expected" : {
+        "readout" : "Today 3:42 PM",
+        "rows" : [
+          {
+            "clockDigits" : "3:42",
+            "isLocal" : true,
+            "meridiem" : "PM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "11:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "8 hours ahead",
+            "placeName" : "London",
+            "zoneLine" : "United Kingdom Time (London)"
+          },
+          {
+            "clockDigits" : "6:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "3 hours ahead",
+            "placeName" : "ET (Eastern Time)",
+            "zoneLine" : "New York, Toronto"
+          },
+          {
+            "clockDigits" : "8:42",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "17 hours ahead",
+            "placeName" : "Tokyo",
+            "zoneLine" : "Japan Standard Time (Tokyo) · next day"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "London",
+          "timeZoneIdentifier" : "Europe/London"
+        },
+        {
+          "code" : "ET",
+          "expandedName" : "Eastern Time",
+          "labelKind" : "code",
+          "timeZoneIdentifier" : "America/New_York"
+        },
+        {
+          "labelKind" : "place",
+          "name" : "Tokyo",
+          "timeZoneIdentifier" : "Asia/Tokyo"
+        }
+      ],
+      "id" : "three-favourites-now",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Live clock: Tokyo is already on Friday, so its row carries the next-day marker.",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : 0
+    },
+    {
+      "expected" : {
+        "offsetDescription" : "+1 d",
+        "readout" : "Tomorrow 3:42 PM",
+        "rows" : [
+          {
+            "clockDigits" : "3:42",
+            "isLocal" : true,
+            "meridiem" : "PM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "11:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "8 hours ahead",
+            "placeName" : "London",
+            "zoneLine" : "United Kingdom Time (London)"
+          },
+          {
+            "clockDigits" : "6:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "3 hours ahead",
+            "placeName" : "ET (Eastern Time)",
+            "zoneLine" : "New York, Toronto"
+          },
+          {
+            "clockDigits" : "8:42",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "17 hours ahead",
+            "placeName" : "Tokyo",
+            "zoneLine" : "Japan Standard Time (Tokyo) · next day"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "London",
+          "timeZoneIdentifier" : "Europe/London"
+        },
+        {
+          "code" : "ET",
+          "expandedName" : "Eastern Time",
+          "labelKind" : "code",
+          "timeZoneIdentifier" : "America/New_York"
+        },
+        {
+          "labelKind" : "place",
+          "name" : "Tokyo",
+          "timeZoneIdentifier" : "Asia/Tokyo"
+        }
+      ],
+      "id" : "plus-24-hours-crossing-a-day",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Readout says Tomorrow; markers stay relative to the local row's date.",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : 86400
+    },
+    {
+      "expected" : {
+        "offsetDescription" : "+19 h",
+        "readout" : "Tomorrow 10:42 AM",
+        "rows" : [
+          {
+            "clockDigits" : "10:42",
+            "isLocal" : true,
+            "meridiem" : "AM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "6:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "8 hours ahead",
+            "placeName" : "London",
+            "zoneLine" : "United Kingdom Time (London)"
+          },
+          {
+            "clockDigits" : "1:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "3 hours ahead",
+            "placeName" : "ET (Eastern Time)",
+            "zoneLine" : "New York, Toronto"
+          },
+          {
+            "clockDigits" : "3:42",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "17 hours ahead",
+            "placeName" : "Tokyo",
+            "zoneLine" : "Japan Standard Time (Tokyo) · next day"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "London",
+          "timeZoneIdentifier" : "Europe/London"
+        },
+        {
+          "code" : "ET",
+          "expandedName" : "Eastern Time",
+          "labelKind" : "code",
+          "timeZoneIdentifier" : "America/New_York"
+        },
+        {
+          "labelKind" : "place",
+          "name" : "Tokyo",
+          "timeZoneIdentifier" : "Asia/Tokyo"
+        }
+      ],
+      "id" : "plus-19-hours-next-day",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Local is tomorrow morning; Tokyo has moved on to the day after.",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : 68400
+    },
+    {
+      "expected" : {
+        "offsetDescription" : "−45 min",
+        "readout" : "Today 2:57 PM",
+        "rows" : [
+          {
+            "clockDigits" : "2:57",
+            "isLocal" : true,
+            "meridiem" : "PM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "10:57",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "8 hours ahead",
+            "placeName" : "London",
+            "zoneLine" : "United Kingdom Time (London)"
+          },
+          {
+            "clockDigits" : "5:57",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "3 hours ahead",
+            "placeName" : "ET (Eastern Time)",
+            "zoneLine" : "New York, Toronto"
+          },
+          {
+            "clockDigits" : "7:57",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "17 hours ahead",
+            "placeName" : "Tokyo",
+            "zoneLine" : "Japan Standard Time (Tokyo) · next day"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "London",
+          "timeZoneIdentifier" : "Europe/London"
+        },
+        {
+          "code" : "ET",
+          "expandedName" : "Eastern Time",
+          "labelKind" : "code",
+          "timeZoneIdentifier" : "America/New_York"
+        },
+        {
+          "labelKind" : "place",
+          "name" : "Tokyo",
+          "timeZoneIdentifier" : "Asia/Tokyo"
+        }
+      ],
+      "id" : "minus-45-minutes",
+      "localZone" : "America/Los_Angeles",
+      "note" : "The offset uses a true minus sign.",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : -2700
+    },
+    {
+      "expected" : {
+        "offsetDescription" : "+3 d 2 h",
+        "readout" : "Sun 18 Jan, 5:42 PM",
+        "rows" : [
+          {
+            "clockDigits" : "5:42",
+            "isLocal" : true,
+            "meridiem" : "PM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "1:42",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "8 hours ahead",
+            "placeName" : "London",
+            "zoneLine" : "United Kingdom Time (London) · next day"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "London",
+          "timeZoneIdentifier" : "Europe/London"
+        }
+      ],
+      "id" : "plus-3-days-2-hours-weekday-readout",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Beyond one day the readout names the weekday and date.",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : 266400
+    },
+    {
+      "expected" : {
+        "offsetDescription" : "−1 d",
+        "readout" : "Yesterday 3:42 PM",
+        "rows" : [
+          {
+            "clockDigits" : "3:42",
+            "isLocal" : true,
+            "meridiem" : "PM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "11:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "8 hours ahead",
+            "placeName" : "London",
+            "zoneLine" : "United Kingdom Time (London)"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "London",
+          "timeZoneIdentifier" : "Europe/London"
+        }
+      ],
+      "id" : "minus-1-day-yesterday",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : -86400
+    },
+    {
+      "expected" : {
+        "readout" : "Today 3:42 PM",
+        "rows" : [
+          {
+            "clockDigits" : "3:42",
+            "isLocal" : true,
+            "meridiem" : "PM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "5:12",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "13.5 hours ahead",
+            "placeName" : "Kolkata",
+            "zoneLine" : "India Standard Time (Kolkata, Mumbai) · next day"
+          },
+          {
+            "clockDigits" : "5:27",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "13.75 hours ahead",
+            "placeName" : "Kathmandu",
+            "zoneLine" : "Nepal Time (Kathmandu) · next day"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "Kolkata",
+          "timeZoneIdentifier" : "Asia/Kolkata"
+        },
+        {
+          "labelKind" : "place",
+          "name" : "Kathmandu",
+          "timeZoneIdentifier" : "Asia/Kathmandu"
+        }
+      ],
+      "id" : "half-hour-zone",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Offset phrases in fractional hours; Kolkata on the next day.",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : 0
+    },
+    {
+      "expected" : {
+        "offsetDescription" : "+1 h",
+        "readout" : "Today 3:00 AM",
+        "rows" : [
+          {
+            "clockDigits" : "3:00",
+            "isLocal" : true,
+            "meridiem" : "AM",
+            "offsetPhrase" : "",
+            "placeName" : "New York (local)",
+            "zoneLine" : "Eastern Time (New York, Toronto)"
+          },
+          {
+            "clockDigits" : "7:00",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "4 hours ahead",
+            "placeName" : "London",
+            "zoneLine" : "United Kingdom Time (London)"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "London",
+          "timeZoneIdentifier" : "Europe/London"
+        }
+      ],
+      "id" : "dst-gap-landing",
+      "localZone" : "America/New_York",
+      "note" : "1:30 AM + 1 h is 2:30 AM, which never happens in New York that day: the converter's policy moves it to 3:00 AM EDT.",
+      "now" : "2026-03-08T06:30:00Z",
+      "offsetSeconds" : 3600
+    },
+    {
+      "expected" : {
+        "readout" : "Today 1:30 AM",
+        "rows" : [
+          {
+            "clockDigits" : "1:30",
+            "isLocal" : true,
+            "meridiem" : "AM",
+            "offsetPhrase" : "",
+            "placeName" : "New York (local)",
+            "zoneLine" : "Eastern Time (New York, Toronto)"
+          },
+          {
+            "clockDigits" : "6:30",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "5 hours ahead",
+            "placeName" : "London",
+            "zoneLine" : "United Kingdom Time (London)"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "London",
+          "timeZoneIdentifier" : "Europe/London"
+        }
+      ],
+      "id" : "repeated-hour-live",
+      "localZone" : "America/New_York",
+      "note" : "At zero the real instant is read directly, so the second 1:30 AM shows London 6:30 AM, not 5:30.",
+      "now" : "2026-11-01T06:30:00Z",
+      "offsetSeconds" : 0
+    },
+    {
+      "expected" : {
+        "readout" : "Today 3:42 PM",
+        "rows" : [
+          {
+            "clockDigits" : "3:42",
+            "isLocal" : true,
+            "meridiem" : "PM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "6:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "3 hours ahead",
+            "placeName" : "ET (Eastern Time)",
+            "zoneLine" : "New York, Toronto"
+          },
+          {
+            "clockDigits" : "8:42",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "17 hours ahead",
+            "placeName" : "JST (Japan Standard Time)",
+            "zoneLine" : "Tokyo · next day"
+          },
+          {
+            "clockDigits" : "6:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "3 hours ahead",
+            "placeName" : "East Coast (Eastern Time)",
+            "zoneLine" : "New York, Toronto"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "code" : "ET",
+          "expandedName" : "Eastern Time",
+          "labelKind" : "code",
+          "timeZoneIdentifier" : "America/New_York"
+        },
+        {
+          "code" : "JST",
+          "expandedName" : "Japan Standard Time",
+          "labelKind" : "code",
+          "timeZoneIdentifier" : "Asia/Tokyo"
+        },
+        {
+          "code" : "East Coast",
+          "expandedName" : "Eastern Time",
+          "labelKind" : "code",
+          "timeZoneIdentifier" : "America/New_York"
+        }
+      ],
+      "id" : "code-labelled-favourites",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Code labels keep the code and its expansion; the zone line is the curated cities only.",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : 0
+    }
+  ],
+  "generatedBy" : "TimeConverterCore SharedWorldClockFixtureTests (Swift)",
+  "schemaVersion" : 1
+}
