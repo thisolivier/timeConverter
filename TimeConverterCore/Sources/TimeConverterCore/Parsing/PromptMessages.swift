@@ -19,7 +19,7 @@ extension Prompt {
         // before 'in'") asked for the *source* specifically, which no longer
         // makes sense: one zone is now enough, on either side.
         case let .zoneNotFound(time):
-            return "Convert \(time.canonicalDescription) where? "
+            return "Convert \(time?.canonicalDescription ?? "now") where? "
                 + "Add a timezone, city, or country"
 
         case let .ambiguousZone(token, _, _, _):

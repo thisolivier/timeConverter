@@ -24,6 +24,11 @@ import Foundation
 /// from the injected `now`. Deciding *whether* the input is such a token is
 /// purely structural — see `bareZoneTokens` — because resolution must still be
 /// allowed to fail into P4 or P5 rather than silently falling back to P1.
+///
+/// The leading time may also be the keyword **`now`** (item 23): `now in
+/// Bangkok` splits exactly like `7pm in Bangkok`, but leaves the time nil so
+/// `InputParser` reads the current clock. `now` is a time, never a zone — only
+/// the leading word is checked, so `9am in now` is an ordinary (unknown) target.
 enum InputTokenizer {
     /// One zone token: the normalised text the resolvers see, and where it came
     /// from in the raw input.
@@ -38,7 +43,8 @@ enum InputTokenizer {
         /// Nil for a bare-zone input ("ET"), which means "the current clock":
         /// `InputParser` substitutes the wall clock of the injected `now` read
         /// in the injected device zone. Never nil when any zone side was typed
-        /// alongside a time, so "8pm ET" is unaffected.
+        /// alongside a time, so "8pm ET" is unaffected. Also nil for a leading
+        /// `now` (item 23), with the same meaning.
         let time: ParsedTime?
         /// Nil when the user named only the target (`7pm in London`), in which
         /// case the source defaults to the injected device zone.
@@ -69,7 +75,7 @@ enum InputTokenizer {
         let normalized = NormalizedInput.normalizing(input)
         let normalizedInput = normalized.normalizedText
 
-        guard let timeMatch = TimeTokenParser.match(atStartOf: normalizedInput) else {
+        guard let leadingTime = leadingTime(in: normalizedInput) else {
             // No time: the whole input may still be a bare zone token naming
             // where to read the current clock (item 22). P1 is what's left when
             // it structurally cannot be one.
@@ -80,8 +86,8 @@ enum InputTokenizer {
         }
 
         let remainingWords = words(
-            in: timeMatch.remainder,
-            startingAtNormalizedOffset: timeMatch.remainderStartOffset
+            in: leadingTime.remainder,
+            startingAtNormalizedOffset: leadingTime.remainderStartOffset
         )
 
         // Scanning for the *first* standalone conjunction is what keeps "Porto"
@@ -99,10 +105,10 @@ enum InputTokenizer {
             // remaining word goes into the one token.
             guard let sourceZone = zoneToken(from: remainingWords, in: normalized) else {
                 // Nothing but a time: there is no zone to convert between.
-                return .prompt(.zoneNotFound(time: timeMatch.time))
+                return .prompt(.zoneNotFound(time: leadingTime.time))
             }
             return .tokens(Tokens(
-                time: timeMatch.time,
+                time: leadingTime.time,
                 sourceZone: sourceZone,
                 conjunction: nil,
                 targetZone: nil
@@ -118,15 +124,52 @@ enum InputTokenizer {
         // A conjunction with nothing on either side of it ("7pm in") names no
         // zone at all, so there is still nothing to convert between.
         guard sourceZone != nil || targetZone != nil else {
-            return .prompt(.zoneNotFound(time: timeMatch.time))
+            return .prompt(.zoneNotFound(time: leadingTime.time))
         }
 
         return .tokens(Tokens(
-            time: timeMatch.time,
+            time: leadingTime.time,
             sourceZone: sourceZone,
             conjunction: conjunction,
             targetZone: targetZone
         ))
+    }
+
+    // MARK: - Leading time
+
+    /// The time at the start of the input and whatever follows it. `time` is
+    /// nil when the user typed the `now` keyword (item 23) — the current clock,
+    /// which only `InputParser` can read, since it alone holds the injected
+    /// `now`.
+    private struct LeadingTime {
+        let time: ParsedTime?
+        let remainder: String
+        let remainderStartOffset: Int
+    }
+
+    private static let nowKeyword = "now"
+
+    /// A clock time from `TimeTokenParser`, else a standalone leading `now`
+    /// (`now`, `now in tokyo` — but not `nowhere`), else nil for "no time".
+    private static func leadingTime(in normalizedInput: String) -> LeadingTime? {
+        if let timeMatch = TimeTokenParser.match(atStartOf: normalizedInput) {
+            return LeadingTime(
+                time: timeMatch.time,
+                remainder: timeMatch.remainder,
+                remainderStartOffset: timeMatch.remainderStartOffset
+            )
+        }
+        guard normalizedInput == nowKeyword || normalizedInput.hasPrefix(nowKeyword + " ") else {
+            return nil
+        }
+        // Normalised input has single spaces, so the remainder starts one
+        // character past the keyword (or is empty for a bare `now`).
+        let remainderStartOffset = min(nowKeyword.count + 1, normalizedInput.count)
+        return LeadingTime(
+            time: nil,
+            remainder: String(normalizedInput.dropFirst(remainderStartOffset)),
+            remainderStartOffset: remainderStartOffset
+        )
     }
 
     // MARK: - Bare zone (item 22)

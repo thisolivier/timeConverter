@@ -30,7 +30,8 @@ enum Prompt: Equatable, Sendable {
     /// P2 — a time was found but there is no zone anywhere in the input:
     /// `7pm`, or a dangling conjunction with nothing on either side of it
     /// (`7pm in`). One named zone is not a P2; it defaults the other side.
-    case zoneNotFound(time: ParsedTime)
+    /// `time` is nil when the user typed `now` (`now`, `now in`, item 23).
+    case zoneNotFound(time: ParsedTime?)
 
     /// P4 — the token has more than one meaning. Never silently defaulted.
     /// `tokenRange` addresses the token inside the raw input so the UI can

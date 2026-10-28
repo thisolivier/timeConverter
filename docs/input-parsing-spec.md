@@ -51,7 +51,8 @@ Implementation is item 3; UI wiring is item 4.
 ## Tokenization
 
 1. Trim, collapse whitespace, lowercase a working copy.
-2. Match the time at the start of the string (regex above, longest match).
+2. Match the time at the start of the string (regex above, longest match), or
+   a standalone leading `now` (item 23 — time = current clock).
    **No match** (amended 2026-10-23, item 22): the whole working copy becomes a
    single target-side zone token and the time becomes "now" — unless it fails
    the structural test in Architecture notes, in which case P1.
@@ -193,3 +194,11 @@ item 4 renders them.
     could be argued. It resolves to P1: a user typing digits is starting a
     time, and "Couldn't find a time — start with e.g. 14:30" is the useful
     answer where "Don't recognize '12'" is not.
+- **`now` as the time** (added 2026-10-28, backlog item 23): the leading time
+  may be the keyword `now` (case-insensitive, a standalone word — `nowhere` is
+  not it). `now in Bangkok` / `now to Bangkok` = the current device clock
+  (hours and minutes) converted to Bangkok, source = device local zone — the
+  same shape as `7pm in Bangkok`. `now ET in London` reads the clock in the
+  named source (ET), so the converted instant is the real present. `now`,
+  `now in` with no zone are P2 ("Convert now where? …"). **Input only:** `now`
+  is never a zone — `9am in now` is P5 on the target token.

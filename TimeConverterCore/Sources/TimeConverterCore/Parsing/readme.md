@@ -59,7 +59,8 @@ InputTokenizer      match time at start → split on first standalone in/to →
                     time + up to two zone tokens, each with a RawTextRange.
                     One side may legitimately be empty (or P1/P2). No time at
                     all → the whole input is one target-side token and the time
-                    is nil ("ET" = now), or P1 if it cannot be a token
+                    is nil ("ET" = now), or P1 if it cannot be a token.
+                    A leading `now` is a time with nil value (item 23)
   ↓
 ZoneResolverChain   each *named* zone token through five resolvers in order,
                     stopping at the first with ≥1 candidate → resolved /
@@ -147,6 +148,15 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   14:30" is the useful half of the truth for a half-typed time, and
   "Don't recognize '12'" is not. `BareZoneInputTests
   .digitOnlyInputsStayP1RatherThanBecomingUnknownZones` pins it.
+- **`now` is a time, never a zone** (item 23). The tokenizer's `leadingTime`
+  accepts a standalone leading `now` wherever a clock time could start the
+  input, leaving `Tokens.time` nil; everything after it splits as usual, so
+  `now in Bangkok` is shaped like `7pm in Bangkok`. `InputParser` fills a nil
+  time with the wall clock of `now` read in the *resolved source zone* — the
+  device zone for `now in Bangkok` or a bare zone, ET for `now ET in London`.
+  Bare `now` / `now in` is P2 with `time: nil` ("Convert now where?"). Only the
+  leading word is checked, so `9am in now` is an ordinary P5 target
+  (`NowKeywordTests`).
 - **The defaulted side is marked, never silent.** A defaulted `ResolvedZone`
   carries `matchSource == .deviceLocalZone`, and the echo leads its existing
   parenthetical with `local` — `7:00 pm Los Angeles (local, UTC-8) → 3:00 am

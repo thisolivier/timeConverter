@@ -19,7 +19,7 @@ struct InputParser: Sendable {
     ///   - now: the caller's current `Date`. Used for three things: deciding
     ///     which calendar day "today" is in the source zone, computing the UTC
     ///     offsets shown in an ambiguity picker, and — for a bare-zone input
-    ///     (item 22) — supplying the time itself.
+    ///     (item 22) or a leading `now` (item 23) — supplying the time itself.
     ///   - localZone: the device's zone, as read by the caller. Stands in for
     ///     whichever side the user didn't name (spec amendment 2026-10-22) —
     ///     and only for that, so an input naming both zones ignores it
@@ -51,12 +51,12 @@ struct InputParser: Sendable {
         case let .resolved(zone): targetZone = zone
         }
 
-        // A bare zone token names no time, so the time is the device's current
-        // wall clock — hours *and* minutes (item 22). Read in `localZone`
-        // rather than in the resolved source zone: they are the same zone here
-        // by construction (the source side is always the local default for a
-        // bare-zone input), and naming the device zone is what the rule means.
-        let time = tokens.time ?? ParsedTime.wallClock(of: now, in: localZone)
+        // No typed time — a bare zone token (item 22) or the `now` keyword
+        // (item 23) — means the current wall clock, hours *and* minutes. Read
+        // in the resolved source zone: for a bare zone or `now in Bangkok` that
+        // is the device zone, and for `now ET in London` reading ET's clock is
+        // what keeps the instant equal to the real present.
+        let time = tokens.time ?? ParsedTime.wallClock(of: now, in: sourceZone.timeZone)
 
         return .request(ConversionRequest(
             time: time,
