@@ -43,9 +43,9 @@ data class ExpectedOutcome(
 )
 
 /**
- * Mirrors Swift `ConverterDisplay` field for field. `sourceZoneLine` and
- * `targetZoneLine` start with an OS-supplied generic zone name on place-labelled
- * sides; compare them with that name wildcarded (see fixtures/readme.md).
+ * Mirrors Swift `ConverterDisplay` field for field. Every field is compared
+ * exactly: the generic zone name in `sourceZoneLine` / `targetZoneLine` comes
+ * from the shared iOS-origin snapshot `zone-names.json` on all platforms.
  */
 @Serializable
 data class ExpectedDisplay(

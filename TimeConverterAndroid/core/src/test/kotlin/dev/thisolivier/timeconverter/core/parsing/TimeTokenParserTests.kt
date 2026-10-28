@@ -16,12 +16,25 @@ class TimeTokenParserTests {
     }
 
     @Test
-    fun `twenty four hour needs a colon`() {
+    fun `twenty four hour with a colon`() {
         assertEquals(ParsedTime(14, 30), time("14:30 et in london"))
         assertEquals(ParsedTime(6, 34), time("6:34 uk to lisbon"))
-        assertNull(time("1230 et in london"))
         assertNull(time("12"))
         assertNull(time("25:00 et"))
+    }
+
+    @Test
+    fun `compact times read the last two digits as minutes`() {
+        assertEquals(ParsedTime(15, 0), time("1500 et in london"))
+        assertEquals(ParsedTime(6, 0), time("0600 uk"))
+        assertEquals(ParsedTime(9, 30), time("930 et"))
+        assertEquals(ParsedTime(18, 0), time("600pm lisbon"))
+        assertEquals(ParsedTime(0, 30), time("1230 am et"))
+        assertNull(time("2400 et"))
+        assertNull(time("1260 et"))
+        assertNull(time("15000 et"))
+        assertNull(time("1500m et"))
+        assertNull(time("1500et in london"))
     }
 
     @Test

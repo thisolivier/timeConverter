@@ -5,7 +5,8 @@ package dev.thisolivier.timeconverter.core.parsing
  *
  * ```
  * <time> := H[H]:mm                  (24-hour)
- *         | H[H][:mm] [space] am|pm  (space optional)
+ *         | H[H]mm                   (compact 24-hour, item 27)
+ *         | H[H][[:]mm] [space] am|pm  (space optional)
  * ```
  *
  * Matches only at the start of the already-normalised input and hands back
@@ -21,8 +22,11 @@ object TimeTokenParser {
         val remainderStartOffset: Int,
     )
 
-    private val twelveHourPattern = Regex("""^(\d{1,2})(?::(\d{2}))?[ ]?([ap]m)(?=[ ]|$)""")
-    private val twentyFourHourPattern = Regex("""^(\d{1,2}):(\d{2})(?=[ ]|$)""")
+    // The colon is optional in both forms since item 27 (2026-10-28): `1500`,
+    // `930`, `600pm`. The last two digits are always the minutes, and the
+    // lookahead still rejects `15000`, `1500m`, `1500et`.
+    private val twelveHourPattern = Regex("""^(\d{1,2})(?::?(\d{2}))?[ ]?([ap]m)(?=[ ]|$)""")
+    private val twentyFourHourPattern = Regex("""^(\d{1,2}):?(\d{2})(?=[ ]|$)""")
 
     /** Tries the 12-hour form first so `9:30 am …` is never read as `9:30` + zone `am…`. */
     fun matchAtStart(normalizedInput: String): Match? {
