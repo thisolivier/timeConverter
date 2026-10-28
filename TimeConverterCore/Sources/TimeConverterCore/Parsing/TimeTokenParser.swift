@@ -3,9 +3,17 @@ import Foundation
 /// The time half of the grammar:
 ///
 /// ```
-/// <time> := H[H]:mm                  (24-hour)
-///         | H[H][:mm] [space] am|pm  (space optional)
+/// <time> := H[H]:mm                    (24-hour)
+///         | H[H]mm                     (compact 24-hour, item 27)
+///         | H[H][[:]mm] [space] am|pm  (space optional)
 /// ```
+///
+/// Compact times (`1500`, `0600`, `930`) are the colon made optional, nothing
+/// more: the minutes are always the *last two* digits, so three digits read as
+/// `Hmm` (`930` = 9:30) because a two-digit hour would leave one digit of
+/// minutes, which the pattern cannot match. Two digits never match (`12` stays
+/// P1) and five never do (`15000`), because the end-of-word lookahead rejects
+/// every split that leaves a digit — or a letter (`1500m`) — behind.
 ///
 /// Matches only at the *start* of the (already normalised) input and hands back
 /// whatever follows, so the tokenizer can go looking for the conjunction.
@@ -28,19 +36,21 @@ enum TimeTokenParser {
     // `Sendable`, which Swift 6 forbids in stored static state. Rebuilding two
     // tiny patterns per parse is immeasurable next to a keystroke.
 
-    /// Meridiem form. Minutes are optional (`12pm` = 12:00 pm) and the space
-    /// before the meridiem is optional (`12pm`, `12 pm`, `12:30pm`, `12:30 pm`).
+    /// Meridiem form. Minutes are optional (`12pm` = 12:00 pm), so is their
+    /// colon (`600pm`, `1230am` — item 27), and so is the space before the
+    /// meridiem (`12pm`, `12 pm`, `12:30pm`, `12:30 pm`).
     /// The lookahead stops `12pmet` from matching as `12pm` + `et`.
     /// Hour range is validated in `meridiemTime`, which also decides whether a
     /// redundant meridiem agrees with its hour.
     private static var twelveHourPattern: Regex<(Substring, Substring, Substring?, Substring)> {
-        /(\d{1,2})(?::(\d{2}))?[ ]?([ap]m)(?=[ ]|$)/
+        /(\d{1,2})(?::?(\d{2}))?[ ]?([ap]m)(?=[ ]|$)/
     }
 
-    /// 24-hour form. Minutes are mandatory here — a bare `6` is not a time, so
-    /// `6 ET in London` is a P1, not an accidental 06:00.
+    /// 24-hour form, colon optional (`15:00` or `1500`). Minutes are mandatory
+    /// here — a bare `6` or `12` is not a time, so `6 ET in London` is a P1, not
+    /// an accidental 06:00.
     private static var twentyFourHourPattern: Regex<(Substring, Substring, Substring)> {
-        /(\d{1,2}):(\d{2})(?=[ ]|$)/
+        /(\d{1,2}):?(\d{2})(?=[ ]|$)/
     }
 
     /// Tries the 12-hour form first: it is the longer match wherever both could

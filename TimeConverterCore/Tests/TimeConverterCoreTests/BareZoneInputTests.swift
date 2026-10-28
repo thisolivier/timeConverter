@@ -267,7 +267,9 @@ struct BareZoneInputTests {
     /// 24-hour form needs its minutes) and it is not a zone name either, and we
     /// resolve the tie towards P1 — somebody typing digits is starting a time,
     /// and "Couldn't find a time" is the useful half of the truth.
-    @Test(arguments: ["12", "1234", "9", "06"])
+    // `1234` used to sit in this list; since item 27 it is the compact time
+    // 12:34 and therefore P2 (`CompactTimeTests`). Five digits are still P1.
+    @Test(arguments: ["12", "12345", "9", "06"])
     func digitOnlyInputsStayP1RatherThanBecomingUnknownZones(input: String) throws {
         let prompt = try #require(parser.parse(
             input, now: FixedDates.winterAfternoonWithMinutes, localZone: FixedZones.losAngeles

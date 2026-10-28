@@ -84,7 +84,7 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 | `InputTokenizer.swift` | The first-standalone-conjunction split, emitting range-carrying zone tokens — either side may be empty, and so may the time (`bareZoneTokens`, item 22). |
 | `NormalizedInput.swift` | Normalisation plus the normalised→raw offset map. |
 | `RawTextRange.swift` | A character range into the raw input, and `RawTextEditing` to apply one. |
-| `TimeTokenParser.swift` | The `<time>` grammar: `H[H]:mm` 24-hour and `H[H][:mm] [space] am/pm`, with lenient spacing and the redundant-meridiem rule. |
+| `TimeTokenParser.swift` | The `<time>` grammar: `H[H]:mm` 24-hour (colon optional — `1500`, `930`, item 27) and `H[H][[:]mm] [space] am/pm`, with lenient spacing and the redundant-meridiem rule. |
 | `ParsingModels.swift` | `ParsedTime`, `ZoneCandidate`, `ResolvedZone`, `ConversionRequest`, `ParseOutcome`. |
 | `Prompt.swift` | The prompts as values (P1, P2, P4, P5 — P3 is retired), plus `ZoneChoice`. |
 | `PromptMessages.swift` | The spec's prompt copy. |
@@ -255,6 +255,12 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   (`2:30 am` typed → `3:00 am New York (UTC-4)`), which is how the user sees
   what happened. `ConversionResult.requestedTime` and `.wallClockDisposition`
   keep the original intent available.
+- **Compact times are the colon made optional** (item 27, 2026-10-28). The
+  minutes are always the last two digits, so `930` is 9:30 with no extra rule:
+  the pattern simply cannot match a one-digit minute. The end-of-word lookahead
+  rejects `15000` and `1500m` the same way it already rejected `12pmet`. Two
+  digits stay P1; a lone `1234` is now P2 (a time, no zone)
+  (`CompactTimeTests`).
 - **Time-of-day canonical form is always 12-hour**, even for 24-hour input, per
   the spec's output examples. `23:15` echoes as `11:15 pm`.
 - **A redundant meridiem is accepted, a contradictory one is not.** On hours

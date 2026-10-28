@@ -9,7 +9,8 @@ Implementation is item 3; UI wiring is item 4.
 ```
 <input>       := <time> <source-zone> <conjunction> <target-zone>
 <time>        := H[H]:mm                    (24-hour assumed)
-               | H[H][:mm] [space] am|pm    (12-hour; space optional on input)
+               | H[H]mm                     (compact 24-hour, added 2026-10-28)
+               | H[H][[:]mm] [space] am|pm  (12-hour; space optional on input)
 <conjunction> := "in" | "to"                (closed list, case-insensitive)
 <zone>        := abbreviation | city | country   (one or more words)
 ```
@@ -36,6 +37,7 @@ Implementation is item 3; UI wiring is item 4.
 |---|---|
 | `HH:mm` | 24-hour. Hours 0–23, minutes 00–59. `6:34` and `06:34` both valid. |
 | `H[:mm] am/pm` | 12-hour. Hours 1–12. Minutes optional (`12pm` = 12:00 pm). |
+| `HHmm` / `Hmm` | Compact 24-hour (added 2026-10-28, item 27): 3–4 digits, no colon. `1500` = 15:00, `0600` = 06:00, `930` = 09:30. Same ranges as `HH:mm`. A meridiem may follow (`600pm` = 6:00 pm, `1230 am` = 00:30) under the same redundant/contradictory rule. |
 
 - **Lenient spacing**: `12pm`, `12 pm`, `12:30pm`, `12:30 pm` all accepted.
   The parsed interpretation is always echoed back in canonical form with the
@@ -47,6 +49,21 @@ Implementation is item 3; UI wiring is item 4.
   with `am` is a contradiction → P1. Symmetrically, hour 0 with `am`
   (`0:30 am` = 00:30) is accepted; hour 0 with `pm` is rejected.
 - No date in the grammar: the time is "today" in the source zone.
+- **Compact times** (amended 2026-10-28, backlog item 27). A leading run of
+  3–4 digits with no colon is a 24-hour time. Ambiguity check, done against the
+  tokenizer before implementing: no other token in the grammar is a bare
+  leading number (zone names never start with a digit — item 22's structural
+  rule), and before this amendment every such input was P1, so no input that
+  used to convert changes meaning. The one reading question is three digits,
+  settled by convention: **the last two digits are always the minutes**
+  (`930` = 9:30, never 93:0; `130` = 1:30). Rejections, all P1: hours above
+  23 or minutes above 59 (`2400`, `1260`, `960`), five or more digits
+  (`15000`), and digits glued to letters (`1500m`, `1500et` — the time must
+  end on a word boundary, exactly as `12pmet` already fails). Two digits stay
+  P1 (`12` — item 23's decision: 24-hour needs its minutes). Consequences
+  accepted: a 4-digit input with nothing after it is now a time with no zone
+  (`1234` → P2 "Convert 12:34 pm where?") rather than P1, and a year typed at
+  the start (`2026`) reads as 20:26 — there are no dates in the grammar.
 
 ## Tokenization
 

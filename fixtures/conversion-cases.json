@@ -105,6 +105,71 @@
         ],
         "dayOffset" : 0,
         "display" : {
+          "detailLine" : "America/New_York → Europe/London",
+          "echoLine" : "3:00 pm Eastern Time (New York, Toronto, UTC-5) → 8:00 pm London (UTC+0)",
+          "footerSentence" : "London is 5 hours ahead of Eastern Time.",
+          "offsetPhrase" : "5 hours ahead",
+          "sourceClockDigits" : "3:00",
+          "sourceEchoLine" : "Eastern Time (New York, Toronto) · 3:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "ET (Eastern Time)",
+          "sourceZoneLine" : "New York, Toronto",
+          "targetClockDigits" : "8:00",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "15:00",
+        "sourceZone" : "America/New_York",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "compact-twenty-four-hour",
+      "input" : "1500 ET in London",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Item 27: HHmm without a colon; the last two digits are the minutes.",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Asia/Tokyo → Europe/London",
+          "echoLine" : "9:30 pm Tokyo (UTC+9) → 12:30 pm London (UTC+0)",
+          "footerSentence" : "London is 9 hours behind Tokyo.",
+          "offsetPhrase" : "9 hours behind",
+          "sourceClockDigits" : "9:30",
+          "sourceEchoLine" : "Tokyo · 9:30 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Tokyo",
+          "sourceZoneLine" : "Japan Standard Time (Tokyo)",
+          "targetClockDigits" : "12:30",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "21:30",
+        "sourceZone" : "Asia/Tokyo",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "compact-with-meridiem",
+      "input" : "930pm Tokyo in London",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
           "detailLine" : "Europe/London → Europe/Lisbon",
           "echoLine" : "11:15 pm UK Time (London, UTC+0) → 11:15 pm Lisbon (UTC+0)",
           "footerSentence" : "Lisbon is the same time as UK Time.",
