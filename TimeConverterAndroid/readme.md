@@ -28,9 +28,19 @@ half of that contract and passes today; `SharedFixtureParserTests` is the
 parser half and stays `@Ignore`d until the parser port lands.
 
 **`InterimInputParser` is a stand-in**, clearly marked as such: enough grammar
-to make the emulator show real conversions (time + zone in|to zone, a dozen
-aliases, the tz database's own city names, local defaulting). It is not
-asserted by the fixtures and is replaced wholesale by the port (backlog 24b).
+to make the emulator show real conversions and real prompts (time + zone
+in|to zone, the Swift alias table incl. the ambiguous `cst`/`ist`, a few
+Foundation-style codes, the tz database's own city names, local defaulting),
+emitting P1/P2/P4/P5 with the spec's copy and raw-text token ranges. It is
+replaced wholesale by the port (backlog 24b); the presenter takes the parser
+as a function parameter, so that swap touches nothing above it.
+
+**The presentation layer is a full port** (`core/.../presentation/`): the
+`ConverterDisplay` slots under their Swift names, `ConverterProblem` /
+`ReplacementChip` (raw-input ranges, `applied`), `ConverterPresenter`, the
+600 ms `ConverterDisplayDriver` (time injected as a `PromptScheduler`, so the
+JVM tests drive it with a fake clock) and `PosterLayoutMode` (item 19's
+rule). The Compose view switches on `ConverterDisplayState` and nothing else.
 
 Version numbers are read from `../project.yml` at build time so the Play train
 shares `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` with the Apple trains.
@@ -59,7 +69,17 @@ Kotlin"), which is why `app` applies no `kotlin-android` plugin.
 ## Main components
 
 - `core/.../parsing/TimeTokenParser.kt` — the `<time>` grammar, ported.
-- `core/.../parsing/InterimInputParser.kt` — the stand-in parser (see above).
+- `core/.../parsing/InterimInputParser.kt`, `InterimZoneTable.kt` — the
+  stand-in parser and its vocabulary (see above).
+- `core/.../parsing/Prompt.kt`, `RawTextRange.kt`, `NormalizedInput.kt` — the
+  prompts as values with the spec's copy; raw-input ranges and the map from
+  the normalised copy back to them.
+- `core/.../parsing/ZoneSuggestionEngine.kt` — did-you-mean with the Swift
+  policy (≤2 edits, ≤1 on short tokens, no code-for-code guesses, top 3,
+  never auto-accepted) plus the bounded `EditDistance`.
+- `core/.../presentation/` — `ConverterDisplayState` (state, display slots,
+  problem, chip), `ConverterPresenter`, `ConverterDisplayDriver` +
+  `PromptScheduler`, `PosterLayoutMode`.
 - `core/.../engine/WallClockResolver.kt` — the DST policy (earlier on overlap,
   next valid instant on gap), on `java.time`'s `ZoneRules`.
 - `core/.../engine/ConversionEngine.kt` — `ZoneReading`, `ConversionResult`,
@@ -67,11 +87,29 @@ Kotlin"), which is why `app` applies no `kotlin-android` plugin.
 - `core/.../engine/Formatting.kt`, `ZoneNames.kt` — the pinned, locale-free
   output shapes and the item-21 zone sub-line.
 - `core/.../fixtures/` — the fixture schema and loader.
-- `app/.../ConverterScreen.kt` — the poster layout; `PosterPalette.kt` the
-  colour tokens; `MainActivity.kt` the activity and the `initialInput` extra.
+- `app/.../ConverterScreen.kt` — the poster (title block, input box, arrow
+  band, result) and item 19's choreography: `WindowInsets.ime` drives
+  `PosterLayoutMode`; tap-away and any drag dismiss the keyboard.
+- `app/.../ConverterScreenModel.kt` — the typed text and display state as
+  Compose state, the main-looper scheduler, and the one place that reads the
+  clock and the device zone.
+- `app/.../ConverterInputBox.kt`, `PosterResultSection.kt`, `PromptChipRow.kt`,
+  `PosterComponents.kt` — the pieces, ported from the iPhone's views.
+- `app/.../PosterPalette.kt`, `PosterTypography.kt` — the Swift
+  `PosterPalette` light and dark values; system condensed-black display face
+  and monospace until real fonts are bundled.
+- `app/.../MainActivity.kt` — the activity, the `initialInput` extra, and the
+  `onStart` arrival tick that autofocuses on launch and return from background.
 
-## Not yet
+## Not yet / still interim
 
-Parser port (resolver chain, prompts P1–P5, chips, `now`, bare zones, the
-offline gazetteer), release signing and the Play upload, a Compose UI test on
-the emulator, the design's fonts. See `docs/android-plan.md`.
+- Parser port (24b): resolver chain, country table, offline gazetteer, `now`,
+  bare zones. Until then `hello`, `Portugal`, `Porto`, `now in …` don't parse.
+- Zone sub-line naming: `ZoneNames` uses `java.time`'s names, which on Android
+  come out as `London Time (London)` / `Kolkata Time (Kolkata)`, and lists only
+  the zone's own city where Swift lists `(New York, Toronto)`. A shared name
+  table is coming separately; the presenter fixture test wildcards that part.
+- Fonts (bundle Anton / JetBrains Mono equivalents), release signing and the
+  Play upload, a Compose UI test on the emulator. See `docs/android-plan.md`.
+- The keyboard's suggestion strip still shows (Gboard ignores
+  `autoCorrectEnabled = false` for suggestions).
