@@ -15,3 +15,5 @@ ANDROID_PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../../TimeConverte
 ANDROID_APP_ID="dev.thisolivier.timeconverter"
 ANDROID_AVD_NAME="timeconverter-api36"
 ANDROID_SYSTEM_IMAGE="system-images;android-36;google_apis;arm64-v8a"
+# Newest installed build-tools (apksigner, aapt2), for the release lane.
+ANDROID_BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* 2>/dev/null | sort -V | tail -1)"

@@ -6,7 +6,8 @@
 # a machine with a display.
 #
 #   scripts/run-android.sh                        # boot if needed, build, install, launch
-#   scripts/run-android.sh --input "12pm ET in London"   # launch with the field prefilled (debug builds)
+#   scripts/run-android.sh --input "12pm ET in London"   # launch with the field prefilled
+#   scripts/run-android.sh --release              # the signed, R8-shrunk release APK instead of debug
 #   scripts/run-android.sh --screenshot out.png   # ...then capture the screen to a PNG
 #   scripts/run-android.sh --window               # emulator with a window
 #   scripts/run-android.sh --stop                 # shut the emulator down
@@ -17,6 +18,7 @@ set -euo pipefail
 source "$(dirname "$0")/lib/android-env.sh"
 
 INITIAL_INPUT=""
+INSTALL_TASK=":app:installDebug"
 SCREENSHOT=""
 WINDOW_FLAGS=(-no-window)
 while [[ $# -gt 0 ]]; do
@@ -24,8 +26,9 @@ while [[ $# -gt 0 ]]; do
     --input) INITIAL_INPUT="$2"; shift 2 ;;
     --screenshot) SCREENSHOT="$2"; shift 2 ;;
     --window) WINDOW_FLAGS=(); shift ;;
+    --release) INSTALL_TASK=":app:installRelease"; shift ;;
     --stop) adb emu kill >/dev/null 2>&1 || true; echo "emulator stopped"; exit 0 ;;
-    --help|-h) sed -n '2,14p' "$0"; exit 0 ;;
+    --help|-h) sed -n '2,15p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -51,8 +54,16 @@ boot_emulator_if_needed() {
 
 boot_emulator_if_needed
 
-echo "building"
-(cd "$ANDROID_PROJECT_DIR" && ./gradlew :app:installDebug --console=plain -q)
+echo "building ($INSTALL_TASK)"
+# Debug and release share an application id but not a signing key, so one
+# cannot install over the other; switching variants means uninstalling first.
+INSTALLED_SIGNATURE_MISMATCH=false
+(cd "$ANDROID_PROJECT_DIR" && ./gradlew "$INSTALL_TASK" --console=plain -q) || INSTALLED_SIGNATURE_MISMATCH=true
+if $INSTALLED_SIGNATURE_MISMATCH; then
+  echo "install failed; retrying after uninstalling the other variant"
+  adb uninstall "$ANDROID_APP_ID" >/dev/null 2>&1 || true
+  (cd "$ANDROID_PROJECT_DIR" && ./gradlew "$INSTALL_TASK" --console=plain -q)
+fi
 
 echo "launching"
 adb shell am force-stop "$ANDROID_APP_ID" >/dev/null
