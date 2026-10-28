@@ -24,11 +24,10 @@ an `InputParser`, only the rendered values the presenter hands them.
   output shapes (`12:00 pm`, `UTC-5`, `UTC+5:30`), so formatting is hand-rolled
   in `Formatting.swift` and calendars are always
   `Calendar(identifier: .gregorian)` pinned to an explicit zone. A device set to
-  a 24-hour German locale produces byte-identical output. The one exception is
-  item 21's zone name, which comes from `TimeZone.localizedName` because naming
-  443 zones by hand is not an editorial decision worth making — and it is read
-  through `ZoneNameFormatting.locale`, a hard-pinned `en_US`, so the rule still
-  holds: output does not vary by device.
+  a 24-hour German locale produces byte-identical output. Item 21's zone name
+  comes from `ZoneNameTable`, a bundled snapshot of what iOS's
+  `TimeZone.localizedName` says (captured in `en_US`), so it does not vary by
+  device *or* by platform either.
 - **Prompts are values.** The parser never formats UI. `Prompt` carries the
   offending token, the side it came from, the raw character range to rewrite and
   the picker rows; the spec's copy lives in `PromptMessages.swift` as a computed
@@ -103,6 +102,7 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 | `WallClockResolver.swift` | Wall-clock time → instant, applying the DST policy explicitly. |
 | `ConversionEngine.swift` | `ConversionRequest` → display-ready `ConversionResult`. |
 | `Formatting.swift` | Deterministic time, zone-name, UTC-offset and calendar helpers. |
+| `ZoneNameTable.swift`, `../Resources/zone-names.json` | The iOS-origin generic zone-name snapshot, shared with Android; see the zone-name note below. |
 
 ## Decisions worth knowing
 
@@ -237,8 +237,14 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   including countries, gazetteer hits, abbreviations our tables do not cover,
   and the device-local default, which keeps its `(local)` marker instead of
   growing a third case.
-- **The zone name comes from Foundation; the cities come from us.**
-  `TimeZone.localizedName(for: .generic)` — verified at runtime, not guessed:
+- **The zone name comes from iOS's snapshot; the cities come from us.**
+  `ZoneNameTable` looks the identifier up in `../Resources/zone-names.json`, a
+  mechanical capture of iOS's `TimeZone.localizedName(for: .generic)` written
+  on the simulator by `scripts/regenerate-zone-names.sh` (verified by
+  `ZoneNameSnapshotTests`, hand-editable where iOS reads badly). iOS is the
+  origin; macOS and Android read the same file, because their ICUs disagree
+  (macOS says "Eastern Australia Time" where iOS says "Australian Eastern
+  Time"). The captured values:
   `America/Sao_Paulo` is "Brasilia Standard Time", `Europe/London` is "United
   Kingdom Time", `Asia/Tokyo` is "Japan Standard Time", `America/New_York` is
   "Eastern Time". `.standard` was the other candidate and is wrong for exactly

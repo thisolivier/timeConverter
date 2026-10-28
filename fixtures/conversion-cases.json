@@ -631,7 +631,7 @@
           "sourceEchoLine" : "Sydney · 12:00 AM",
           "sourceMeridiem" : "AM",
           "sourcePlaceName" : "Sydney",
-          "sourceZoneLine" : "Eastern Australia Time (Sydney, Melbourne)",
+          "sourceZoneLine" : "Australian Eastern Time (Sydney, Melbourne)",
           "targetClockDigits" : "5:00",
           "targetMeridiem" : "AM",
           "targetPlaceLabel" : "In Los Angeles",

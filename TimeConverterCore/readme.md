@@ -23,13 +23,18 @@ TimeConverterCore/
     Parsing/       the spec implementation — has its own readme
     Presentation/  parse output → display values, and when to show them
     Launch/        what a launcher asks the app to do, and the DEBUG prefill
-    Resources/     fallback-cities.json, reached through Bundle.module
+    Resources/     fallback-cities.json and zone-names.json, reached through Bundle.module
   Sources/TimeConverterUI/        the shared design layer — has its own readme
   Tests/TimeConverterCoreTests/   every unit test in the repo bar the shells'; SharedFixtures/ generates and verifies fixtures/conversion-cases.json, the contract the Android core is held to
   Tests/TimeConverterUITests/     the design layer's geometry and proportions
 ```
 
 ## Working patterns
+
+- **Zone names are an iOS-origin snapshot.** `Resources/zone-names.json` is
+  what the iOS simulator names every zone, captured by
+  `scripts/regenerate-zone-names.sh`; macOS and the Android core (which reads
+  the same file at build time) render from it, so all platforms agree exactly.
 
 - **One SPM target per *layer*, not per directory.** `Parsing`, `Presentation`
   and `Launch` are directories inside one target, deliberately: splitting them

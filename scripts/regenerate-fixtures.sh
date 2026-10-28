@@ -8,6 +8,12 @@
 # suites (scripts/test.sh, scripts/test-android.sh) and commit the JSON with the
 # code — a stale file fails SharedFixtureTests on the Apple side, and a
 # regenerated file is the to-do list for the Android port.
+#
+# It runs on macOS (`swift test`), and that no longer matters: the one value
+# that used to depend on the OS — the generic zone name in the zone lines —
+# comes from the iOS-origin snapshot Resources/zone-names.json, so this Mac
+# writes exactly what the iOS simulator would. To change those names, run
+# scripts/regenerate-zone-names.sh first, then this.
 set -euo pipefail
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_DIR/TimeConverterCore"

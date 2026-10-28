@@ -47,7 +47,12 @@ let package = Package(
             // `.process` rather than `.copy`: it goes through the asset
             // pipeline and lands flat in the generated resource bundle, which
             // is what `Bundle.module.url(forResource:withExtension:)` expects.
-            resources: [.process("Resources/fallback-cities.json")]
+            resources: [
+                .process("Resources/fallback-cities.json"),
+                // The iOS-origin zone-name snapshot (`ZoneNameTable`). Also
+                // read, from this same path, by the Android core's build.
+                .process("Resources/zone-names.json")
+            ]
         ),
         .target(
             name: "TimeConverterUI",

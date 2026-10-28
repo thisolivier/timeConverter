@@ -14,6 +14,10 @@ import Foundation
 /// - **Regenerate** (`TIMECONVERTER_REGENERATE_FIXTURES=1`, via
 ///   `scripts/regenerate-fixtures.sh`): rewrite the file from the catalog.
 ///
+/// The comparison is exact, field for field. The one value that used to differ
+/// by platform — the generic zone name on a zone line — now comes from the
+/// iOS-origin snapshot (`ZoneNameTable`), so every lane renders it identically.
+///
 /// The file is found relative to this source file, so the suite needs no
 /// working-directory assumptions whichever lane runs it.
 struct SharedFixtureTests {
@@ -45,7 +49,7 @@ struct SharedFixtureTests {
         #expect(stored.cases.map(\.id) == generated.cases.map(\.id),
                 "catalog and fixture file list different cases — run scripts/regenerate-fixtures.sh")
         for (storedCase, generatedCase) in zip(stored.cases, generated.cases)
-        where Self.platformNeutral(storedCase) != Self.platformNeutral(generatedCase) {
+        where storedCase != generatedCase {
             Issue.record("fixture `\(storedCase.id)` is stale — run scripts/regenerate-fixtures.sh\n  stored: \(storedCase.expected)\n  now:    \(generatedCase.expected)")
         }
     }
@@ -53,34 +57,6 @@ struct SharedFixtureTests {
     @Test func catalogIdentifiersAreUnique() {
         let identifiers = Self.SharedFixtureCatalogEntries.map(\.id)
         #expect(Set(identifiers).count == identifiers.count)
-    }
-
-    // MARK: - Platform-neutral comparison
-
-    /// The one segment of a display that the OS supplies rather than this
-    /// code: the generic zone name on a place-labelled zone line
-    /// (`ZoneNameFormatting.genericName`). ICU versions disagree about it —
-    /// the iOS 26 simulator says `Australian Eastern Time` where macOS 26 says
-    /// `Eastern Australia Time` — so the fixtures carry whatever the generating
-    /// Mac said and every verifier (this one and the Kotlin one) compares the
-    /// line with that name wildcarded. Everything after the name — the cities
-    /// and the rollover note — is this code's and stays exact.
-    static func platformNeutral(_ conversionCase: ConversionCase) -> ConversionCase {
-        var neutral = conversionCase
-        if var display = neutral.expected.display {
-            display.sourceZoneLine = neutralZoneLine(display.sourceZoneLine)
-            display.targetZoneLine = neutralZoneLine(display.targetZoneLine)
-            neutral.expected.display = display
-        }
-        return neutral
-    }
-
-    /// `Eastern Australia Time (Sydney, Melbourne) · previous day`
-    /// → `* (Sydney, Melbourne) · previous day`. Abbreviation-labelled lines
-    /// (`New York, Toronto`) have no parenthesis and pass through unchanged.
-    static func neutralZoneLine(_ line: String) -> String {
-        guard let parenthesis = line.range(of: " (") else { return line }
-        return "*" + line[parenthesis.lowerBound...]
     }
 
     // MARK: - Rendering

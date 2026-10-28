@@ -23,14 +23,25 @@ Add a case by adding a catalog row; the file's order is the catalog's order,
 and ids must be unique. The schema is `SharedFixtureModels.swift` on one side
 and `core/.../fixtures/ConversionCase.kt` on the other — change both.
 
-## One platform-dependent field
+## Zone names: one canonical answer, from iOS
 
 `sourceZoneLine` / `targetZoneLine` on a place-labelled side begin with the
-OS's generic zone name (`Eastern Australia Time (Sydney, Melbourne)`), which
-comes from ICU and differs between ICU versions — the iOS 26 simulator and
-macOS 26 already disagree about Sydney, and Android's `java.time` disagrees
-about London. The file carries the generating Mac's wording; **verifiers
-compare those two lines with the leading name wildcarded** (`* (Sydney,
-Melbourne) · previous day`). Everything else in the file is exact. The Kotlin
-verifier must apply the same rule (see `SharedFixtureTests.neutralZoneLine`).
+zone's generic name (`Australian Eastern Time (Sydney, Melbourne)`). Every
+platform's ICU words these differently (macOS 26 says `Eastern Australia
+Time`, Android's `java.time` says `London Time`), so no platform asks its own
+OS any more: the names come from
+`TimeConverterCore/Sources/TimeConverterCore/Resources/zone-names.json`, a
+snapshot of what the **iOS** simulator says for every zone. **iOS is the
+origin; other platforms conform.** The Swift core bundles the file; the Android
+core's build adds the same file to its classpath (no second copy).
 
+- To refresh it (new iOS, new tz database — `ZoneNameSnapshotTests` fails
+  until you do): `scripts/regenerate-zone-names.sh` (iOS simulator only), then
+  `scripts/regenerate-fixtures.sh`, then both test suites.
+- A name may be hand-edited in the snapshot where iOS's wording reads badly;
+  regenerating overwrites the edit, so re-apply it.
+
+Because of this, **every field in this file is compared exactly**, zone lines
+included, by both verifiers: `SharedFixtureTests` on the Apple side, and on the
+Kotlin side `ZoneNameParityTests` checks that the name in each fixture zone
+line equals `ZoneNames.genericName` for that zone.

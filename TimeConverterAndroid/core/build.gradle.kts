@@ -16,6 +16,14 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+// The zone-name snapshot is the Swift core's resource, captured on iOS (iOS is
+// the origin — see fixtures/readme.md). It is added to this module's classpath
+// as `/zone-names.json` straight from that one file: there is no second copy
+// to drift.
+tasks.processResources {
+    from(rootProject.file("../TimeConverterCore/Sources/TimeConverterCore/Resources/zone-names.json"))
+}
+
 tasks.test {
     useJUnitPlatform()
     testLogging {

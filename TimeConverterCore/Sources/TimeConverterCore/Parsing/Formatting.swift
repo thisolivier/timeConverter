@@ -49,21 +49,22 @@ enum ZoneDisplayName {
 
 /// The zone's own name, for item 21's sub-line (`Brasilia Standard Time`).
 ///
-/// The one place in this file that *does* lean on Foundation, because naming
-/// 443 zones by hand is not an editorial decision anyone should make — only the
-/// ~30 abbreviations people actually type are worth curating, and those already
-/// live in the two abbreviation tables.
+/// A lookup in `ZoneNameTable` — the bundled snapshot of what iOS says — rather
+/// than a live call to Foundation. Asking the OS made the answer depend on the
+/// OS: the iOS 26 simulator says `Australian Eastern Time` where macOS 26 says
+/// `Eastern Australia Time`, and Android's `java.time` says `London Time`.
+/// There must be one canonical answer, and iOS is the origin, so the snapshot
+/// is a mechanical capture of iOS's answer for every identifier (nobody names
+/// 443 zones by hand), hand-editable where iOS's wording reads badly.
 enum ZoneNameFormatting {
-    /// Pinned, like every other string this app renders.
-    ///
-    /// Every label in the app is hand-written English (`Type a time to convert`,
-    /// `4 hours behind Lisbon.`), so a zone name that localised itself would be
-    /// the one translated word on an otherwise English screen — and it would
-    /// make these assertions depend on the machine's region. If the app is ever
-    /// localised, this constant is the single place that changes.
+    /// The locale the snapshot was captured in. Pinned, like every other
+    /// string this app renders: every label is hand-written English, so a zone
+    /// name that localised itself would be the one translated word on the
+    /// screen. If the app is ever localised, this and the snapshot change
+    /// together.
     static let locale = Locale(identifier: "en_US")
 
-    /// `.generic` rather than `.standard`, verified against the live database:
+    /// `.generic` rather than `.standard` (the form the snapshot captures):
     ///
     /// | identifier         | `.generic`                | `.standard`                     |
     /// |--------------------|---------------------------|---------------------------------|
@@ -74,17 +75,22 @@ enum ZoneNameFormatting {
     ///
     /// `.standard` is actively wrong half the year — a London conversion in
     /// July is not on Greenwich Mean Time — and the sub-line is naming the
-    /// *zone*, not today's offset within it. `.generic` is also the form that
-    /// gives the North American zones the names people use.
+    /// *zone*, not today's offset within it.
     static func genericName(for timeZone: TimeZone) -> String {
-        guard let name = timeZone.localizedName(for: .generic, locale: locale),
+        guard let name = ZoneNameTable.genericName(forIdentifier: timeZone.identifier),
               !name.isEmpty
         else {
-            // Unreachable against the shipped database (all 443 identifiers
-            // answer), and a quiet, readable degradation if one ever doesn't.
+            // An identifier newer than the snapshot: a quiet, readable
+            // degradation. `ZoneNameSnapshotTests` fails until it is regenerated.
             return "\(ZoneDisplayName.forIdentifier(timeZone.identifier)) Time"
         }
         return name
+    }
+
+    /// What the running OS itself says — used only to *capture* the snapshot
+    /// (`ZoneNameSnapshotTests` in regenerate mode), never to render.
+    static func operatingSystemGenericName(for timeZone: TimeZone) -> String? {
+        timeZone.localizedName(for: .generic, locale: locale)
     }
 }
 
