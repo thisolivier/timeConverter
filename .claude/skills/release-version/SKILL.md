@@ -34,6 +34,14 @@ When in doubt, prefer the smaller bump. Only bump MAJOR for genuinely transforma
 5. **Ensure the changelog is visible to users** — apps with a UI should have a screen where users can see the changelog and current version (e.g. in Settings or About).
 6. **Commit** with message: `Bump {component} to vX.Y.Z`
 
+## TimeConverter: ship both lanes for core changes
+
+Before shipping, check what changed since each lane's last `shipped` commit.
+If **anything under `TimeConverterCore/`** changed, ship **both**
+`scripts/ship.sh <N>` (iOS) and `scripts/ship-mac.sh <N+1>` (macOS) — the
+build number is shared and strictly increasing. Single-lane ships are only for
+changes confined to one shell. See README → "Which lanes to ship".
+
 ## Common Pitfalls
 
 - Forgetting a version location — always grep for the old version string before committing

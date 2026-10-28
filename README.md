@@ -59,7 +59,7 @@ provisioning profiles.
 | archive | `generic/platform=iOS` | `generic/platform=macOS` |
 | profiles | `TimeConverter App Store`, `TimeConverter Controls App Store` | `TimeConverter Mac App Store` (one — no extension on the Mac) |
 | product | `.ipa` → `altool -t ios` | `.pkg` → `altool -t macos` |
-| status | **working** — build 5 is VALID | **blocked on the portal** (below) |
+| status | **working** | **working** — first native build 7 |
 
 Both targets carry the bundle id `dev.thisolivier.timeconverter`. A bundle id is
 scoped per platform in App Store Connect, so the Mac app is the macOS train of
@@ -81,21 +81,34 @@ different product from the menu-bar app: no status item, no ⌃⌥T, a window. T
 compatibility path still works and is untouched; it simply cannot deliver the
 Mac experience, which is why `ship-mac.sh` archives `TimeConverterMac`.
 
-> **⚠️ `ship-mac.sh` cannot complete yet** — it needs one macOS provisioning
-> profile and a Mac Installer Distribution certificate that do not exist. It
-> stops in **preflight (step 2/7)**, before touching the build number, and
-> prints the portal steps. The final list is under **"macOS train"** in
-> `docs/testflight-setup-checklist.md`, including the dry-run archive's verbatim
-> demand. Nothing else is affected: `ship.sh`, Debug builds, both test lanes,
-> `run-ios.sh` and `run-mac.sh` all work, because Debug signs ad-hoc with no
-> team and the macOS signing settings are scoped to the Mac target's Release
-> config.
->
-> Once the profile is installed, the first command to run is
-> `scripts/ship-mac.sh --validate-only`: it archives, exports and asks App Store
-> Connect's validator for a verdict **without delivering anything and without
-> consuming a build number**. macOS build numbers are unrecoverable, so that
-> order matters.
+> The Mac lane's portal setup (profile + Mac Installer Distribution
+> certificate) is recorded under **"macOS train"** in
+> `docs/testflight-setup-checklist.md`. If signing ever changes, run
+> `scripts/ship-mac.sh --validate-only` first: it asks App Store Connect's
+> validator for a verdict **without delivering anything and without consuming
+> a build number** — macOS build numbers are unrecoverable.
+
+### Which lanes to ship — the both-lanes rule
+
+**Any change under `TimeConverterCore/` ships on both lanes**, in the same
+release, one after the other:
+
+```
+scripts/test.sh --platform all      # both must pass
+scripts/ship.sh <N>                 # iOS
+scripts/ship-mac.sh <N+1>           # macOS — build numbers are shared, so +1
+```
+
+The core package (parser, conversion engine, presenter, shared design layer)
+is compiled into *both* apps, so a feature there is a feature on both
+platforms. Shipping only one lane silently leaves the other behind — that is
+how item 22 (bare zone = now) reached iOS build 12 but not the Mac. Only a
+change confined to one shell (`TimeConverter/`, `TimeConverterControls/` →
+iOS only; `TimeConverterMac/` → Mac only) may ship on a single lane. Record
+both in the ship commit, e.g. `iOS build 13 + Mac build 14 shipped (…)`.
+
+To check whether a lane is behind, compare the last ship commit for each
+(`git log --oneline | grep shipped`) against `git log -- TimeConverterCore`.
 
 ## Layout
 
