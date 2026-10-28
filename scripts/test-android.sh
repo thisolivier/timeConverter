@@ -32,6 +32,10 @@ fi
 $INSTRUMENTED && TASKS+=(:app:connectedDebugAndroidTest)
 
 set -o pipefail
-./gradlew "${TASKS[@]}" --console=plain 2>&1 | grep -E 'PASSED|FAILED|SKIPPED|BUILD|error:|e: ' || true
-GRADLE_EXIT=${PIPESTATUS[0]}
+# PIPESTATUS must be read on the right of `||`: a trailing `|| true` followed
+# by a separate assignment reads the status of `true`, and the script could
+# never fail (found 2026-10-28 while templating this script into a skill).
+GRADLE_EXIT=0
+./gradlew "${TASKS[@]}" --console=plain 2>&1 | grep -E 'PASSED|FAILED|SKIPPED|BUILD|error:|e: ' \
+  || GRADLE_EXIT=${PIPESTATUS[0]}
 [[ $GRADLE_EXIT -eq 0 ]] || { echo "FAILED (gradle exit $GRADLE_EXIT)"; exit "$GRADLE_EXIT"; }

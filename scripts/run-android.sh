@@ -56,13 +56,19 @@ boot_emulator_if_needed
 
 echo "building ($INSTALL_TASK)"
 # Debug and release share an application id but not a signing key, so one
-# cannot install over the other; switching variants means uninstalling first.
-INSTALLED_SIGNATURE_MISMATCH=false
-(cd "$ANDROID_PROJECT_DIR" && ./gradlew "$INSTALL_TASK" --console=plain -q) || INSTALLED_SIGNATURE_MISMATCH=true
-if $INSTALLED_SIGNATURE_MISMATCH; then
-  echo "install failed; retrying after uninstalling the other variant"
-  adb uninstall "$ANDROID_APP_ID" >/dev/null 2>&1 || true
-  (cd "$ANDROID_PROJECT_DIR" && ./gradlew "$INSTALL_TASK" --console=plain -q)
+# cannot install over the other (INSTALL_FAILED_UPDATE_INCOMPATIBLE), and a
+# leftover higher versionCode refuses a lower one (INSTALL_FAILED_VERSION_DOWNGRADE).
+# On this dev emulator both mean: uninstall and retry. Any other failure (a
+# compile error, say) is shown and fatal — never uninstall for those.
+INSTALL_LOG="${TMPDIR:-/tmp}/$ANDROID_AVD_NAME-install.log"
+if ! (cd "$ANDROID_PROJECT_DIR" && ./gradlew "$INSTALL_TASK" --console=plain -q) >"$INSTALL_LOG" 2>&1; then
+  if grep -qE 'INSTALL_FAILED_(UPDATE_INCOMPATIBLE|VERSION_DOWNGRADE)' "$INSTALL_LOG"; then
+    echo "installed copy has the other key or a higher versionCode; uninstalling it and retrying"
+    adb uninstall "$ANDROID_APP_ID" >/dev/null 2>&1 || true
+    (cd "$ANDROID_PROJECT_DIR" && ./gradlew "$INSTALL_TASK" --console=plain -q)
+  else
+    grep -v '^\s*at ' "$INSTALL_LOG"; echo "install failed (full log: $INSTALL_LOG)"; exit 1
+  fi
 fi
 
 echo "launching"
