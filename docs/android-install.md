@@ -96,6 +96,36 @@ like any other app.
 
 ---
 
+## Putting a Convert-a-time button in your Quick Settings
+
+Quick Settings is the panel of buttons you get by swiping down from the top of
+the screen (Wi-Fi, Bluetooth, torch). Time Converter can put a **Convert a
+time** button there, so you can open it ready to type from anywhere, even from
+the lock screen.
+
+**The first time you open Time Converter**, your phone asks once whether to
+add it. Tap **Add tile**:
+
+<img src="images/android-install/14-add-tile-dialog.png" alt="Time Converter wants to add the following tile to Quick Settings: Convert a time. Buttons: Do not add tile, Add tile" width="300">
+
+It then sits with the other buttons:
+
+<img src="images/android-install/15-quick-settings-tile.png" alt="Quick Settings with a Convert a time button at the top left" width="300">
+
+Tap it and Time Converter opens with the keyboard up. On the lock screen the
+phone asks for your PIN or fingerprint first, then opens it.
+
+**If you said no, or the question never came up** (older phones don't ask), you
+can add it by hand: swipe down twice to open Quick Settings fully, tap the
+**pencil** (Edit) button, find **Convert a time** in the list of extra tiles,
+and drag it up among your buttons (on some phones you just tap it). The app
+won't ask again.
+
+You can also long-press the Time Converter icon: **Convert a time** is in the
+little menu that pops up.
+
+---
+
 ## What an update looks like
 
 When there's a new version, Obtainium shows a notification. (It checks by

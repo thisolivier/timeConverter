@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Time Converter</string>
+    <!-- Tile, add-tile prompt and launcher shortcut. Tile labels cap at 18 characters. -->
+    <string name="convert_a_time">Convert a time</string>
 </resources>

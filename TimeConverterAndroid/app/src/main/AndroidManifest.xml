@@ -16,6 +16,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- "Convert a time" Quick Settings tile (backlog 29): a launcher, so
+             not toggleable, and not in active mode (see ConvertTimeTileService). -->
+        <service
+            android:name=".ConvertTimeTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile_convert_time"
+            android:label="@string/convert_a_time"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.ACTIVE_TILE"
+                android:value="false" />
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="false" />
+        </service>
     </application>
 
 </manifest>

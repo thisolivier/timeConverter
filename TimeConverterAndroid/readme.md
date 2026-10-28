@@ -108,6 +108,55 @@ asserts the sub-line text on screen (via `uiautomator dump`), not just a
 screenshot. Debug and release are signed differently and can't install over
 each other; `run-android.sh` uninstalls and retries when switching.
 
+## Quick Settings tile (backlog 29)
+
+The twin of the iOS Control Center control (item 11): a **Convert a time**
+tile that opens the app with the field focused and the keyboard up.
+
+- `ConvertTimeLaunch` builds the one launch intent shared by the tile and the
+  launcher shortcut: `NEW_TASK | SINGLE_TOP`, never a `CLEAR_*` flag, so a live
+  activity is brought forward with its typed text, plus the `focusInput` extra.
+  `MainActivity.onNewIntent` ticks `arrivalCount` on that extra, so focus and
+  keyboard come back even when the activity never left the foreground (tile
+  tapped over the app); from the background `onStart` already does it.
+- `ConvertTimeTileService`: always `STATE_ACTIVE`, not toggleable, not in
+  active mode (re-asserts ACTIVE in `onStartListening`; it does no work, so
+  binding per shade-open is cheap). API 34+ calls
+  `startActivityAndCollapse(PendingIntent)` and lets SystemUI ask for the
+  unlock on the keyguard; below 34 the deprecated `Intent` overload, wrapped
+  in `unlockAndRun` when locked. Wrapping the 34+ path in `unlockAndRun` too
+  made SystemUI ask twice and drop the launch on the API 36 emulator.
+- `QuickSettingsTileOnboarding`: on API 33+, the first launch (after the first
+  frame) calls `StatusBarManager.requestAddTileService` once; the
+  SharedPreferences flag is written before asking, so whatever the answer it
+  is never asked again. Closing the dialog re-ticks `arrivalCount` so the
+  keyboard returns. Below 33 the user adds the tile by hand (edit Quick
+  Settings, drag it in; see `docs/android-install.md`). Launches carrying
+  `initialInput` (`run-android.sh --input`, the ship smoke) skip it without
+  spending the ask, so scripted screenshots never show the system dialog.
+- Launcher shortcut: a **dynamic** shortcut published on every launch.
+  Static `shortcuts.xml` shortcuts always launch with `CLEAR_TASK`, which
+  would destroy the activity and the typed text.
+- Icon: `res/drawable/ic_tile_convert_time.xml`, a white 24dp clock whose rim
+  is an arrow; the system tints it.
+
+QA on the emulator (component `dev.thisolivier.timeconverter/.ConvertTimeTileService`):
+
+```bash
+adb shell cmd statusbar add-tile dev.thisolivier.timeconverter/.ConvertTimeTileService
+adb shell cmd statusbar expand-settings
+adb shell cmd statusbar click-tile dev.thisolivier.timeconverter/.ConvertTimeTileService
+adb shell dumpsys input_method | grep -m1 mInputShown     # true = keyboard up
+adb shell cmd statusbar remove-tile dev.thisolivier.timeconverter/.ConvertTimeTileService
+```
+
+Notes: after `am force-stop`, binding the tile service takes ~5 s on the
+emulator, so wait before checking. On the keyguard, `click-tile` did nothing
+on the API 36 image; tap the tile with `adb shell input tap` instead (the PIN
+bouncer is a secure window and screenshots black). To see the add-tile
+dialog again: `adb uninstall dev.thisolivier.timeconverter`, then launch
+without `--input`.
+
 ## Main components
 
 - `core/.../parsing/` — the parser port: `InputParser`, `InputTokenizer`,
@@ -135,7 +184,11 @@ each other; `run-android.sh` uninstalls and retries when switching.
   `PosterPalette` light and dark values; system condensed-black display face
   and monospace until real fonts are bundled.
 - `app/.../MainActivity.kt` — the activity, the `initialInput` extra, and the
-  `onStart` arrival tick that autofocuses on launch and return from background.
+  arrival tick (`onStart`, plus `onNewIntent` with `focusInput`) that
+  autofocuses on launch, return from background and tile/shortcut launches.
+- `app/.../ConvertTimeLaunch.kt`, `ConvertTimeTileService.kt`,
+  `QuickSettingsTileOnboarding.kt` — the Quick Settings tile, the shared
+  launch intent and launcher shortcut, the one-time add-tile prompt.
 
 ## Not yet / still interim
 

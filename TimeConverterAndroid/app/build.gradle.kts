@@ -96,3 +96,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.compose.ui.test.junit4)
 }
+
+// Per-test lines, as in :core, so scripts/test-android.sh shows (and greps) the app's tests too.
+tasks.withType<Test>().configureEach {
+    testLogging { events("passed", "skipped", "failed") }
+}

@@ -57,6 +57,10 @@ is the one resolver without a direct twin).
   page `docs/android-install.md`. Verified on the emulator: Obtainium adds the
   repo, installs, and updates 16 → 17 in place. Details:
   `TimeConverterAndroid/readme.md` ("Release lane").
+- **29. Quick Settings tile — DONE 2026-10-28.** "Convert a time" tile (the
+  twin of iOS item 11's Control Center control), a one-time add-tile prompt
+  on API 33+, and a long-press launcher shortcut. Details:
+  `TimeConverterAndroid/readme.md` ("Quick Settings tile").
 - A Compose UI test (`connectedDebugAndroidTest`) once there is UI logic worth it.
 
 ## Blockers for Olivier — accruing, batch them
