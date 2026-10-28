@@ -49,7 +49,7 @@ GITHUB_REPOSITORY="thisolivier/timeConverter"
 INSTALL_PAGE_URL="https://github.com/$GITHUB_REPOSITORY/blob/main/docs/android-install.md"
 SIGNING_PROPERTIES="$HOME/.config/timeconverter/android-release.properties"
 SMOKE_INPUT="1500 Kolkata in Sydney"
-SMOKE_EXPECTED_TEXTS=("8:30 PM" "AUSTRALIAN EASTERN TIME (SYDNEY)")
+SMOKE_EXPECTED_TEXTS=("8:30 PM" "AUSTRALIAN EASTERN TIME (SYDNEY, MELBOURNE)")
 
 step() { echo ""; echo "=== $1 ==="; }
 fail() { echo "FAILED at step: $1"; exit 1; }
