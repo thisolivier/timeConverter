@@ -122,6 +122,16 @@ chain stops at the **first resolver with ≥1 candidate**.
    the tz db. Seeded with a handful of QA entries only (e.g.
    `porto→Europe/Lisbon`, `manchester→Europe/London`); architected so a larger
    gazetteer can replace the file later without touching the resolver chain.
+   **Grown 2026-10-28 (item 26)**: the file now carries ~300 names — the
+   world's ~200 largest cities plus every national capital that is not already
+   a tz identifier city — each mapped to its correct IANA zone (`mumbai` →
+   `Asia/Kolkata`, `barcelona` → `Europe/Madrid`, `rio` → `America/Sao_Paulo`,
+   `calgary` → `America/Edmonton`). Rules: a name an earlier step already
+   resolves is omitted (it would be unreachable); a name shared by places in
+   different zones with no clear winner is either left out (`portland`,
+   `valencia`, `hamilton`, `victoria`, `st john's`) or lists both zones so it
+   prompts (`san jose` = California / Costa Rica, `washington` = DC / state);
+   a clear winner is mapped with a comment (`birmingham` → England).
 
 Outcomes per token:
 - **1 candidate** (including a country's canonical zone) → resolved; the echoed

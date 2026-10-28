@@ -99,7 +99,7 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 | `FoundationAbbreviationZoneResolver.swift` | Step 2 + the curated expanded-name table. |
 | `TimeZoneDatabaseCityResolver.swift` | Step 3 + the legacy-identifier guard. |
 | `CountryZoneResolver.swift`, `CountryZoneTable.swift` | Step 4 + its table. |
-| `OfflineFallbackZoneResolver.swift`, `../Resources/fallback-cities.json` | Step 5 + its bundled data, reached through `Bundle.module`. |
+| `OfflineFallbackZoneResolver.swift`, `../Resources/fallback-cities.json` | Step 5 + its bundled data, reached through `Bundle.module`: ~300 editorial city names (item 26), integrity-checked by `GazetteerCoverageTests`. |
 | `WallClockResolver.swift` | Wall-clock time → instant, applying the DST policy explicitly. |
 | `ConversionEngine.swift` | `ConversionRequest` → display-ready `ConversionResult`. |
 | `Formatting.swift` | Deterministic time, zone-name, UTC-offset and calendar helpers. |
@@ -184,6 +184,12 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   Depending on OS version the known-identifier list can also carry legacy
   backward names — `Portugal`, `Japan`, `GB`, `US/Pacific`, `Etc/*`. Indexing
   those would let `portugal` resolve as a "city" and bypass the country policy.
+- **The gazetteer is editorial, and every entry must be reachable** (item 26).
+  `fallback-cities.json` holds the ~200 largest cities plus capitals that are
+  not identifier cities. A name an earlier step answers is omitted, because it
+  could never be reached; a name split across zones either lists both (so it
+  prompts: `san jose`, `washington`) or is left out (`portland`, `valencia`).
+  `GazetteerCoverageTests` enforces reachability and valid identifiers.
 - **Echo always names the zone actually used**, derived from the resolved
   identifier rather than the typed token: `porto` echoes as Lisbon. That is what
   makes the canonical-zone and alias choices visible.

@@ -450,7 +450,73 @@
       "id" : "half-hour-offset",
       "input" : "10am Kolkata in London",
       "localZone" : "America/Los_Angeles",
-      "note" : "Kolkata is the tz identifier city; Mumbai is a known gap (backlog).",
+      "note" : "Kolkata is the tz identifier city.",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Asia/Kolkata → Europe/London",
+          "echoLine" : "10:00 am Kolkata (UTC+5:30) → 4:30 am London (UTC+0)",
+          "footerSentence" : "London is 5.5 hours behind Kolkata.",
+          "offsetPhrase" : "5.5 hours behind",
+          "sourceClockDigits" : "10:00",
+          "sourceEchoLine" : "Kolkata · 10:00 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "Kolkata",
+          "sourceZoneLine" : "India Standard Time (Kolkata, Mumbai)",
+          "targetClockDigits" : "4:30",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "10:00",
+        "sourceZone" : "Asia/Kolkata",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "gazetteer-city-half-hour",
+      "input" : "10am Mumbai in London",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Item 26: Mumbai via the grown offline gazetteer.",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 1,
+        "display" : {
+          "detailLine" : "America/Los_Angeles → Europe/Madrid",
+          "echoLine" : "3:00 pm Los Angeles (local, UTC-8) → 12:00 am Madrid (UTC+1) +1d",
+          "footerSentence" : "Madrid is 9 hours ahead of Los Angeles.",
+          "offsetPhrase" : "9 hours ahead",
+          "sourceClockDigits" : "3:00",
+          "sourceEchoLine" : "Los Angeles (local) · 3:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Los Angeles (local)",
+          "sourceZoneLine" : "Pacific Time (Los Angeles, Vancouver)",
+          "targetClockDigits" : "12:00",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In Madrid",
+          "targetPlaceName" : "Madrid",
+          "targetZoneLine" : "Central European Time (Madrid) · next day"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "15:00",
+        "sourceZone" : "America/Los_Angeles",
+        "targetZone" : "Europe/Madrid"
+      },
+      "id" : "gazetteer-city-default-source",
+      "input" : "3pm in Barcelona",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Item 26: Barcelona via the gazetteer; source defaults to local.",
       "now" : "2026-01-15T12:00:00Z"
     },
     {

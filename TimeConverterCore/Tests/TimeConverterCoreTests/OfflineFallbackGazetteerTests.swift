@@ -30,13 +30,12 @@ struct OfflineFallbackGazetteerTests {
         #expect(OfflineFallbackGazetteer.bundledEntries["manchester"] == ["Europe/London"])
     }
 
-    /// The seed is deliberately tiny: QA entries plus the one modern city name
-    /// this OS's tz database only ships under a link name. Anything else that
-    /// happens to be a real city elsewhere still reports as unknown rather than
-    /// silently resolving.
-    @Test func seedContainsOnlyTheQAEntriesAndTheKolkataLinkFix() {
-        #expect(Set(OfflineFallbackGazetteer.bundledEntries.keys)
-            == ["porto", "manchester", "kolkata"])
+    /// The seed used to be pinned to exactly these three names; since item 26
+    /// the file is an editorial gazetteer (`GazetteerCoverageTests`), and the
+    /// seeds simply have to survive the growth.
+    @Test func theQASeedsAndTheKolkataLinkFixSurviveTheGrowth() {
+        let names = Set(OfflineFallbackGazetteer.bundledEntries.keys)
+        #expect(names.isSuperset(of: ["porto", "manchester", "kolkata"]))
     }
 
     /// `Asia/Kolkata` is a valid `TimeZone` identifier but is absent from this
