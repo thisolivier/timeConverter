@@ -30,8 +30,9 @@ enum CountryZones: Equatable, Sendable {
 /// shows. Portugal is `Europe/Lisbon`, not `Atlantic/Azores`; Spain is
 /// `Europe/Madrid`, not `Atlantic/Canary`. Only the six countries the spec
 /// names — USA, Canada, Australia, Brazil, Russia, Mexico — have no such clock
-/// and prompt instead. Their candidate lists are ordered most-populous-first,
-/// because the chain shows candidates in table order.
+/// and prompt instead, plus one continent: Antarctica (item 25). Their
+/// candidate lists are ordered most-populous-first, because the chain shows
+/// candidates in table order.
 ///
 /// This is a curated seed, not a gazetteer: it covers the countries people
 /// actually type. Unlisted countries fall through to step 5.
@@ -64,6 +65,10 @@ enum CountryZoneTable {
             "America/Mexico_City", "America/Cancun",
             "America/Chihuahua", "America/Tijuana",
         ]),
+
+        // MARK: Continent-as-country (item 25) — also prompts
+
+        "antarctica": .noCanonicalClock(antarcticStationZones),
 
         // MARK: Multi-zone, but with a dominant national clock
 
@@ -154,6 +159,18 @@ enum CountryZoneTable {
     private static let unitedStatesZones = [
         "America/New_York", "America/Chicago", "America/Denver",
         "America/Los_Angeles", "America/Anchorage", "Pacific/Honolulu",
+    ]
+
+    /// One research station per distinct clock (spec amendment 2026-10-28):
+    /// McMurdo first as the largest station, then east to west. Left out
+    /// because another row already shows their clock: South Pole (a link to
+    /// McMurdo), Vostok (Mawson's +5), Palmer (Rothera's −3). Left out for its
+    /// label: Dumont d'Urville, whose identifier city renders `DumontDUrville`.
+    /// Every station still resolves by name through step 3.
+    private static let antarcticStationZones = [
+        "Antarctica/McMurdo", "Antarctica/Macquarie", "Antarctica/Casey",
+        "Antarctica/Davis", "Antarctica/Mawson", "Antarctica/Syowa",
+        "Antarctica/Troll", "Antarctica/Rothera",
     ]
 
     private static let brazilZones = [

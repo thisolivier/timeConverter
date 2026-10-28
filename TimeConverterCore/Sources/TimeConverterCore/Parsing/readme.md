@@ -175,6 +175,10 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   with no national time (USA, Canada, Australia, Brazil, Russia, Mexico), which
   prompt. Ambiguous *abbreviations* (`CST`, `IST`) always prompt; there is no
   canonical pick for those.
+  One continent rides the same mechanism (item 25): `antarctica` is a
+  no-canonical-clock row of eight research stations, one per distinct clock;
+  a station typed by name (`mcmurdo`) is just a step-3 city
+  (`AntarcticaInputTests`).
 - **Step 3 only indexes area-prefixed identifiers** (`Europe/London`,
   `America/Argentina/Buenos_Aires`) from an allow-list of real IANA areas.
   Depending on OS version the known-identifier list can also carry legacy

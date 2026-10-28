@@ -106,6 +106,18 @@ chain stops at the **first resolver with ≥1 candidate**.
    `brazil`, `russia`, `mexico`) return all candidates → P4 prompt.
    (Amended 2026-10-20: canonical defaults replace always-prompt for countries;
    abbreviations like CST/IST keep the always-prompt rule — no canonical pick.)
+   **Continent-as-country row** (amended 2026-10-28, item 25): `antarctica`
+   is a no-canonical-clock entry whose candidates are research-station zones
+   from the tz database's `Antarctica/*` area — one station per distinct
+   offset rule, eight chips, each labelled with the station name (the
+   identifier city): McMurdo (UTC+13/+12, also stands for the South Pole link),
+   Macquarie (+11/+10), Casey (+8), Davis (+7), Mawson (+5, also Vostok's
+   offset), Syowa (+3), Troll (+0/+2), Rothera (−3, also Palmer's). Listing all
+   twelve identifiers was rejected: four rows would duplicate another row's
+   clock, and Dumont d'Urville (+10) is left out because its only label is the
+   identifier spelling `DumontDUrville`; it still resolves when typed.
+   Individual stations (`mcmurdo`, `south pole`, `vostok`) need no entry — the
+   step-3 city resolver already indexes the `Antarctica` area.
 5. **Offline fallback list** (bundled data file, not code). Cities absent from
    the tz db. Seeded with a handful of QA entries only (e.g.
    `porto→Europe/Lisbon`, `manchester→Europe/London`); architected so a larger

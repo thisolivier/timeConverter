@@ -43,6 +43,8 @@ enum SharedFixtureCatalog {
               note: "Kolkata is the tz identifier city; Mumbai is a known gap (backlog)."),
         Entry(id: "three-quarter-hour-offset", input: "3pm Kathmandu in London"),
         Entry(id: "same-zone-both-sides", input: "9am Paris in Paris"),
+        Entry(id: "antarctic-station-city", input: "3pm in McMurdo",
+              note: "Item 25: a station resolves as a tz-database city; southern summer, UTC+13."),
         Entry(id: "twelve-am-southern-to-western", input: "12am Sydney to Los Angeles"),
 
         // Local-zone defaulting (item 14) — device zone is Los Angeles.
@@ -71,6 +73,8 @@ enum SharedFixtureCatalog {
         Entry(id: "p2-bare-now", input: "now"),
         Entry(id: "p4-ambiguous-abbreviation", input: "9am CST to IST"),
         Entry(id: "p4-two-candidate-country", input: "06:34 Portugal in PST"),
+        Entry(id: "p4-antarctica-stations", input: "3pm in Antarctica",
+              note: "Item 25: one chip per research station with a distinct clock."),
         Entry(id: "p5-typo-with-suggestions", input: "9am Lodnon to Paris"),
         Entry(id: "p5-bare-unknown-word", input: "hello"),
         Entry(id: "p5-now-as-destination", input: "9am in now"),

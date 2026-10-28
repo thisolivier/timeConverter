@@ -522,6 +522,39 @@
         "chips" : [
 
         ],
+        "dayOffset" : 1,
+        "display" : {
+          "detailLine" : "America/Los_Angeles → Antarctica/McMurdo",
+          "echoLine" : "3:00 pm Los Angeles (local, UTC-8) → 12:00 pm McMurdo (UTC+13) +1d",
+          "footerSentence" : "McMurdo is 21 hours ahead of Los Angeles.",
+          "offsetPhrase" : "21 hours ahead",
+          "sourceClockDigits" : "3:00",
+          "sourceEchoLine" : "Los Angeles (local) · 3:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Los Angeles (local)",
+          "sourceZoneLine" : "Pacific Time (Los Angeles, Vancouver)",
+          "targetClockDigits" : "12:00",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In McMurdo",
+          "targetPlaceName" : "McMurdo",
+          "targetZoneLine" : "New Zealand Time (McMurdo) · next day"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "15:00",
+        "sourceZone" : "America/Los_Angeles",
+        "targetZone" : "Antarctica/McMurdo"
+      },
+      "id" : "antarctic-station-city",
+      "input" : "3pm in McMurdo",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Item 25: a station resolves as a tz-database city; southern summer, UTC+13.",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
         "dayOffset" : -1,
         "display" : {
           "detailLine" : "Australia/Sydney → America/Los_Angeles",
@@ -978,6 +1011,68 @@
       "id" : "p4-two-candidate-country",
       "input" : "06:34 Portugal in PST",
       "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+          {
+            "label" : "McMurdo (UTC+13)",
+            "replacementEnd" : 17,
+            "replacementStart" : 7,
+            "replacementText" : "McMurdo"
+          },
+          {
+            "label" : "Macquarie (UTC+11)",
+            "replacementEnd" : 17,
+            "replacementStart" : 7,
+            "replacementText" : "Macquarie"
+          },
+          {
+            "label" : "Casey (UTC+8)",
+            "replacementEnd" : 17,
+            "replacementStart" : 7,
+            "replacementText" : "Casey"
+          },
+          {
+            "label" : "Davis (UTC+7)",
+            "replacementEnd" : 17,
+            "replacementStart" : 7,
+            "replacementText" : "Davis"
+          },
+          {
+            "label" : "Mawson (UTC+5)",
+            "replacementEnd" : 17,
+            "replacementStart" : 7,
+            "replacementText" : "Mawson"
+          },
+          {
+            "label" : "Syowa (UTC+3)",
+            "replacementEnd" : 17,
+            "replacementStart" : 7,
+            "replacementText" : "Syowa"
+          },
+          {
+            "label" : "Troll (UTC+0)",
+            "replacementEnd" : 17,
+            "replacementStart" : 7,
+            "replacementText" : "Troll"
+          },
+          {
+            "label" : "Rothera (UTC-3)",
+            "replacementEnd" : 17,
+            "replacementStart" : 7,
+            "replacementText" : "Rothera"
+          }
+        ],
+        "kind" : "prompt",
+        "message" : "'antarctica' could mean more than one place — pick one: McMurdo (UTC+13), Macquarie (UTC+11), Casey (UTC+8), Davis (UTC+7), Mawson (UTC+5), Syowa (UTC+3), Troll (UTC+0), Rothera (UTC-3)",
+        "promptId" : "P4"
+      },
+      "id" : "p4-antarctica-stations",
+      "input" : "3pm in Antarctica",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Item 25: one chip per research station with a distinct clock.",
       "now" : "2026-01-15T12:00:00Z"
     },
     {
