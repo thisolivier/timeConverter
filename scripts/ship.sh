@@ -86,6 +86,8 @@ fail() { echo "FAILED at step: $1"; exit 1; }
 # `fail` above is the lib's error path, so it must be defined before this.
 # shellcheck source=lib/version.sh
 source "$SCRIPTS_DIR/lib/version.sh"
+# shellcheck source=lib/parity-gate.sh
+source "$SCRIPTS_DIR/lib/parity-gate.sh"
 
 SKIP_UPLOAD="${SKIP_UPLOAD:-0}"
 
@@ -109,7 +111,7 @@ if ! [[ "$NEW_BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
 fi
 
 # ------------------------------------------------------------------
-step "1/6 Source API key + unlock keychain"
+step "1/7 Source API key + unlock keychain"
 
 if [[ ! -f "$SIGNING_DIR/api-key.env" ]]; then
   echo "Error: $SIGNING_DIR/api-key.env not found"
@@ -130,7 +132,12 @@ security unlock-keychain \
 echo "Keychain unlocked, KEY_ID=$APPSTORE_KEY_ID"
 
 # ------------------------------------------------------------------
-step "2/6 Bump build number + regenerate project"
+step "2/7 Core parity gate"
+# Before the bump, so a stale fixture file never leaves project.yml half-shipped.
+parity_gate_swift_core || fail "parity gate (Swift core suite / fixture contract)"
+
+# ------------------------------------------------------------------
+step "3/7 Bump build number + regenerate project"
 
 # project.yml is patched (not the generated pbxproj): patching the pbxproj
 # would be silently wiped by the next `xcodegen generate`. Existence check,
@@ -142,7 +149,7 @@ bump_build_number "$PROJECT_YML" "$NEW_BUILD_NUMBER"
 echo "xcodegen generate complete — TimeConverter.xcodeproj regenerated from project.yml"
 
 # ------------------------------------------------------------------
-step "3/6 Archive"
+step "4/7 Archive"
 
 mkdir -p "$BUILD_DIR"
 # A stale archive from a previous run would pass the existence check below and
@@ -180,7 +187,7 @@ fi
 echo "Archive succeeded (CFBundleVersion $ARCHIVED_BUILD)"
 
 # ------------------------------------------------------------------
-step "4/6 Export"
+step "5/7 Export"
 
 xcodebuild -exportArchive \
   -archivePath "$ARCHIVE_PATH" \
@@ -194,7 +201,7 @@ fi
 echo "Export succeeded"
 
 # ------------------------------------------------------------------
-step "5/6 Upload to TestFlight"
+step "6/7 Upload to TestFlight"
 
 if [[ "$SKIP_UPLOAD" == "1" ]]; then
   echo "SKIP_UPLOAD set — not calling 'xcrun altool --upload-app'."
@@ -223,9 +230,14 @@ else
 fi
 
 # ------------------------------------------------------------------
-step "6/6 Summary"
+step "7/7 Summary"
 
 COMMIT_SHA=$(git -C "$REPO_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+if [[ "$SKIP_UPLOAD" != "1" ]]; then
+  record_release ios "$NEW_BUILD_NUMBER" "$(grep -m1 'MARKETING_VERSION:' "$PROJECT_YML" | sed -E 's/.*: *"?([^"]+)"?.*/\1/')" "$COMMIT_SHA" "TestFlight iOS, delivery $DELIVERY_UUID"
+  report_lane_drift ios "$NEW_BUILD_NUMBER"
+  echo "Include docs/releases.md in the ship commit."
+fi
 
 echo ""
 echo "Ship complete!"

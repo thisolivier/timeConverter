@@ -57,6 +57,14 @@ music projects the Mac build broke twice while the iOS lane stayed green.
 A third shell, `TimeConverterAndroid/` (Kotlin + Jetpack Compose, phones;
 sideloaded via GitHub Releases + Obtainium, not Google Play), built the same way as the other two: a thin UI over a core that
 holds every rule. There is no shared runtime with the Swift core — instead
+**Release parity.** A change to the shared core ships to all three lanes at
+the same build number. Every ship script runs `scripts/lib/parity-gate.sh`
+before building: the Swift core suite (which fails when
+`fixtures/conversion-cases.json` is stale) and, on Android, a check that every
+shared-fixture class ran with nothing skipped or `@Ignore`d. After a real
+upload each lane appends to `docs/releases.md` and prints which other lanes
+are behind on core changes.
+
 **`fixtures/conversion-cases.json`** is generated from the Swift core and
 asserted by both test suites, so the two parsers are held to one behaviour.
 The engine is ported and passes that contract; the parser port is next

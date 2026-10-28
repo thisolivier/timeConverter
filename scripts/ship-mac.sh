@@ -111,6 +111,8 @@ fail() { echo "FAILED at step: $1"; exit 1; }
 
 # shellcheck source=lib/version.sh
 source "$SCRIPTS_DIR/lib/version.sh"
+# shellcheck source=lib/parity-gate.sh
+source "$SCRIPTS_DIR/lib/parity-gate.sh"
 
 SKIP_UPLOAD="${SKIP_UPLOAD:-0}"
 VALIDATE_ONLY=0
@@ -150,7 +152,7 @@ if [[ -n "$NEW_BUILD_NUMBER" ]] && ! [[ "$NEW_BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
 fi
 
 # ------------------------------------------------------------------
-step "1/7 Source API key + unlock keychain"
+step "1/8 Source API key + unlock keychain"
 
 if [[ ! -f "$SIGNING_DIR/api-key.env" ]]; then
   echo "Error: $SIGNING_DIR/api-key.env not found"
@@ -169,7 +171,7 @@ security unlock-keychain \
 echo "Keychain unlocked, KEY_ID=$APPSTORE_KEY_ID"
 
 # ------------------------------------------------------------------
-step "2/7 Preflight: macOS signing assets"
+step "2/8 Preflight: macOS signing assets"
 
 # Preflight runs BEFORE the version bump on purpose. The portal assets are the
 # known-missing piece, and a failed run that has already edited project.yml
@@ -277,7 +279,11 @@ GUIDANCE
 fi
 
 # ------------------------------------------------------------------
-step "3/7 Build number + regenerate project"
+step "3/8 Core parity gate"
+parity_gate_swift_core || fail "parity gate (Swift core suite / fixture contract)"
+
+# ------------------------------------------------------------------
+step "4/8 Build number + regenerate project"
 
 if [[ "$VALIDATE_ONLY" == "1" ]]; then
   NEW_BUILD_NUMBER="$(read_build_number "$PROJECT_YML")"
@@ -297,7 +303,7 @@ fi
 echo "xcodegen generate complete — TimeConverter.xcodeproj regenerated from project.yml"
 
 # ------------------------------------------------------------------
-step "4/7 Archive (native macOS)"
+step "5/8 Archive (native macOS)"
 
 mkdir -p "$BUILD_DIR"
 rm -rf "$ARCHIVE_PATH" "$EXPORT_DIR"
@@ -345,7 +351,7 @@ fi
 echo "Archive succeeded (CFBundleVersion $ARCHIVED_BUILD, bundle id $ARCHIVED_BUNDLE_ID)"
 
 # ------------------------------------------------------------------
-step "5/7 Assert the archive is the shape the Mac App Store wants"
+step "6/8 Assert the archive is the shape the Mac App Store wants"
 
 # The Catalyst version of this step policed an embedded loadable .bundle
 # (ITMS-90283) and an .appex. The native archive has neither: one executable,
@@ -378,7 +384,7 @@ fi
 echo "OK   app is sandboxed"
 
 # ------------------------------------------------------------------
-step "6/7 Export (.pkg for App Store Connect)"
+step "7/8 Export (.pkg for App Store Connect)"
 
 xcodebuild -exportArchive \
   -archivePath "$ARCHIVE_PATH" \
@@ -403,7 +409,7 @@ echo "Export succeeded: $(basename "$PKG_PATH")"
 
 # ------------------------------------------------------------------
 if [[ "$VALIDATE_ONLY" == "1" ]]; then
-  step "7/7 Validate with App Store Connect (nothing delivered)"
+  step "8/8 Validate with App Store Connect (nothing delivered)"
   # Same ITMS validation as an upload, no delivery, no build number consumed.
   VALIDATE_OUTPUT=$(xcrun altool --validate-app \
     -f "$PKG_PATH" \
@@ -431,7 +437,7 @@ if [[ "$VALIDATE_ONLY" == "1" ]]; then
   fi
 fi
 
-step "7/7 Upload to the macOS TestFlight train"
+step "8/8 Upload to the macOS TestFlight train"
 
 if [[ "$SKIP_UPLOAD" == "1" ]]; then
   echo "SKIP_UPLOAD set — not calling 'xcrun altool --upload-app'."
@@ -467,6 +473,11 @@ fi
 step "Summary"
 
 COMMIT_SHA=$(git -C "$REPO_DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+if [[ "${VALIDATE_ONLY:-0}" != "1" && "${SKIP_UPLOAD:-0}" != "1" ]]; then
+  record_release mac "$NEW_BUILD_NUMBER" "$(grep -m1 'MARKETING_VERSION:' "$PROJECT_YML" | sed -E 's/.*: *"?([^"]+)"?.*/\1/')" "$COMMIT_SHA" "TestFlight macOS, delivery $DELIVERY_UUID"
+  report_lane_drift mac "$NEW_BUILD_NUMBER"
+  echo "Include docs/releases.md in the ship commit."
+fi
 
 echo ""
 echo "Mac ship complete!"

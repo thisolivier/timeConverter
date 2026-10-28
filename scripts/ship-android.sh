@@ -28,7 +28,9 @@
 # This script:
 #   1. Preflight: release key present, gh logged in, tag unused, HEAD pushed
 #   2. Bump (or confirm) the build number in project.yml
-#   3. scripts/test-android.sh
+#   3. scripts/test-android.sh, then the core parity gate (lib/parity-gate.sh):
+#      every shared fixture ran and passed on the Kotlin side, nothing
+#      @Ignore'd, and the Swift core suite agrees with the fixture file
 #   4. assembleRelease; assert versionCode, and that the APK is signed by OUR key
 #   5. Emulator smoke: install the release, convert "1500 Kolkata in Sydney",
 #      assert 8:30 PM + the zone sub-line on screen (catches R8 breakage)
@@ -36,7 +38,7 @@
 #   7. gh release create with the APK and generated notes — skipped by --dry-run
 #
 # Ship commit convention, after a real publish (same shape as the Apple lanes):
-#   git commit -m "Android build <N> shipped (<one-line what's new>)" project.yml
+#   git commit -m "Android build <N> shipped (<one-line what's new>)" project.yml docs/releases.md
 #   git push
 set -euo pipefail
 
@@ -54,6 +56,7 @@ fail() { echo "FAILED at step: $1"; exit 1; }
 usage() { sed -n '2,40p' "$0"; exit "${1:-0}"; }
 
 source "$SCRIPTS_DIR/lib/version.sh"
+source "$SCRIPTS_DIR/lib/parity-gate.sh"
 source "$SCRIPTS_DIR/lib/android-env.sh"
 
 [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]] && usage 0
@@ -103,8 +106,10 @@ else
 fi
 
 # ------------------------------------------------------------------
-step "3/7 Tests"
+step "3/7 Tests + core parity gate"
 "$SCRIPTS_DIR/test-android.sh" | tail -3 || fail "tests"
+parity_gate_kotlin_fixtures || fail "parity gate (Kotlin shared fixtures)"
+parity_gate_swift_core || fail "parity gate (Swift core suite / fixture contract)"
 
 # ------------------------------------------------------------------
 step "4/7 Release build + signature"
@@ -171,4 +176,6 @@ gh release create "$RELEASE_TAG" "$DIST_APK" -R "$GITHUB_REPOSITORY" \
 echo ""
 echo "Shipped $RELEASE_TITLE"
 echo "  $(gh release view "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" --json url --jq .url)"
-echo "Now commit the bump: git commit -m \"Android build $NEW_BUILD_NUMBER shipped (...)\" project.yml && git push"
+record_release android "$NEW_BUILD_NUMBER" "$MARKETING_VERSION" "$(git -C "$REPO_DIR" rev-parse --short HEAD)" "GitHub release $RELEASE_TAG"
+report_lane_drift android "$NEW_BUILD_NUMBER"
+echo "Now commit the bump: git commit -m \"Android build $NEW_BUILD_NUMBER shipped (...)\" project.yml docs/releases.md && git push"
