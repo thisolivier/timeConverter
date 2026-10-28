@@ -50,11 +50,10 @@ is the one resolver without a direct twin).
   equivalents are free to bundle on Android, unlike iOS).
 - **24d. Play release lane — PARKED 2026-10-28.** Olivier declined the Play
   Console onboarding. Replaced by:
-- **24e. Manual distribution lane** — own release keystore, signed `.apk`,
-  wireless `adb` to the phone over the tailnet as the QA route, a
-  `tailscale serve` page (optionally Obtainium) as the update route. Research,
-  ranking and plan: `docs/android-distribution.md`. Build number shared with
-  the Apple trains.
+- **24e. Manual distribution lane** — own release keystore, signed `.apk`
+  attached to a GitHub Release by `scripts/ship-android.sh`, Obtainium on the
+  partner's phone for update notifications. Research, ranking and plan:
+  `docs/android-distribution.md`. Build number shared with the Apple trains.
 - A Compose UI test (`connectedDebugAndroidTest`) once there is UI logic worth it.
 
 ## Blockers for Olivier — accruing, batch them
@@ -62,19 +61,16 @@ is the one resolver without a direct twin).
 **Group A — done.** SDK licences were accepted by the setup script; no macOS
 prompt appeared for the headless emulator.
 
-**Group B — the phone (remote), one live session once 24e's scripts exist.**
-1. Install Tailscale on the Android phone and sign in; confirm it shows in
-   `tailscale status` here.
-2. Developer options → Wireless debugging (phone on Wi-Fi). Read me the
-   pairing code + `ip:port` once, then the connect port. Pairing persists;
-   the connect port changes whenever wireless debugging restarts, so expect
-   to read it out again in later sessions.
-3. In the Tailscale admin console enable MagicDNS and HTTPS certificates
-   (needed for the `tailscale serve` APK page).
-4. First sideload: open the served page in the phone's browser, allow
-   "install unknown apps" for the browser, accept the Play Protect
-   unknown-developer warning. Tell me what the prompts said on your Android
-   version. Optional: install Obtainium and point its HTML source at the page.
+**Group B — the partner's phone.** The Android target is Olivier's
+partner's phone (Olivier is on iPhone), so there is no developer at the device
+and QA stays on the emulator. One ten-minute session, ideally on a call, once
+24e's ship script has published a release: install Obtainium from its GitHub
+releases page in the browser (allow "install unknown apps", accept the Play
+Protect unknown-developer warning), add `https://github.com/thisolivier/timeConverter`
+in Obtainium, install from there. Updates then arrive as notifications. Full
+steps and the 2027 developer-verification caveat: `docs/android-distribution.md`.
+Before that: `gh auth login` on this Mac (token expired) so the ship script can
+publish releases.
 
 **Group C — Google Play Console. PARKED 2026-10-28** (Olivier declined the
 identity-verification onboarding). Kept for the record in case a store listing
