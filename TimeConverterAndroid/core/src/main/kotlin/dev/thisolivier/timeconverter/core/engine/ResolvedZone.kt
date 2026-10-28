@@ -1,5 +1,6 @@
 package dev.thisolivier.timeconverter.core.engine
 
+import dev.thisolivier.timeconverter.core.parsing.ZoneMatchSource
 import java.time.ZoneId
 
 /**
@@ -21,8 +22,8 @@ sealed interface ZoneLabel {
 }
 
 /**
- * A zone the parser has settled on — the engine's input. Port of the slice of
- * Swift `ResolvedZone` the engine reads.
+ * A zone the parser has settled on — the engine's input. Port of Swift
+ * `ResolvedZone`, with the label precomputed (Swift derives it on read).
  */
 data class ResolvedZone(
     val zone: ZoneId,
@@ -32,8 +33,16 @@ data class ResolvedZone(
     val representativeCities: List<String> = emptyList(),
     val label: ZoneLabel = ZoneLabel.Place(displayName, isDeviceLocal = false),
     val isDeviceLocalZone: Boolean = false,
+    /** Which resolver produced it; null for zones built outside the parser (engine-only tests). */
+    val matchSource: ZoneMatchSource? = null,
+    /** The normalised token the user typed; empty for a defaulted side. */
+    val originalToken: String = "",
 ) {
     companion object {
+        /** The injected device zone standing in for a side the user left unnamed. */
+        fun deviceLocal(zone: ZoneId): ResolvedZone =
+            place(zone.id, isDeviceLocal = true).copy(matchSource = ZoneMatchSource.DeviceLocalZone)
+
         /** The plainest resolution: an identifier read as a place. */
         fun place(identifier: String, isDeviceLocal: Boolean = false): ResolvedZone {
             val name = ZoneDisplayName.forIdentifier(identifier)

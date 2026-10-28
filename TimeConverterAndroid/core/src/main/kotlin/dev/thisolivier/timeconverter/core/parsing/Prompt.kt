@@ -15,7 +15,7 @@ data class ZoneChoice(
  * The parser emits them, the presenter renders them. P3 is retired.
  */
 sealed interface Prompt {
-    /** P1 — no parseable time at the start of the input. */
+    /** P1 — no parseable time at the start of the input. `input` is the normalised text. */
     data class TimeNotFound(val input: String) : Prompt
 
     /** P2 — a time but no zone anywhere. `time` is null for `now`. */
@@ -24,12 +24,21 @@ sealed interface Prompt {
     /** P4 — the token means more than one place; never silently defaulted. */
     data class AmbiguousZone(
         val token: String,
+        val side: ZoneSide,
         val tokenRange: RawTextRange,
         val choices: List<ZoneChoice>,
     ) : Prompt
 
     /** P5 — nothing recognised the token. Same rewrite range as P4, for did-you-mean chips. */
-    data class UnknownZone(val token: String, val tokenRange: RawTextRange) : Prompt
+    data class UnknownZone(val token: String, val side: ZoneSide, val tokenRange: RawTextRange) : Prompt
+
+    /** The raw span a correction chip rewrites; null for P1 and P2, which have no single token. */
+    val offendingTokenRange: RawTextRange?
+        get() = when (this) {
+            is AmbiguousZone -> tokenRange
+            is UnknownZone -> tokenRange
+            else -> null
+        }
 
     val specIdentifier: String
         get() = when (this) {

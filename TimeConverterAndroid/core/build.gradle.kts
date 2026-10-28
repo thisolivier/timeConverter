@@ -16,12 +16,15 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
-// The zone-name snapshot is the Swift core's resource, captured on iOS (iOS is
-// the origin — see fixtures/readme.md). It is added to this module's classpath
-// as `/zone-names.json` straight from that one file: there is no second copy
-// to drift.
+// Two of the Swift core's resources ride on this module's classpath straight
+// from their one file, so there is no second copy to drift:
+// - `/zone-names.json`, the zone-name snapshot captured on iOS (iOS is the
+//   origin — see fixtures/readme.md);
+// - `/fallback-cities.json`, the offline gazetteer (resolver step 5).
 tasks.processResources {
-    from(rootProject.file("../TimeConverterCore/Sources/TimeConverterCore/Resources/zone-names.json"))
+    val swiftResources = "../TimeConverterCore/Sources/TimeConverterCore/Resources"
+    from(rootProject.file("$swiftResources/zone-names.json"))
+    from(rootProject.file("$swiftResources/fallback-cities.json"))
 }
 
 tasks.test {

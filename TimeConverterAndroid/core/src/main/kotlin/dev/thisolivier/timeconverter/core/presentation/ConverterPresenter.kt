@@ -4,7 +4,7 @@ import dev.thisolivier.timeconverter.core.engine.ConversionResult
 import dev.thisolivier.timeconverter.core.engine.WallClockResolver
 import dev.thisolivier.timeconverter.core.engine.ZoneNames
 import dev.thisolivier.timeconverter.core.engine.ZoneReading
-import dev.thisolivier.timeconverter.core.parsing.InterimInputParser
+import dev.thisolivier.timeconverter.core.parsing.InputParser
 import dev.thisolivier.timeconverter.core.parsing.Prompt
 import dev.thisolivier.timeconverter.core.parsing.ZoneSuggestionEngine
 import java.time.Instant
@@ -15,11 +15,11 @@ import java.time.ZoneId
  * display values. Pure: `now` and `localZone` are parameters; the activity is
  * the one place that reads the clock. Port of Swift `ConverterPresenter`.
  *
- * The parser is a function parameter so the 24b port can swap in without
- * touching anything here or above.
+ * The parser is injectable (its resolver chain also feeds the did-you-mean
+ * chips), as in Swift; the default is the full port with the standard chain.
  */
 class ConverterPresenter(
-    private val parse: (String, Instant, ZoneId) -> InterimInputParser.Outcome = InterimInputParser::parse,
+    private val parser: InputParser = InputParser(),
 ) {
     /** What an input produces *before* the did-you-mean scan — the driver's cheap first look. */
     sealed interface Evaluation {
@@ -31,9 +31,9 @@ class ConverterPresenter(
     fun evaluate(rawInput: String, now: Instant, localZone: ZoneId): Evaluation {
         // Empty input stays quiet rather than scolding with P1 before anything is typed.
         if (rawInput.isBlank()) return Evaluation.Hint
-        return when (val outcome = parse(rawInput, now, localZone)) {
-            is InterimInputParser.Outcome.Converted -> Evaluation.Converted(display(outcome.result))
-            is InterimInputParser.Outcome.Prompted -> Evaluation.Prompted(outcome.prompt)
+        return when (val outcome = parser.parseAndConvert(rawInput, now, localZone)) {
+            is InputParser.Outcome.Converted -> Evaluation.Converted(display(outcome.result))
+            is InputParser.Outcome.Prompted -> Evaluation.Prompted(outcome.prompt)
         }
     }
 
@@ -59,7 +59,7 @@ class ConverterPresenter(
             )
         }
         // Never auto-accepted, not even a unique distance-1 match — the tap is the point.
-        is Prompt.UnknownZone -> ZoneSuggestionEngine.suggestions(prompt.token).map { suggestion ->
+        is Prompt.UnknownZone -> ZoneSuggestionEngine.suggestions(prompt.token, parser.zoneResolverChain).map { suggestion ->
             ReplacementChip("${suggestion.label}?", suggestion.label, prompt.tokenRange)
         }
         is Prompt.TimeNotFound, is Prompt.ZoneNotFound -> emptyList()
@@ -120,7 +120,7 @@ class ConverterPresenter(
             }
         }
 
-        /** Generic zone name from `ZoneNames` for now; a shared name table is coming separately. */
+        /** The iOS-origin zone name plus representative cities, or an abbreviation's own cities. */
         private fun zoneDetail(reading: ZoneReading): String = ZoneNames.zoneDetailLine(reading)
     }
 }

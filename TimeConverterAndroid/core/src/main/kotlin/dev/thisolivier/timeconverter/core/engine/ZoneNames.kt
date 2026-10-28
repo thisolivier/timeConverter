@@ -1,5 +1,6 @@
 package dev.thisolivier.timeconverter.core.engine
 
+import dev.thisolivier.timeconverter.core.parsing.ZoneRepresentativeCities
 import kotlinx.serialization.json.Json
 import java.time.ZoneId
 
@@ -26,7 +27,10 @@ object ZoneNames {
 
     /** `Brasilia Standard Time (São Paulo)` under a place header; `New York, Toronto` under an abbreviation header. */
     fun zoneDetailLine(reading: ZoneReading): String = when (reading.label) {
-        is ZoneLabel.Place -> "${genericName(ZoneId.of(reading.timeZoneIdentifier))} (${reading.cityName})"
+        is ZoneLabel.Place -> {
+            val cities = ZoneRepresentativeCities.cities(reading.timeZoneIdentifier).joinToString(", ")
+            "${genericName(ZoneId.of(reading.timeZoneIdentifier))} ($cities)"
+        }
         is ZoneLabel.Abbreviation -> reading.representativeCities.joinToString(", ")
     }
 }

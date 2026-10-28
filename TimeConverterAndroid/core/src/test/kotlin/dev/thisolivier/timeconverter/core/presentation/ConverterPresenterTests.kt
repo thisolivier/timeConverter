@@ -10,35 +10,22 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The presenter against the shared fixtures, for the cases the INTERIM parser
- * can express. Every `ConverterDisplay` slot is compared, the two zone lines
- * with their leading OS-supplied name wildcarded (fixtures/readme.md). When
- * the parser port lands, `SharedFixtureParserTests` takes over all cases.
+ * The presenter against the shared fixtures with the real parser: every
+ * `ConverterDisplay` slot of every conversion, and the copy and chips of every
+ * prompt, compared exactly (zone lines included — the names come from the
+ * iOS-origin snapshot and the cities from `ZoneRepresentativeCities`).
  */
 class ConverterPresenterTests {
     private val presenter = ConverterPresenter()
-    private val casesById = SharedFixtures.load().cases.associateBy { it.id }
-
-    private val conversionCasesTheInterimParserCovers = listOf(
-        "spec-example-winter", "spec-example-summer", "twenty-four-hour", "single-digit-hour",
-        "midnight-gmt-to-tokyo", "spaced-meridiem-multiword-cities", "previous-day-rollover",
-        "all-lowercase", "redundant-agreeing-meridiem", "half-hour-offset", "three-quarter-hour-offset",
-        "default-source-to-local", "default-with-tokyo-device", "dst-spring-forward-gap", "dst-fall-back-overlap",
-    )
-
-    private val promptCasesTheInterimParserCovers = listOf(
-        "p1-digits-only", "p1-contradicting-meridiem", "p1-two-places-no-time", "p2-time-only",
-        "p2-dangling-conjunction", "p4-ambiguous-abbreviation", "p5-typo-with-suggestions",
-        "p5-now-as-destination", "hint-empty", "hint-whitespace",
-    )
+    private val cases = SharedFixtures.load().cases
 
     private fun state(case: ConversionCase) =
         presenter.displayState(case.input, Instant.parse(case.now), ZoneId.of(case.localZone))
 
     @Test
-    fun `every slot matches the conversion fixtures the interim parser covers`() {
-        val failures = conversionCasesTheInterimParserCovers.mapNotNull { id ->
-            val case = casesById.getValue(id)
+    fun `every slot matches every conversion fixture`() {
+        val failures = cases.filter { it.expected.kind == "conversion" }.mapNotNull { case ->
+            val id = case.id
             val display = state(case).convertedDisplay ?: return@mapNotNull "$id: not converted (${state(case)})"
             mismatches(case.expected.display!!, display).takeIf { it.isNotEmpty() }
                 ?.let { "$id (${case.input}):\n    " + it.joinToString("\n    ") }
@@ -47,9 +34,9 @@ class ConverterPresenterTests {
     }
 
     @Test
-    fun `prompt copy and chips match the prompt fixtures the interim parser covers`() {
-        val failures = promptCasesTheInterimParserCovers.mapNotNull { id ->
-            val case = casesById.getValue(id)
+    fun `prompt copy and chips match every prompt and hint fixture`() {
+        val failures = cases.filter { it.expected.kind != "conversion" }.mapNotNull { case ->
+            val id = case.id
             val actual = state(case)
             val expected = case.expected
             val ok = when (expected.kind) {
@@ -68,7 +55,7 @@ class ConverterPresenterTests {
     fun `the rollover note rides the target zone line`() {
         val display = presenter.displayState("12am Sydney to Los Angeles", Instant.parse("2026-01-15T12:00:00Z"), ZoneId.of("UTC"))
             .convertedDisplay!!
-        assertTrue(display.targetZoneLine.endsWith(" (Los Angeles) · previous day"), display.targetZoneLine)
+        assertEquals("Pacific Time (Los Angeles, Vancouver) · previous day", display.targetZoneLine)
     }
 
     @Test
@@ -86,30 +73,16 @@ class ConverterPresenterTests {
         compare("sourcePlaceName", expected.sourcePlaceName, actual.sourcePlaceName),
         compare("sourceClockDigits", expected.sourceClockDigits, actual.sourceClockDigits),
         compare("sourceMeridiem", expected.sourceMeridiem, actual.sourceMeridiem),
-        compare("sourceZoneLine", neutral(expected.sourceZoneLine), neutral(actual.sourceZoneLine)),
+        compare("sourceZoneLine", expected.sourceZoneLine, actual.sourceZoneLine),
         compare("targetPlaceLabel", expected.targetPlaceLabel, actual.targetPlaceLabel),
         compare("targetPlaceName", expected.targetPlaceName, actual.targetPlaceName),
         compare("targetClockDigits", expected.targetClockDigits, actual.targetClockDigits),
         compare("targetMeridiem", expected.targetMeridiem, actual.targetMeridiem),
-        compare("targetZoneLine", neutral(expected.targetZoneLine), neutral(actual.targetZoneLine)),
+        compare("targetZoneLine", expected.targetZoneLine, actual.targetZoneLine),
         compare("footerSentence", expected.footerSentence, actual.footerSentence),
         compare("offsetPhrase", expected.offsetPhrase, actual.offsetPhrase),
         compare("daylightSavingNote", expected.daylightSavingNote.toString(), actual.daylightSavingNote.toString()),
     )
-
-    /**
-     * `Japan Standard Time (Tokyo) · next day` → `* · next day`. The leading
-     * name is ICU's (fixtures/readme.md), and the parenthesised city list on a
-     * place-labelled side comes from Swift's `ZoneRepresentativeCities`, which
-     * arrives with the shared name table — until then `ZoneNames` names the
-     * zone's own city only. Abbreviation-side lines (`New York, Toronto`) have
-     * no parenthesis and stay exact; the rollover note always stays exact.
-     */
-    private fun neutral(zoneLine: String): String {
-        val parenthesisIndex = zoneLine.indexOf(" (")
-        if (parenthesisIndex < 0) return zoneLine
-        return "*" + zoneLine.substring(zoneLine.indexOf(')', parenthesisIndex) + 1)
-    }
 
     private fun compare(field: String, expected: String, actual: String): String? =
         if (expected == actual) null else "$field: expected `$expected`, got `$actual`"
