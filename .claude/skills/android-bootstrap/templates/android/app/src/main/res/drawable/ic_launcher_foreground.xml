@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder launcher icon (a white ring): only has to be distinguishable
+     in the launcher until the real icon arrives. minSdk 26 means this
+     adaptive icon is the only one needed; no PNG mipmaps. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M54,30a24,24 0 1,0 0.01,0z M54,37a17,17 0 1,1 -0.01,0z" />
+</vector>
