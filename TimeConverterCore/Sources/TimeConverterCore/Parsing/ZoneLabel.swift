@@ -11,7 +11,12 @@ import Foundation
 /// Only two cases, deliberately. The five resolvers collapse into "the user
 /// named a place" and "the user named a code", and the device-local default
 /// folds into the place case — see `ResolvedZone.zoneLabel`.
-enum ZoneLabel: Equatable, Sendable {
+///
+/// Public and `Codable` since item 30: a favourite stores the label the user
+/// starred it with, so the world clock keeps their own word for the zone. The
+/// synthesized coding is the on-disk form in `FavouritesStore`; the shared
+/// world-clock fixtures spell it out field by field instead.
+public enum ZoneLabel: Codable, Equatable, Hashable, Sendable {
     /// The user named a place (city, country, gazetteer entry) — or named
     /// nothing at all and got the device zone, which is still a place.
     case place(name: String, isDeviceLocal: Bool)
@@ -32,7 +37,7 @@ enum ZoneLabel: Equatable, Sendable {
     /// to contrast it with, while the pair's columns are already captioned
     /// `FROM` and `TO` — a second preposition on top of those would read as a
     /// stutter. Same content, two framings, one source.
-    var placeNameDescription: String {
+    public var placeNameDescription: String {
         switch self {
         case let .place(name, isDeviceLocal):
             return isDeviceLocal ? "\(name) (local)" : name
@@ -43,7 +48,7 @@ enum ZoneLabel: Equatable, Sendable {
 
     /// The header above the big time, in natural case:
     /// `In São Paulo`, `In Los Angeles (local)`, `In ET (Eastern Time)`.
-    var headerDescription: String { "In \(placeNameDescription)" }
+    public var headerDescription: String { "In \(placeNameDescription)" }
 }
 
 /// Renders the token the user typed back at them as a label.

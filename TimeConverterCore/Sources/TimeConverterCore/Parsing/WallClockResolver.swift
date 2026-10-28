@@ -39,7 +39,18 @@ enum WallClockResolver {
     ) -> Outcome {
         let dayComponents = GregorianCalendars.calendar(in: timeZone)
             .dateComponents([.year, .month, .day], from: referenceDate)
+        return resolve(wallClock: time, onCalendarDay: dayComponents, in: timeZone)
+    }
 
+    /// The same policy for a calendar day given directly as year, month and
+    /// day — for the world clock (item 30), whose shifted wall clock is plain
+    /// date arithmetic and has no instant to read a day off until this
+    /// resolves one.
+    static func resolve(
+        wallClock time: ParsedTime,
+        onCalendarDay dayComponents: DateComponents,
+        in timeZone: TimeZone
+    ) -> Outcome {
         // The requested wall time read as if it were UTC. Subtracting a
         // candidate offset from this gives the instant that *would* show that
         // wall time if the zone were at that offset.
@@ -50,7 +61,7 @@ enum WallClockResolver {
             hour: time.hour,
             minute: time.minute
         )) else {
-            return Outcome(instant: referenceDate, disposition: .unambiguous)
+            return Outcome(instant: Date(timeIntervalSince1970: 0), disposition: .unambiguous)
         }
 
         // Any offset in force within a day either side of the target is a

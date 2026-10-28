@@ -78,7 +78,8 @@ struct ConverterPresenter: Sendable {
             targetZoneLine: targetZoneLine(for: result),
             footerSentence: result.relativeOffsetSentence,
             offsetPhrase: result.relativeOffsetPhrase,
-            daylightSavingNote: note
+            daylightSavingNote: note,
+            favouritableTarget: FavouriteDestination(converterTarget: result.target)
         )
     }
 

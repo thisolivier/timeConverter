@@ -113,6 +113,13 @@ public struct ConverterDisplay: Equatable, Sendable {
     /// The daylight-saving explanation, on the two days a year it applies.
     /// `nil` otherwise, which is the overwhelmingly common case.
     public let daylightSavingNote: String?
+    /// What the star beside the target header would store (item 31): the
+    /// target's identifier and the label the user asked with. `nil` when the
+    /// target was defaulted to the device zone — `(local)` cannot be starred.
+    /// Deliberately not part of the shared fixture schema: it is a UI hook,
+    /// and its two halves are already pinned there (`targetZone`,
+    /// `targetPlaceName`).
+    public let favouritableTarget: FavouriteDestination?
 }
 
 /// A prompt, ready to render: the message exactly as the spec words it, and

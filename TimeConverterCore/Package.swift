@@ -43,7 +43,7 @@ let package = Package(
             // Module readmes are documentation, not resources. Without this,
             // SwiftPM warns "found an unhandled resource" and would otherwise
             // copy them into the product.
-            exclude: ["Parsing/readme.md"],
+            exclude: ["Parsing/readme.md", "WorldClock/readme.md"],
             // `.process` rather than `.copy`: it goes through the asset
             // pipeline and lands flat in the generated resource bundle, which
             // is what `Bundle.module.url(forResource:withExtension:)` expects.

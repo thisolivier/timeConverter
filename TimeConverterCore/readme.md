@@ -23,9 +23,10 @@ TimeConverterCore/
     Parsing/       the spec implementation — has its own readme
     Presentation/  parse output → display values, and when to show them
     Launch/        what a launcher asks the app to do, and the DEBUG prefill
+    WorldClock/    favourites, their store, and the world clock (items 30–31) — has its own readme
     Resources/     fallback-cities.json and zone-names.json, reached through Bundle.module
   Sources/TimeConverterUI/        the shared design layer — has its own readme
-  Tests/TimeConverterCoreTests/   every unit test in the repo bar the shells'; SharedFixtures/ generates and verifies fixtures/conversion-cases.json, the contract the Android core is held to
+  Tests/TimeConverterCoreTests/   every unit test in the repo bar the shells'; SharedFixtures/ generates and verifies fixtures/conversion-cases.json and fixtures/world-clock-cases.json, the contracts the Android core is held to
   Tests/TimeConverterUITests/     the design layer's geometry and proportions
 ```
 
@@ -46,7 +47,10 @@ TimeConverterCore/
 - **The public surface is tiny and hand-picked.** Only what a *shell* calls is
   `public`: `ConverterDisplayDriver` (with a parameterless `init`),
   `ConverterDisplayState` and its payloads, `ReplacementChip`, `LaunchRequest`,
-  `LaunchRequestInbox`, `LaunchURLRouter`, `LaunchArguments`. `InputParser`,
+  `LaunchRequestInbox`, `LaunchURLRouter`, `LaunchArguments` — and since items
+  30–31 `ZoneLabel`, `FavouriteDestination`, `FavouritesStore` (constructed
+  with an injected `UserDefaults`), `WorldClock`, `WorldClockDisplay` and
+  `WorldClockRow`. `InputParser`,
   `ConverterPresenter`, `Prompt`, every resolver and every model stay internal —
   the tests reach them with `@testable import`, which is why extraction did not
   cost a wave of `public` keywords. A shell cannot reach past the driver into
@@ -82,6 +86,8 @@ TimeConverterCore/
 | `Launch/LaunchRequest.swift` | `.startFreshConversion` vs `.summonWithoutReset`, their `inputToStartFrom` rule, and the one-slot `LaunchRequestInbox`. |
 | `Launch/LaunchURLRouter.swift` | `timeconverter://convert` → a request. A QA and fallback route, not a feature. |
 | `Launch/LaunchArguments.swift` | The DEBUG `-initialInput` prefill and `-forceCompact`, so both a conversion and item 19's collapsed layout can be screenshotted headlessly. |
+| `Launch/LaunchArguments+Clocks.swift` | DEBUG `-favourites`, `-selectedTab clocks`, `-clockOffsetDays`, `-clockOffsetMinutes`: the starred and Clocks-tab states, for headless screenshots. |
+| `WorldClock/` | `FavouriteDestination`, `FavouritesStore`, `WorldClock.readings(…)` — see `WorldClock/readme.md`. `ConverterDisplay.favouritableTarget` is what the star stores. |
 
 ### `ConverterDisplay` carries two generations of fields at once
 
@@ -128,7 +134,7 @@ exactly why taking the offset off that line had to be done carefully.
 
 ## Tests
 
-283 tests — 262 in `TimeConverterCoreTests` and 21 in `TimeConverterUITests` —
+379 tests under `swift test` — 358 in `TimeConverterCoreTests` and 21 in `TimeConverterUITests` —
 and they are the bulk of the repo's coverage. Both schemes run both of this
 package's test targets, so they are exercised **twice per full run** — once on
 the iOS simulator and once natively on macOS:

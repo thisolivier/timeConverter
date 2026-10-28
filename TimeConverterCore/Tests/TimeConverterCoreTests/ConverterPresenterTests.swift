@@ -35,7 +35,10 @@ struct ConverterPresenterTests {
             targetZoneLine: "United Kingdom Time (London)",
             footerSentence: "London is 5 hours ahead of Eastern Time.",
             offsetPhrase: "5 hours ahead",
-            daylightSavingNote: nil
+            daylightSavingNote: nil,
+            favouritableTarget: FavouriteDestination(
+                timeZoneIdentifier: "Europe/London", label: .place(name: "London", isDeviceLocal: false)
+            )
         )))
     }
 
@@ -217,7 +220,10 @@ struct ConverterPresenterTests {
             targetZoneLine: "Western European Time (Lisbon)",
             footerSentence: "Lisbon is 5 hours ahead of New York.",
             offsetPhrase: "5 hours ahead",
-            daylightSavingNote: nil
+            daylightSavingNote: nil,
+            favouritableTarget: FavouriteDestination(
+                timeZoneIdentifier: "Europe/Lisbon", label: .place(name: "Lisbon", isDeviceLocal: false)
+            )
         )))
     }
 

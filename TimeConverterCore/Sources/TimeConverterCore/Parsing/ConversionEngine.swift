@@ -229,19 +229,41 @@ struct ConversionEngine: Sendable {
             onDayOf: request.referenceDate,
             in: request.sourceZone.timeZone
         )
-        let instant = wallClockOutcome.instant
+        return read(
+            wallClockOutcome.instant,
+            from: request.sourceZone,
+            to: request.targetZone,
+            requestedTime: request.time,
+            wallClockDisposition: wallClockOutcome.disposition
+        )
+    }
 
-        let sourceReading = reading(of: instant, in: request.sourceZone)
-        let targetReading = reading(of: instant, in: request.targetZone)
-
-        return ConversionResult(
+    /// Reads an instant that is already known through two zones — the second
+    /// half of `convert`, on its own.
+    ///
+    /// Split out for the world clock (item 30), whose rows are one shifted
+    /// local instant read in every favourite's zone. Going through here rather
+    /// than re-deriving the readings is what keeps the clock's digits, zone
+    /// lines and day markers identical to the converter's, character for
+    /// character. At zero offset the clock passes the real `now` straight in,
+    /// which is also why this exists: re-resolving the current wall clock
+    /// through the DST policy would show the wrong hour during the repeated
+    /// hour of a fall-back night.
+    func read(
+        _ instant: Date,
+        from sourceZone: ResolvedZone,
+        to targetZone: ResolvedZone,
+        requestedTime: ParsedTime,
+        wallClockDisposition: WallClockResolver.Disposition
+    ) -> ConversionResult {
+        ConversionResult(
             instant: instant,
-            source: sourceReading,
-            target: targetReading,
-            dayOffset: dayNumber(of: instant, in: request.targetZone.timeZone)
-                - dayNumber(of: instant, in: request.sourceZone.timeZone),
-            wallClockDisposition: wallClockOutcome.disposition,
-            requestedTime: request.time
+            source: reading(of: instant, in: sourceZone),
+            target: reading(of: instant, in: targetZone),
+            dayOffset: Self.dayNumber(of: instant, in: targetZone.timeZone)
+                - Self.dayNumber(of: instant, in: sourceZone.timeZone),
+            wallClockDisposition: wallClockDisposition,
+            requestedTime: requestedTime
         )
     }
 
@@ -271,7 +293,9 @@ struct ConversionEngine: Sendable {
     /// Days since the Unix epoch for the calendar date the instant falls on in
     /// a given zone. Reducing both zones to a plain day count is what makes the
     /// rollover comparison trivial and month/year-boundary safe.
-    private func dayNumber(of instant: Date, in timeZone: TimeZone) -> Int {
+    /// Internal rather than private since item 30: the world clock's readout
+    /// (`Today` / `Tomorrow`) is the same comparison against the device zone.
+    static func dayNumber(of instant: Date, in timeZone: TimeZone) -> Int {
         let localDay = GregorianCalendars.calendar(in: timeZone)
             .dateComponents([.year, .month, .day], from: instant)
         guard let dayStartInUTC = GregorianCalendars.utc.date(from: DateComponents(
