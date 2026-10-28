@@ -50,10 +50,13 @@ is the one resolver without a direct twin).
   equivalents are free to bundle on Android, unlike iOS).
 - **24d. Play release lane — PARKED 2026-10-28.** Olivier declined the Play
   Console onboarding. Replaced by:
-- **24e. Manual distribution lane** — own release keystore, signed `.apk`
-  attached to a GitHub Release by `scripts/ship-android.sh`, Obtainium on the
-  partner's phone for update notifications. Research, ranking and plan:
-  `docs/android-distribution.md`. Build number shared with the Apple trains.
+- **24e. Manual distribution lane — DONE 2026-10-28.** Own release key
+  (`scripts/setup-android-signing.sh`), signed `.apk` published to GitHub
+  Releases by `scripts/ship-android.sh` (first: build 17, tag
+  `android-0.1.0.17`), Obtainium on the partner's phone for updates, install
+  page `docs/android-install.md`. Verified on the emulator: Obtainium adds the
+  repo, installs, and updates 16 → 17 in place. Details:
+  `TimeConverterAndroid/readme.md` ("Release lane").
 - A Compose UI test (`connectedDebugAndroidTest`) once there is UI logic worth it.
 
 ## Blockers for Olivier — accruing, batch them
@@ -63,14 +66,11 @@ prompt appeared for the headless emulator.
 
 **Group B — the partner's phone.** The Android target is Olivier's
 partner's phone (Olivier is on iPhone), so there is no developer at the device
-and QA stays on the emulator. One ten-minute session, ideally on a call, once
-24e's ship script has published a release: install Obtainium from its GitHub
-releases page in the browser (allow "install unknown apps", accept the Play
-Protect unknown-developer warning), add `https://github.com/thisolivier/timeConverter`
-in Obtainium, install from there. Updates then arrive as notifications. Full
-steps and the 2027 developer-verification caveat: `docs/android-distribution.md`.
-Before that: `gh auth login` on this Mac (token expired) so the ship script can
-publish releases.
+and QA stays on the emulator. Now: **one install session with the partner
+using `docs/android-install.md`** (ten minutes, ideally on a call). Note what
+Play Protect says on their Android version; the emulator showed none. Also:
+back up `~/.config/timeconverter/android-release.{jks,properties}` off this Mac
+before that session. Losing the key strands the installed app.
 
 **Group C — Google Play Console. PARKED 2026-10-28** (Olivier declined the
 identity-verification onboarding). Kept for the record in case a store listing

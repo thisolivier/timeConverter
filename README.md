@@ -41,6 +41,9 @@ scripts/render-glass.sh         # Mac-only: PNGs of the glass panel, no screen
 cd TimeConverterCore && swift test   # the core alone, fastest loop
 scripts/test-android.sh         # Android: JVM tests incl. the shared-fixture contract
 scripts/run-android.sh --input "12pm ET in London" --screenshot shot.png  # headless emulator
+scripts/run-android.sh --release   # same, with the signed R8-shrunk release APK
+scripts/setup-android-signing.sh   # one-off: the Android release key (back it up!)
+scripts/ship-android.sh <N> [--dry-run]   # Android: signed APK → GitHub Release
 scripts/regenerate-fixtures.sh  # rewrite fixtures/conversion-cases.json from the Swift core
 ```
 
@@ -51,8 +54,8 @@ music projects the Mac build broke twice while the iOS lane stayed green.
 
 ## Android
 
-A third shell, `TimeConverterAndroid/` (Kotlin + Jetpack Compose, phones via
-Google Play), built the same way as the other two: a thin UI over a core that
+A third shell, `TimeConverterAndroid/` (Kotlin + Jetpack Compose, phones;
+sideloaded via GitHub Releases + Obtainium, not Google Play), built the same way as the other two: a thin UI over a core that
 holds every rule. There is no shared runtime with the Swift core — instead
 **`fixtures/conversion-cases.json`** is generated from the Swift core and
 asserted by both test suites, so the two parsers are held to one behaviour.
@@ -124,6 +127,17 @@ both in the ship commit, e.g. `iOS build 13 + Mac build 14 shipped (…)`.
 
 To check whether a lane is behind, compare the last ship commit for each
 (`git log --oneline | grep shipped`) against `git log -- TimeConverterCore`.
+
+### Android lane
+
+`scripts/ship-android.sh <N>` builds the signed release APK, checks it is
+signed by the key from `scripts/setup-android-signing.sh`, smoke-tests it on
+the emulator and publishes it as GitHub Release `android-<versionName>` (e.g.
+`android-0.1.0.17`), where Obtainium on the phone picks it up. It shares the
+build number with the Apple lanes: new code takes the next number, and
+re-shipping a number Apple just used for the same code is allowed. Ship commit: `Android build <N> shipped (…)`. Details:
+`TimeConverterAndroid/readme.md`; the partner's install steps:
+`docs/android-install.md`.
 
 ## Layout
 

@@ -56,8 +56,8 @@ tap.
 - **Our side per release**: `scripts/ship-android.sh <build>` runs
   `assembleRelease`, verifies the signature, and `gh release create
   android-<build>` with the APK attached. Shares the build number with the
-  Apple lanes via `project.yml`. Needs `gh` logged in (currently expired on
-  this Mac, see blockers).
+  Apple lanes via `project.yml`. Built 2026-10-28; the tag is actually
+  `android-<versionName>` (e.g. `android-0.1.0.17`), see "Plan for 24e".
 - **Partner's phone, once** (ten minutes, best done together on a call):
   1. Install Obtainium itself: browser → its GitHub releases page → tap the
      APK → allow "install unknown apps" for the browser → Play Protect
@@ -135,14 +135,23 @@ A sideloaded app needs nothing but a key we generate ourselves:
 5. Then backlog item 28, the greenfield-setup skill, written against a
    pipeline that has reached a real phone.
 
+**Status 2026-10-28:** steps 1–3 done (build 17 published,
+`docs/android-install.md` written from an emulator run of exactly these
+steps). Naming changed on contact with Obtainium's source: it takes the
+release *tag* as the version and compares it with the installed
+`versionName`, so `versionName` became `MARKETING_VERSION.build` and the tag
+`android-<versionName>`. Step 4 is next.
+
 ## Blockers for Olivier
 
-- `gh auth login` on this Mac (the saved token no longer works). From this
-  session: `! gh auth login -h github.com -p ssh -w` and follow the device
-  code. Needed before step 2 can publish anything.
-- Nothing else until a build is worth installing.
+- `gh auth login`: resolved, `gh` is logged in.
+- Back up the release key (`~/.config/timeconverter/android-release.jks` and
+  `.properties`) off this Mac.
+- Step 4, the install session with the partner.
 
 ## Not verified
 
 - When in 2027 the UK/EU enforcement lands.
-- The exact Play Protect wording on the partner's Android version.
+- The exact Play Protect wording on the partner's Android version. The
+  emulator (Google APIs image with Play Store, no Google account signed in)
+  showed no Play Protect prompt at all, for Obtainium or for Time Converter.
