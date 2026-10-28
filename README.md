@@ -57,7 +57,7 @@ holds every rule. There is no shared runtime with the Swift core — instead
 **`fixtures/conversion-cases.json`** is generated from the Swift core and
 asserted by both test suites, so the two parsers are held to one behaviour.
 The engine is ported and passes that contract; the parser port is next
-(`docs/android-plan.md`). Toolchain, scripts and the headless-emulator QA loop
+(`docs/android-plan.md`; distribution without Play: `docs/android-distribution.md`). Toolchain, scripts and the headless-emulator QA loop
 are described in `TimeConverterAndroid/readme.md`; `scripts/setup-android.sh`
 reproduces the machine setup.
 

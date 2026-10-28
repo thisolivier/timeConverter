@@ -1,6 +1,7 @@
 # Android plan
 
-Agreed 2026-10-28. Scope: Android **phones via Google Play**. Mono repo
+Agreed 2026-10-28. Scope: Android **phones**, originally via Google Play; the
+Play route was parked the same day (see `docs/android-distribution.md`). Mono repo
 (`TimeConverterAndroid/`). The Android phone is remote from the build machine,
 so day-to-day QA is the headless emulator here plus screenshots; the phone is
 for release candidates.
@@ -47,9 +48,13 @@ is the one resolver without a direct twin).
 - **24c. Presenter + UI parity** — `ConverterDisplay` slots, the debounce,
   chips row, keyboard choreography; the design's fonts (Anton/JetBrains Mono
   equivalents are free to bundle on Android, unlike iOS).
-- **24d. Release lane** — upload keystore, Play App Signing, `scripts/ship-android.sh`
-  producing an `.aab`, internal-testing track upload via the Play Developer
-  API or manual upload. Build number shared with the Apple trains.
+- **24d. Play release lane — PARKED 2026-10-28.** Olivier declined the Play
+  Console onboarding. Replaced by:
+- **24e. Manual distribution lane** — own release keystore, signed `.apk`,
+  wireless `adb` to the phone over the tailnet as the QA route, a
+  `tailscale serve` page (optionally Obtainium) as the update route. Research,
+  ranking and plan: `docs/android-distribution.md`. Build number shared with
+  the Apple trains.
 - A Compose UI test (`connectedDebugAndroidTest`) once there is UI logic worth it.
 
 ## Blockers for Olivier — accruing, batch them
@@ -57,29 +62,26 @@ is the one resolver without a direct twin).
 **Group A — done.** SDK licences were accepted by the setup script; no macOS
 prompt appeared for the headless emulator.
 
-**Group B — the phone (remote).** Nothing to do until a build is worth
-installing. When it is: the debug `.apk` (`TimeConverterAndroid/app/build/outputs/apk/debug/app-debug.apk`)
-can be copied over ssh and sideloaded ("install unknown apps" prompt on the
-phone), or — cleaner — reach the phone through Play internal testing after
-Group C. `adb` over the ssh link is possible (wireless debugging pairing on the
-phone, port forwarded) but is a per-session dance; sideload or Play is less
-friction.
+**Group B — the phone (remote), one live session once 24e's scripts exist.**
+1. Install Tailscale on the Android phone and sign in; confirm it shows in
+   `tailscale status` here.
+2. Developer options → Wireless debugging (phone on Wi-Fi). Read me the
+   pairing code + `ip:port` once, then the connect port. Pairing persists;
+   the connect port changes whenever wireless debugging restarts, so expect
+   to read it out again in later sessions.
+3. In the Tailscale admin console enable MagicDNS and HTTPS certificates
+   (needed for the `tailscale serve` APK page).
+4. First sideload: open the served page in the phone's browser, allow
+   "install unknown apps" for the browser, accept the Play Protect
+   unknown-developer warning. Tell me what the prompts said on your Android
+   version. Optional: install Obtainium and point its HTML source at the page.
 
-**Group C — Google Play Console.** Start early; the clock is on Google's side.
-1. Create a Play Console developer account (one-off $25; identity verification
-   — can take days; a personal account also needs a verified phone and
-   address).
-2. New personal accounts must run a **closed test with at least 12 testers
-   opted in for 14 continuous days** before they may apply for production
-   access. Plan the tester list (friends with Android phones count).
-3. Create the app record: name "Time Converter 3000" (or the Play name you
-   want), default language, free, package `dev.thisolivier.timeconverter`.
-4. Opt in to Play App Signing (default); I generate the upload key locally and
-   you keep the keystore password somewhere durable.
-5. Store listing minimums before any track accepts a build: short + full
-   description, 512px icon, feature graphic 1024×500, ≥2 phone screenshots,
-   privacy policy URL (even "collects nothing"), content rating questionnaire,
-   data safety form, target audience.
-6. Optional but worth it: a Play Developer API service account so
-   `scripts/ship-android.sh` can upload like `altool` does — needs Google
-   Cloud project + service-account JSON + Play Console permission grant.
+**Group C — Google Play Console. PARKED 2026-10-28** (Olivier declined the
+identity-verification onboarding). Kept for the record in case a store listing
+ever becomes a goal: $25 account with ID verification, verified phone and
+address; new personal accounts need a closed test with 12 testers for 14 days
+before production; app record for package `dev.thisolivier.timeconverter`;
+Play App Signing must be enrolled by **uploading our own key** (PEPK) or Play
+builds will not update over sideloaded ones; store-listing minimums
+(descriptions, 512px icon, 1024×500 feature graphic, screenshots, privacy
+policy URL, content rating, data safety).
