@@ -67,9 +67,16 @@ struct PosterResultSection: View {
 
     private func convertedBand(_ display: ConverterDisplay) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(display.targetPlaceLabel)
-                .posterLabel(size: 14)
-                .foregroundStyle(PosterPalette.ink)
+            // The star (item 31) sits beside the header; no star on a
+            // `(local)` target, whose clock is always the Clocks tab's first row.
+            HStack(alignment: .center, spacing: 8) {
+                Text(display.targetPlaceLabel)
+                    .posterLabel(size: 14)
+                    .foregroundStyle(PosterPalette.ink)
+                if let destination = display.favouritableTarget {
+                    FavouriteStarButton(destination: destination)
+                }
+            }
 
             // One `Text`, not two in an `HStack`: concatenation keeps the
             // numerals and the meridiem on a shared baseline *and* scales them

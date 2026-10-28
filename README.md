@@ -408,6 +408,23 @@ or `defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool
 false` before booting) and launch with `-initialInput` alone: item 10's
 autofocus raises the keyboard and the collapse animates on arrival.
 
+### Favourites and the Clocks tab (items 30–31)
+
+Taps cannot be scripted, so DEBUG builds also read these (ignored in Release;
+see `LaunchArguments+Clocks.swift`):
+
+| Argument | Effect |
+|---|---|
+| `-favourites "London,ET,Tokyo"` | **Replaces** the stored favourites with what starring the target of `12pm in <zone>` stores, per zone. `""` clears them. |
+| `-selectedTab clocks` | Opens on the Clocks tab. |
+| `-clockOffsetDays 3` / `m3` | Starts the day stepper there (`m` for minus: a bare `-3` reads as a flag). |
+| `-clockOffsetMinutes 1140` | Starts the slider there (clamped to ±1440, snapped to 15). |
+
+```
+xcrun simctl launch booted dev.thisolivier.timeconverter \
+  -favourites "London,ET,Tokyo" -selectedTab clocks -clockOffsetMinutes 1140
+```
+
 ## Getting into the app on the Mac (menu bar + ⌃⌥T)
 
 The Mac app **is** the menu bar: a small clock glyph, no Dock icon, no window.

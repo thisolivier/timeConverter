@@ -73,6 +73,7 @@ whose strings all arrive pre-rendered from `TimeConverterCore`.
 | File | Purpose |
 |---|---|
 | `PosterComponents.swift` | `PosterRule`, `PosterArrowSeparator` and `PosterBox` — this screen's own furniture. The arrow *shape* it strokes comes from `TimeConverterUI`. |
+| `FavouriteStarButton.swift` | Item 31's star beside the target header (`IN LONDON ☆`/`★`). Shown only when `ConverterDisplay.favouritableTarget` is non-nil (never for a `(local)` target); reads the `FavouritesStore` from the environment, optionally, so previews draw no star. |
 | `PosterResultSection.swift` | Everything below the arrow: the result band, the hint, or a prompt plus chips. Logic-free. Takes a `PosterLayoutMode` and owns the two display-type sizes that go with it. |
 
 Imported from `TimeConverterUI` rather than defined here: `PosterPalette` (the

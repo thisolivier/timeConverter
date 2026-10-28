@@ -2,7 +2,7 @@ import SwiftUI
 import TimeConverterCore
 import TimeConverterUI
 
-/// The whole iOS app, laid out as the poster in `docs/design/Time
+/// The Convert tab (the whole iOS app until item 31), laid out as the poster in `docs/design/Time
 /// Converter.pdf`: title, rule, labelled input box with the parsed source
 /// echoed *inside* it, the rule-and-arrow band, and the result at poster scale
 /// over its footer sentence.
@@ -96,10 +96,8 @@ struct ContentView: View {
         // The warm case: the app was already running, so the intent (or the
         // QA URL) arrives while this view is on screen.
         .onChange(of: launchRequests.pendingRequest) { honourPendingLaunchRequest() }
-        .onOpenURL { url in
-            guard let request = LaunchURLRouter.request(for: url) else { return }
-            launchRequests.post(request)
-        }
+        // `timeconverter://convert` is received by `RootTabView` (item 31),
+        // which posts it to the same mailbox and brings this tab forward.
         // Launch-to-typing is zero taps, and a window returning from the
         // background arrives ready to type — but focus is never taken
         // mid-session. See `InputFocusPolicy`.

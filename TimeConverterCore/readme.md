@@ -134,7 +134,7 @@ exactly why taking the offset off that line had to be done carefully.
 
 ## Tests
 
-379 tests under `swift test` — 358 in `TimeConverterCoreTests` and 21 in `TimeConverterUITests` —
+379 tests — 343 in `TimeConverterCoreTests` and 36 in `TimeConverterUITests` —
 and they are the bulk of the repo's coverage. Both schemes run both of this
 package's test targets, so they are exercised **twice per full run** — once on
 the iOS simulator and once natively on macOS:
