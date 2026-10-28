@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder: the poster palette's rust ring with an ink hour hand.
+     The real icon arrives with the design pass; this one only has to be
+     distinguishable in the launcher. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#B5391F"
+        android:pathData="M54,30a24,24 0 1,0 0.01,0z M54,37a17,17 0 1,1 -0.01,0z" />
+    <path android:strokeColor="#141210" android:strokeWidth="4" android:strokeLineCap="round"
+        android:pathData="M54,54 L54,41 M54,54 L63,59" />
+</vector>

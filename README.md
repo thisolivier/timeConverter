@@ -39,12 +39,27 @@ scripts/run-mac.sh              # build and launch the native Mac menu-bar app
 scripts/qa-menubar.sh           # Mac-only: QA the menu bar and ⌃⌥T (Debug)
 scripts/render-glass.sh         # Mac-only: PNGs of the glass panel, no screen
 cd TimeConverterCore && swift test   # the core alone, fastest loop
+scripts/test-android.sh         # Android: JVM tests incl. the shared-fixture contract
+scripts/run-android.sh --input "12pm ET in London" --screenshot shot.png  # headless emulator
+scripts/regenerate-fixtures.sh  # rewrite fixtures/conversion-cases.json from the Swift core
 ```
 
 The shared core is deliberately tested **twice**, once per platform, which is
 why the two lanes overlap by 298 tests. Run `--platform all` before shipping
 anything that touches parsing, the presenter or startup wiring — in the sibling
 music projects the Mac build broke twice while the iOS lane stayed green.
+
+## Android
+
+A third shell, `TimeConverterAndroid/` (Kotlin + Jetpack Compose, phones via
+Google Play), built the same way as the other two: a thin UI over a core that
+holds every rule. There is no shared runtime with the Swift core — instead
+**`fixtures/conversion-cases.json`** is generated from the Swift core and
+asserted by both test suites, so the two parsers are held to one behaviour.
+The engine is ported and passes that contract; the parser port is next
+(`docs/android-plan.md`). Toolchain, scripts and the headless-emulator QA loop
+are described in `TimeConverterAndroid/readme.md`; `scripts/setup-android.sh`
+reproduces the machine setup.
 
 ## Shipping
 
@@ -137,6 +152,10 @@ To check whether a lane is behind, compare the last ship commit for each
   `TimeConverterControls/readme.md`)
 - `TimeConverterTests/`, `TimeConverterMacTests/` — each shell's own tests, thin
   by design (Swift Testing)
+- `TimeConverterAndroid/` — the **Android** shell and its Kotlin core (see
+  `TimeConverterAndroid/readme.md`)
+- `fixtures/` — the generated cross-platform behaviour fixtures (see
+  `fixtures/readme.md`)
 - `docs/` — backlog (`docs/backlog.md`) and specs
 - `scripts/` — build/run/test helpers
 

@@ -1,0 +1,992 @@
+{
+  "cases" : [
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "America/New_York → Europe/London",
+          "echoLine" : "12:00 pm Eastern Time (New York, Toronto, UTC-5) → 5:00 pm London (UTC+0)",
+          "footerSentence" : "London is 5 hours ahead of Eastern Time.",
+          "offsetPhrase" : "5 hours ahead",
+          "sourceClockDigits" : "12:00",
+          "sourceEchoLine" : "Eastern Time (New York, Toronto) · 12:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "ET (Eastern Time)",
+          "sourceZoneLine" : "New York, Toronto",
+          "targetClockDigits" : "5:00",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "12:00",
+        "sourceZone" : "America/New_York",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "spec-example-winter",
+      "input" : "12pm ET in London",
+      "localZone" : "America/Los_Angeles",
+      "note" : "The spec's own example; New York UTC-5, London UTC+0.",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "America/New_York → Europe/London",
+          "echoLine" : "12:00 pm Eastern Time (New York, Toronto, UTC-4) → 5:00 pm London (UTC+1)",
+          "footerSentence" : "London is 5 hours ahead of Eastern Time.",
+          "offsetPhrase" : "5 hours ahead",
+          "sourceClockDigits" : "12:00",
+          "sourceEchoLine" : "Eastern Time (New York, Toronto) · 12:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "ET (Eastern Time)",
+          "sourceZoneLine" : "New York, Toronto",
+          "targetClockDigits" : "5:00",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "12:00",
+        "sourceZone" : "America/New_York",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "spec-example-summer",
+      "input" : "12pm ET in London",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Same input in July: both sides on daylight saving.",
+      "now" : "2026-07-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "America/New_York → Europe/London",
+          "echoLine" : "2:30 pm Eastern Time (New York, Toronto, UTC-5) → 7:30 pm London (UTC+0)",
+          "footerSentence" : "London is 5 hours ahead of Eastern Time.",
+          "offsetPhrase" : "5 hours ahead",
+          "sourceClockDigits" : "2:30",
+          "sourceEchoLine" : "Eastern Time (New York, Toronto) · 2:30 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "ET (Eastern Time)",
+          "sourceZoneLine" : "New York, Toronto",
+          "targetClockDigits" : "7:30",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "14:30",
+        "sourceZone" : "America/New_York",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "twenty-four-hour",
+      "input" : "14:30 ET in London",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Europe/London → Europe/Lisbon",
+          "echoLine" : "11:15 pm UK Time (London, UTC+0) → 11:15 pm Lisbon (UTC+0)",
+          "footerSentence" : "Lisbon is the same time as UK Time.",
+          "offsetPhrase" : "Same time",
+          "sourceClockDigits" : "11:15",
+          "sourceEchoLine" : "UK Time (London) · 11:15 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "UK (UK Time)",
+          "sourceZoneLine" : "London",
+          "targetClockDigits" : "11:15",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In Lisbon",
+          "targetPlaceName" : "Lisbon",
+          "targetZoneLine" : "Western European Time (Lisbon)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "23:15",
+        "sourceZone" : "Europe/London",
+        "targetZone" : "Europe/Lisbon"
+      },
+      "id" : "country-alias-to-gazetteer-city",
+      "input" : "23:15 UK to Porto",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Porto resolves through the bundled offline gazetteer; rolls to the next day.",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Europe/London → Europe/Lisbon",
+          "echoLine" : "6:34 am UK Time (London, UTC+0) → 6:34 am Lisbon (UTC+0)",
+          "footerSentence" : "Lisbon is the same time as UK Time.",
+          "offsetPhrase" : "Same time",
+          "sourceClockDigits" : "6:34",
+          "sourceEchoLine" : "UK Time (London) · 6:34 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "UK (UK Time)",
+          "sourceZoneLine" : "London",
+          "targetClockDigits" : "6:34",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In Lisbon",
+          "targetPlaceName" : "Lisbon",
+          "targetZoneLine" : "Western European Time (Lisbon)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "06:34",
+        "sourceZone" : "Europe/London",
+        "targetZone" : "Europe/Lisbon"
+      },
+      "id" : "single-digit-hour",
+      "input" : "6:34 UK to Lisbon",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "GMT → Asia/Tokyo",
+          "echoLine" : "12:00 am Greenwich Mean Time (UTC+0) → 9:00 am Tokyo (UTC+9)",
+          "footerSentence" : "Tokyo is 9 hours ahead of Greenwich Mean Time.",
+          "offsetPhrase" : "9 hours ahead",
+          "sourceClockDigits" : "12:00",
+          "sourceEchoLine" : "Greenwich Mean Time · 12:00 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "GMT (Greenwich Mean Time)",
+          "sourceZoneLine" : "",
+          "targetClockDigits" : "9:00",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In Tokyo",
+          "targetPlaceName" : "Tokyo",
+          "targetZoneLine" : "Japan Standard Time (Tokyo)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "00:00",
+        "sourceZone" : "GMT",
+        "targetZone" : "Asia/Tokyo"
+      },
+      "id" : "midnight-gmt-to-tokyo",
+      "input" : "00:00 GMT in Tokyo",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "America/New_York → Asia/Tokyo",
+          "echoLine" : "9:30 am New York (UTC-5) → 11:30 pm Tokyo (UTC+9)",
+          "footerSentence" : "Tokyo is 14 hours ahead of New York.",
+          "offsetPhrase" : "14 hours ahead",
+          "sourceClockDigits" : "9:30",
+          "sourceEchoLine" : "New York · 9:30 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "New York",
+          "sourceZoneLine" : "Eastern Time (New York, Toronto)",
+          "targetClockDigits" : "11:30",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In Tokyo",
+          "targetPlaceName" : "Tokyo",
+          "targetZoneLine" : "Japan Standard Time (Tokyo)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "09:30",
+        "sourceZone" : "America/New_York",
+        "targetZone" : "Asia/Tokyo"
+      },
+      "id" : "spaced-meridiem-multiword-cities",
+      "input" : "9:30 am New York in Tokyo",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Asia/Tokyo → America/New_York",
+          "echoLine" : "11:00 pm Tokyo (UTC+9) → 9:00 am New York (UTC-5)",
+          "footerSentence" : "New York is 14 hours behind Tokyo.",
+          "offsetPhrase" : "14 hours behind",
+          "sourceClockDigits" : "11:00",
+          "sourceEchoLine" : "Tokyo · 11:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Tokyo",
+          "sourceZoneLine" : "Japan Standard Time (Tokyo)",
+          "targetClockDigits" : "9:00",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In New York",
+          "targetPlaceName" : "New York",
+          "targetZoneLine" : "Eastern Time (New York, Toronto)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "23:00",
+        "sourceZone" : "Asia/Tokyo",
+        "targetZone" : "America/New_York"
+      },
+      "id" : "previous-day-rollover",
+      "input" : "11pm Tokyo in New York",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "America/Los_Angeles → Europe/Berlin",
+          "echoLine" : "12:00 pm Pacific Standard Time (Los Angeles, Vancouver, UTC-8) → 9:00 pm Berlin (UTC+1)",
+          "footerSentence" : "Berlin is 9 hours ahead of Pacific Standard Time.",
+          "offsetPhrase" : "9 hours ahead",
+          "sourceClockDigits" : "12:00",
+          "sourceEchoLine" : "Pacific Standard Time (Los Angeles, Vancouver) · 12:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "PST (Pacific Standard Time)",
+          "sourceZoneLine" : "Los Angeles, Vancouver",
+          "targetClockDigits" : "9:00",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In Berlin",
+          "targetPlaceName" : "Berlin",
+          "targetZoneLine" : "Central European Time (Berlin)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "12:00",
+        "sourceZone" : "America/Los_Angeles",
+        "targetZone" : "Europe/Berlin"
+      },
+      "id" : "foundation-abbreviation",
+      "input" : "12:00 PST in Berlin",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Europe/London → America/New_York",
+          "echoLine" : "9:30 pm London (UTC+0) → 4:30 pm New York (UTC-5)",
+          "footerSentence" : "New York is 5 hours behind London.",
+          "offsetPhrase" : "5 hours behind",
+          "sourceClockDigits" : "9:30",
+          "sourceEchoLine" : "London · 9:30 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "London",
+          "sourceZoneLine" : "United Kingdom Time (London)",
+          "targetClockDigits" : "4:30",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In New York",
+          "targetPlaceName" : "New York",
+          "targetZoneLine" : "Eastern Time (New York, Toronto)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "21:30",
+        "sourceZone" : "Europe/London",
+        "targetZone" : "America/New_York"
+      },
+      "id" : "all-lowercase",
+      "input" : "21:30 london in new york",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Europe/Lisbon → Europe/Madrid",
+          "echoLine" : "6:00 pm Lisbon (UTC+0) → 7:00 pm Madrid (UTC+1)",
+          "footerSentence" : "Madrid is 1 hour ahead of Lisbon.",
+          "offsetPhrase" : "1 hour ahead",
+          "sourceClockDigits" : "6:00",
+          "sourceEchoLine" : "Lisbon · 6:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Lisbon",
+          "sourceZoneLine" : "Western European Time (Lisbon)",
+          "targetClockDigits" : "7:00",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In Madrid",
+          "targetPlaceName" : "Madrid",
+          "targetZoneLine" : "Central European Time (Madrid)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "18:00",
+        "sourceZone" : "Europe/Lisbon",
+        "targetZone" : "Europe/Madrid"
+      },
+      "id" : "redundant-agreeing-meridiem",
+      "input" : "18pm Lisbon to Madrid",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Asia/Kolkata → Europe/London",
+          "echoLine" : "10:00 am Kolkata (UTC+5:30) → 4:30 am London (UTC+0)",
+          "footerSentence" : "London is 5.5 hours behind Kolkata.",
+          "offsetPhrase" : "5.5 hours behind",
+          "sourceClockDigits" : "10:00",
+          "sourceEchoLine" : "Kolkata · 10:00 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "Kolkata",
+          "sourceZoneLine" : "India Standard Time (Kolkata, Mumbai)",
+          "targetClockDigits" : "4:30",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "10:00",
+        "sourceZone" : "Asia/Kolkata",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "half-hour-offset",
+      "input" : "10am Kolkata in London",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Kolkata is the tz identifier city; Mumbai is a known gap (backlog).",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Asia/Kathmandu → Europe/London",
+          "echoLine" : "3:00 pm Kathmandu (UTC+5:45) → 9:15 am London (UTC+0)",
+          "footerSentence" : "London is 5.75 hours behind Kathmandu.",
+          "offsetPhrase" : "5.75 hours behind",
+          "sourceClockDigits" : "3:00",
+          "sourceEchoLine" : "Kathmandu · 3:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Kathmandu",
+          "sourceZoneLine" : "Nepal Time (Kathmandu)",
+          "targetClockDigits" : "9:15",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "15:00",
+        "sourceZone" : "Asia/Kathmandu",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "three-quarter-hour-offset",
+      "input" : "3pm Kathmandu in London",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Europe/Paris → Europe/Paris",
+          "echoLine" : "9:00 am Paris (UTC+1) → 9:00 am Paris (UTC+1)",
+          "footerSentence" : "Same time as Paris.",
+          "offsetPhrase" : "Same time",
+          "sourceClockDigits" : "9:00",
+          "sourceEchoLine" : "Paris · 9:00 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "Paris",
+          "sourceZoneLine" : "Central European Time (Paris, Berlin)",
+          "targetClockDigits" : "9:00",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In Paris",
+          "targetPlaceName" : "Paris",
+          "targetZoneLine" : "Central European Time (Paris, Berlin)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "09:00",
+        "sourceZone" : "Europe/Paris",
+        "targetZone" : "Europe/Paris"
+      },
+      "id" : "same-zone-both-sides",
+      "input" : "9am Paris in Paris",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : -1,
+        "display" : {
+          "detailLine" : "Australia/Sydney → America/Los_Angeles",
+          "echoLine" : "12:00 am Sydney (UTC+11) → 5:00 am Los Angeles (UTC-8) -1d",
+          "footerSentence" : "Los Angeles is 19 hours behind Sydney.",
+          "offsetPhrase" : "19 hours behind",
+          "sourceClockDigits" : "12:00",
+          "sourceEchoLine" : "Sydney · 12:00 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "Sydney",
+          "sourceZoneLine" : "Eastern Australia Time (Sydney, Melbourne)",
+          "targetClockDigits" : "5:00",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In Los Angeles",
+          "targetPlaceName" : "Los Angeles",
+          "targetZoneLine" : "Pacific Time (Los Angeles, Vancouver) · previous day"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "00:00",
+        "sourceZone" : "Australia/Sydney",
+        "targetZone" : "America/Los_Angeles"
+      },
+      "id" : "twelve-am-southern-to-western",
+      "input" : "12am Sydney to Los Angeles",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 1,
+        "display" : {
+          "detailLine" : "America/Los_Angeles → Europe/London",
+          "echoLine" : "7:00 pm Los Angeles (local, UTC-8) → 3:00 am London (UTC+0) +1d",
+          "footerSentence" : "London is 8 hours ahead of Los Angeles.",
+          "offsetPhrase" : "8 hours ahead",
+          "sourceClockDigits" : "7:00",
+          "sourceEchoLine" : "Los Angeles (local) · 7:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Los Angeles (local)",
+          "sourceZoneLine" : "Pacific Time (Los Angeles, Vancouver)",
+          "targetClockDigits" : "3:00",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London) · next day"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "19:00",
+        "sourceZone" : "America/Los_Angeles",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "default-source-to-local",
+      "input" : "7pm in London",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "America/New_York → America/Los_Angeles",
+          "echoLine" : "7:00 pm Eastern Time (New York, Toronto, UTC-5) → 4:00 pm Los Angeles (local, UTC-8)",
+          "footerSentence" : "Los Angeles is 3 hours behind Eastern Time.",
+          "offsetPhrase" : "3 hours behind",
+          "sourceClockDigits" : "7:00",
+          "sourceEchoLine" : "Eastern Time (New York, Toronto) · 7:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "East Coast (Eastern Time)",
+          "sourceZoneLine" : "New York, Toronto",
+          "targetClockDigits" : "4:00",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In Los Angeles (local)",
+          "targetPlaceName" : "Los Angeles (local)",
+          "targetZoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "19:00",
+        "sourceZone" : "America/New_York",
+        "targetZone" : "America/Los_Angeles"
+      },
+      "id" : "default-target-to-local",
+      "input" : "7pm East Coast",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "Asia/Tokyo → Europe/London",
+          "echoLine" : "7:00 pm Tokyo (local, UTC+9) → 10:00 am London (UTC+0)",
+          "footerSentence" : "London is 9 hours behind Tokyo.",
+          "offsetPhrase" : "9 hours behind",
+          "sourceClockDigits" : "7:00",
+          "sourceEchoLine" : "Tokyo (local) · 7:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Tokyo (local)",
+          "sourceZoneLine" : "Japan Standard Time (Tokyo)",
+          "targetClockDigits" : "10:00",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "19:00",
+        "sourceZone" : "Asia/Tokyo",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "default-with-tokyo-device",
+      "input" : "7pm in London",
+      "localZone" : "Asia/Tokyo",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "America/Los_Angeles → America/New_York",
+          "echoLine" : "3:42 pm Los Angeles (local, UTC-8) → 6:42 pm Eastern Time (New York, Toronto, UTC-5)",
+          "footerSentence" : "Eastern Time is 3 hours ahead of Los Angeles.",
+          "offsetPhrase" : "3 hours ahead",
+          "sourceClockDigits" : "3:42",
+          "sourceEchoLine" : "Los Angeles (local) · 3:42 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Los Angeles (local)",
+          "sourceZoneLine" : "Pacific Time (Los Angeles, Vancouver)",
+          "targetClockDigits" : "6:42",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In ET (Eastern Time)",
+          "targetPlaceName" : "ET (Eastern Time)",
+          "targetZoneLine" : "New York, Toronto"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "15:42",
+        "sourceZone" : "America/Los_Angeles",
+        "targetZone" : "America/New_York"
+      },
+      "id" : "bare-zone-converts-now",
+      "input" : "ET",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T23:42:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "America/Los_Angeles → America/New_York",
+          "echoLine" : "3:42 pm Los Angeles (local, UTC-7) → 6:42 pm Eastern Time (New York, Toronto, UTC-4)",
+          "footerSentence" : "Eastern Time is 3 hours ahead of Los Angeles.",
+          "offsetPhrase" : "3 hours ahead",
+          "sourceClockDigits" : "3:42",
+          "sourceEchoLine" : "Los Angeles (local) · 3:42 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Los Angeles (local)",
+          "sourceZoneLine" : "Pacific Time (Los Angeles, Vancouver)",
+          "targetClockDigits" : "6:42",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In ET (Eastern Time)",
+          "targetPlaceName" : "ET (Eastern Time)",
+          "targetZoneLine" : "New York, Toronto"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "15:42",
+        "sourceZone" : "America/Los_Angeles",
+        "targetZone" : "America/New_York"
+      },
+      "id" : "bare-zone-follows-dst",
+      "input" : "ET",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-07-15T22:42:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 1,
+        "display" : {
+          "detailLine" : "America/Los_Angeles → Asia/Bangkok",
+          "echoLine" : "3:42 pm Los Angeles (local, UTC-8) → 6:42 am Bangkok (UTC+7) +1d",
+          "footerSentence" : "Bangkok is 15 hours ahead of Los Angeles.",
+          "offsetPhrase" : "15 hours ahead",
+          "sourceClockDigits" : "3:42",
+          "sourceEchoLine" : "Los Angeles (local) · 3:42 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Los Angeles (local)",
+          "sourceZoneLine" : "Pacific Time (Los Angeles, Vancouver)",
+          "targetClockDigits" : "6:42",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In Bangkok",
+          "targetPlaceName" : "Bangkok",
+          "targetZoneLine" : "Indochina Time (Bangkok) · next day"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "15:42",
+        "sourceZone" : "America/Los_Angeles",
+        "targetZone" : "Asia/Bangkok"
+      },
+      "id" : "now-keyword",
+      "input" : "now in Bangkok",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T23:42:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "detailLine" : "America/New_York → Europe/London",
+          "echoLine" : "6:42 pm Eastern Time (New York, Toronto, UTC-5) → 11:42 pm London (UTC+0)",
+          "footerSentence" : "London is 5 hours ahead of Eastern Time.",
+          "offsetPhrase" : "5 hours ahead",
+          "sourceClockDigits" : "6:42",
+          "sourceEchoLine" : "Eastern Time (New York, Toronto) · 6:42 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "ET (Eastern Time)",
+          "sourceZoneLine" : "New York, Toronto",
+          "targetClockDigits" : "11:42",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "18:42",
+        "sourceZone" : "America/New_York",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "now-with-named-source",
+      "input" : "now ET in London",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T23:42:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "daylightSavingNote" : "2:30 am doesn't exist today in New York — clocks went forward",
+          "detailLine" : "America/New_York → Europe/London · 2:30 am doesn't exist today in New York — clocks went forward",
+          "echoLine" : "3:00 am New York (UTC-4) → 7:00 am London (UTC+0)",
+          "footerSentence" : "London is 4 hours ahead of New York.",
+          "offsetPhrase" : "4 hours ahead",
+          "sourceClockDigits" : "3:00",
+          "sourceEchoLine" : "New York · 3:00 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "New York",
+          "sourceZoneLine" : "Eastern Time (New York, Toronto)",
+          "targetClockDigits" : "7:00",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "02:30",
+        "sourceZone" : "America/New_York",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "dst-spring-forward-gap",
+      "input" : "2:30 am New York in London",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-03-08T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
+          "daylightSavingNote" : "1:30 am happens twice today in New York — showing the first",
+          "detailLine" : "America/New_York → Europe/London · 1:30 am happens twice today in New York — showing the first",
+          "echoLine" : "1:30 am New York (UTC-4) → 5:30 am London (UTC+0)",
+          "footerSentence" : "London is 4 hours ahead of New York.",
+          "offsetPhrase" : "4 hours ahead",
+          "sourceClockDigits" : "1:30",
+          "sourceEchoLine" : "New York · 1:30 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "New York",
+          "sourceZoneLine" : "Eastern Time (New York, Toronto)",
+          "targetClockDigits" : "5:30",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In London",
+          "targetPlaceName" : "London",
+          "targetZoneLine" : "United Kingdom Time (London)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "01:30",
+        "sourceZone" : "America/New_York",
+        "targetZone" : "Europe/London"
+      },
+      "id" : "dst-fall-back-overlap",
+      "input" : "1:30 am New York in London",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-11-01T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "prompt",
+        "message" : "Couldn't find a time — start with e.g. 14:30 or 2:30 pm",
+        "promptId" : "P1"
+      },
+      "id" : "p1-digits-only",
+      "input" : "12",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "prompt",
+        "message" : "Couldn't find a time — start with e.g. 14:30 or 2:30 pm",
+        "promptId" : "P1"
+      },
+      "id" : "p1-contradicting-meridiem",
+      "input" : "13:00 am ET in London",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "prompt",
+        "message" : "Couldn't find a time — start with e.g. 14:30 or 2:30 pm",
+        "promptId" : "P1"
+      },
+      "id" : "p1-two-places-no-time",
+      "input" : "london to paris",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "prompt",
+        "message" : "Convert 7:00 pm where? Add a timezone, city, or country",
+        "promptId" : "P2"
+      },
+      "id" : "p2-time-only",
+      "input" : "7pm",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "prompt",
+        "message" : "Convert 7:00 pm where? Add a timezone, city, or country",
+        "promptId" : "P2"
+      },
+      "id" : "p2-dangling-conjunction",
+      "input" : "7pm in",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "prompt",
+        "message" : "Convert now where? Add a timezone, city, or country",
+        "promptId" : "P2"
+      },
+      "id" : "p2-bare-now",
+      "input" : "now",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+          {
+            "label" : "Chicago (UTC-6)",
+            "replacementEnd" : 7,
+            "replacementStart" : 4,
+            "replacementText" : "Chicago"
+          },
+          {
+            "label" : "Shanghai (UTC+8)",
+            "replacementEnd" : 7,
+            "replacementStart" : 4,
+            "replacementText" : "Shanghai"
+          }
+        ],
+        "kind" : "prompt",
+        "message" : "'cst' could mean more than one place — pick one: Chicago (UTC-6), Shanghai (UTC+8)",
+        "promptId" : "P4"
+      },
+      "id" : "p4-ambiguous-abbreviation",
+      "input" : "9am CST to IST",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : -1,
+        "display" : {
+          "detailLine" : "Europe/Lisbon → America/Los_Angeles",
+          "echoLine" : "6:34 am Lisbon (UTC+0) → 10:34 pm Pacific Standard Time (Los Angeles, Vancouver, UTC-8) -1d",
+          "footerSentence" : "Pacific Standard Time is 8 hours behind Lisbon.",
+          "offsetPhrase" : "8 hours behind",
+          "sourceClockDigits" : "6:34",
+          "sourceEchoLine" : "Lisbon · 6:34 AM",
+          "sourceMeridiem" : "AM",
+          "sourcePlaceName" : "Lisbon",
+          "sourceZoneLine" : "Western European Time (Lisbon)",
+          "targetClockDigits" : "10:34",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In PST (Pacific Standard Time)",
+          "targetPlaceName" : "PST (Pacific Standard Time)",
+          "targetZoneLine" : "Los Angeles, Vancouver · previous day"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "06:34",
+        "sourceZone" : "Europe/Lisbon",
+        "targetZone" : "America/Los_Angeles"
+      },
+      "id" : "p4-two-candidate-country",
+      "input" : "06:34 Portugal in PST",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+          {
+            "label" : "London?",
+            "replacementEnd" : 10,
+            "replacementStart" : 4,
+            "replacementText" : "London"
+          }
+        ],
+        "kind" : "prompt",
+        "message" : "Don't recognize 'lodnon' — try a timezone (ET, PST), a major city, or a country",
+        "promptId" : "P5"
+      },
+      "id" : "p5-typo-with-suggestions",
+      "input" : "9am Lodnon to Paris",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "prompt",
+        "message" : "Don't recognize 'hello' — try a timezone (ET, PST), a major city, or a country",
+        "promptId" : "P5"
+      },
+      "id" : "p5-bare-unknown-word",
+      "input" : "hello",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "prompt",
+        "message" : "Don't recognize 'now' — try a timezone (ET, PST), a major city, or a country",
+        "promptId" : "P5"
+      },
+      "id" : "p5-now-as-destination",
+      "input" : "9am in now",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "hint"
+      },
+      "id" : "hint-empty",
+      "input" : "",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "kind" : "hint"
+      },
+      "id" : "hint-whitespace",
+      "input" : "   ",
+      "localZone" : "America/Los_Angeles",
+      "now" : "2026-01-15T12:00:00Z"
+    }
+  ],
+  "generatedBy" : "TimeConverterCore SharedFixtureTests (Swift)",
+  "schemaVersion" : 1
+}

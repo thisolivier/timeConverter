@@ -25,7 +25,7 @@ TimeConverterCore/
     Launch/        what a launcher asks the app to do, and the DEBUG prefill
     Resources/     fallback-cities.json, reached through Bundle.module
   Sources/TimeConverterUI/        the shared design layer — has its own readme
-  Tests/TimeConverterCoreTests/   every unit test in the repo bar the shells'
+  Tests/TimeConverterCoreTests/   every unit test in the repo bar the shells'; SharedFixtures/ generates and verifies fixtures/conversion-cases.json, the contract the Android core is held to
   Tests/TimeConverterUITests/     the design layer's geometry and proportions
 ```
 
