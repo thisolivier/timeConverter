@@ -4,30 +4,30 @@ import Foundation
 
 /// The Clocks tab's endless dial, as rules (item 31, reworked 2026-10-29).
 struct ClockOffsetTests {
-    @Test func aFullWidthSwipeIsTwelveHoursAndTheNextSwipeAddsToIt() {
+    @Test func aFullWidthPullLeftIsTwelveHoursForwardAndTheNextAddsToIt() {
         var offset = ClockOffset()
-        offset.drag(translationWidth: 390, trackWidth: 390)
+        offset.drag(translationWidth: -390, trackWidth: 390)
         #expect(offset.minutes == 720)
         offset.settleDrag()
         #expect(offset.settledMinutes == 720 && offset.draggedMinutes == 0)
 
-        offset.drag(translationWidth: 390, trackWidth: 390)
+        offset.drag(translationWidth: -390, trackWidth: 390)
         offset.settleDrag()
         #expect(offset.minutes == 1440)
         #expect(offset.interval == 1440 * 60)
 
-        // Leftwards is backwards; nothing stops it going past zero.
-        offset.drag(translationWidth: -3 * 390, trackWidth: 390)
+        // Pulling right is backwards; nothing stops it going past zero.
+        offset.drag(translationWidth: 3 * 390, trackWidth: 390)
         offset.settleDrag()
         #expect(offset.minutes == -720)
     }
 
     @Test func theValueSnapsToFifteenMinutesButTheStripDoesNot() {
         var offset = ClockOffset()
-        offset.drag(translationWidth: 10, trackWidth: 720)   // 10 minutes
+        offset.drag(translationWidth: -10, trackWidth: 720)   // 10 minutes
         #expect(offset.minutes == 15)
         #expect(offset.continuousMinutes == 10)
-        offset.drag(translationWidth: 7, trackWidth: 720)    // 7 minutes
+        offset.drag(translationWidth: -7, trackWidth: 720)    // 7 minutes
         #expect(offset.minutes == 0)
         offset.settleDrag()
         #expect(offset.settledMinutes == 0)

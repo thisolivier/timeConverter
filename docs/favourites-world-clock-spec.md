@@ -65,8 +65,9 @@ open; each is marked **(decision)** so they are easy to reverse.
   **Mechanic (Olivier, 2026-10-29)**: an **endless dial**, not a slider — "it
   can be turned and turned again. One swipe is 12 hours in one direction, a
   second pushes it another 12 hours — this eliminates the +/- UI." A
-  full-width swipe across the control is 12 hours, rightwards forwards; each
-  swipe adds to the last, with no ends. The value snaps to 15-minute steps. A
+  full-width swipe across the control is 12 hours, pulling **left** forwards
+  (the strip is a timeline with later times to the right and moves with the
+  finger; Olivier, 2026-10-29); each swipe adds to the last, with no ends. The value snaps to 15-minute steps. A
   **tap** on the dial (not a drag) resets to now. The MVP draws it as a strip
   of 15-minute ticks sliding under a fixed pointer; the visuals are a design
   question for later. (Build 20 shipped a −24 h…+24 h slider plus a day

@@ -33,11 +33,13 @@ struct ClockOffset: Equatable {
         settledMinutes = Self.snapped(Double(launchDays) * 1440 + Double(launchMinutes))
     }
 
-    /// A drag in progress: rightwards is forwards in time, a whole track width
-    /// is twelve hours, however many times over.
+    /// A drag in progress: pulling **left** is forwards in time (the strip is
+    /// a timeline, later to the right, and you pull the future towards the
+    /// pointer — Olivier, 2026-10-29); a whole track width is twelve hours,
+    /// however many times over.
     mutating func drag(translationWidth: Double, trackWidth: Double) {
         guard trackWidth > 0 else { return }
-        draggedMinutes = translationWidth / trackWidth * Self.minutesPerTrackWidth
+        draggedMinutes = -translationWidth / trackWidth * Self.minutesPerTrackWidth
     }
 
     /// The finger lifted: bank the drag, snapped, so the next swipe adds to it.
