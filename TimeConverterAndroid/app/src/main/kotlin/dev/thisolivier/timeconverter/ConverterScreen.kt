@@ -59,13 +59,20 @@ import kotlin.math.abs
  * mid-session (the iOS `InputFocusPolicy`).
  */
 @Composable
-fun ConverterScreen(initialInput: String, arrivalCount: Int) {
-    val model = remember { ConverterScreenModel(initialInput) }
+fun ConverterScreen(
+    model: ConverterScreenModel,
+    arrivalCount: Int,
+    favouritesModel: FavouritesModel,
+    modifier: Modifier = Modifier,
+) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
+    // Only a new arrival focuses: re-entering composition from the Clocks tab does not.
     LaunchedEffect(arrivalCount) {
+        if (arrivalCount == model.handledArrivalCount) return@LaunchedEffect
+        model.handledArrivalCount = arrivalCount
         focusRequester.requestFocus()
         keyboardController?.show()
     }
@@ -90,7 +97,7 @@ fun ConverterScreen(initialInput: String, arrivalCount: Int) {
     val colors = systemPosterColors()
     CompositionLocalProvider(LocalPosterColors provides colors) {
         Box(
-            Modifier
+            modifier
                 .fillMaxSize()
                 .background(colors.paper)
                 .nestedScroll(dismissOnDrag)
@@ -135,6 +142,8 @@ fun ConverterScreen(initialInput: String, arrivalCount: Int) {
                     displayState = model.displayState,
                     layoutMode = layoutMode,
                     onChipTap = model::apply,
+                    isFavourite = favouritesModel::isFavourite,
+                    onToggleFavourite = favouritesModel::toggle,
                     modifier = Modifier.padding(top = if (layoutMode.showsTitleBlock) 22.dp else 16.dp),
                 )
             }

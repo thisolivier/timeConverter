@@ -2,12 +2,14 @@ package dev.thisolivier.timeconverter
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.SpanStyle
@@ -21,6 +23,7 @@ import dev.thisolivier.timeconverter.core.presentation.ConverterDisplayState
 import dev.thisolivier.timeconverter.core.presentation.ConverterProblem
 import dev.thisolivier.timeconverter.core.presentation.PosterLayoutMode
 import dev.thisolivier.timeconverter.core.presentation.ReplacementChip
+import dev.thisolivier.timeconverter.core.worldclock.FavouriteDestination
 
 /**
  * Everything below the arrow. A `when` over [ConverterDisplayState] and
@@ -32,6 +35,8 @@ fun PosterResultSection(
     displayState: ConverterDisplayState,
     layoutMode: PosterLayoutMode,
     onChipTap: (ReplacementChip) -> Unit,
+    isFavourite: (FavouriteDestination) -> Boolean,
+    onToggleFavourite: (FavouriteDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (displayState) {
@@ -41,7 +46,8 @@ fun PosterResultSection(
             color = LocalPosterColors.current.quietInk,
             modifier = modifier,
         )
-        is ConverterDisplayState.Converted -> ConvertedBand(displayState.display, layoutMode, modifier)
+        is ConverterDisplayState.Converted ->
+            ConvertedBand(displayState.display, layoutMode, isFavourite, onToggleFavourite, modifier)
         is ConverterDisplayState.Problem -> ProblemBand(displayState.problem, onChipTap, modifier)
     }
 }
@@ -56,7 +62,13 @@ private const val COMPACT_CLOCK_SIZE = 92
 private const val MERIDIEM_TO_CLOCK_RATIO = 40.0 / 140.0
 
 @Composable
-private fun ConvertedBand(display: ConverterDisplay, layoutMode: PosterLayoutMode, modifier: Modifier) {
+private fun ConvertedBand(
+    display: ConverterDisplay,
+    layoutMode: PosterLayoutMode,
+    isFavourite: (FavouriteDestination) -> Boolean,
+    onToggleFavourite: (FavouriteDestination) -> Unit,
+    modifier: Modifier,
+) {
     val colors = LocalPosterColors.current
     val clockSize = if (layoutMode.usesCompactResultType) COMPACT_CLOCK_SIZE else FULL_CLOCK_SIZE
     Column(modifier.fillMaxWidth()) {
@@ -69,13 +81,19 @@ private fun ConvertedBand(display: ConverterDisplay, layoutMode: PosterLayoutMod
                 append(display.targetMeridiem)
             }
         }
-        BasicText(
-            clockText,
-            style = PosterTypography.display(clockSize.sp).copy(color = colors.ink),
-            maxLines = 1,
-            autoSize = TextAutoSize.StepBased(minFontSize = (clockSize * 0.3).sp, maxFontSize = clockSize.sp, stepSize = 2.sp),
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-        )
+        // The star sits at the far right of the time row (item 31), never on the `IN …` line.
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            BasicText(
+                clockText,
+                style = PosterTypography.display(clockSize.sp).copy(color = colors.ink),
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = (clockSize * 0.3).sp, maxFontSize = clockSize.sp, stepSize = 2.sp),
+                modifier = Modifier.weight(1f),
+            )
+            display.favouritableTarget?.let { destination ->
+                FavouriteStarButton(isFavourite(destination), onToggle = { onToggleFavourite(destination) })
+            }
+        }
 
         // Hidden when empty (GMT/UTC) so a blank line doesn't leave the rule floating.
         if (display.targetZoneLine.isNotEmpty()) {

@@ -20,20 +20,38 @@ import androidx.compose.runtime.mutableIntStateOf
  * It also ticks for a "Convert a time" launch (tile, shortcut) that reaches a
  * live activity through `onNewIntent`, and when the one-time add-tile dialog
  * closes — each of those wants the field focused and the keyboard up.
+ * `launchRequestCount` ticks only for the tile/shortcut launch, which also
+ * brings the Convert tab forward (`RootScreen`).
+ *
+ * DEBUG builds also read the QA extras in `DebugLaunchOptions` (`favourites`,
+ * `selectedTab`, `clockOffsetMinutes`); the favourites seed is applied here,
+ * once per fresh launch.
  */
 class MainActivity : ComponentActivity() {
     private val arrivalCount = mutableIntStateOf(0)
+    /** Ticks for each "Convert a time" launch reaching a live activity: Convert comes forward. */
+    private val launchRequestCount = mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val initialInput = intent.getStringExtra("initialInput").orEmpty()
+        val debugLaunchOptions = DebugLaunchOptions.read(this, intent)
+        val favouritesModel = FavouritesModel.forContext(this)
+        if (savedInstanceState == null) debugLaunchOptions.seededFavourites?.let(favouritesModel::replaceAll)
         setContent {
-            ConverterScreen(initialInput = initialInput, arrivalCount = arrivalCount.intValue)
+            RootScreen(
+                initialInput = initialInput,
+                debugLaunchOptions = debugLaunchOptions,
+                favouritesModel = favouritesModel,
+                arrivalCount = arrivalCount.intValue,
+                launchRequestCount = launchRequestCount.intValue,
+            )
         }
         ConvertTimeLaunch.publishLauncherShortcut(this)
+        val isScriptedLaunch = initialInput.isNotEmpty() || debugLaunchOptions.isScripted
         window.decorView.post {
-            QuickSettingsTileOnboarding.offerOnce(this, isScriptedLaunch = initialInput.isNotEmpty()) {
+            QuickSettingsTileOnboarding.offerOnce(this, isScriptedLaunch = isScriptedLaunch) {
                 arrivalCount.intValue += 1
             }
         }
@@ -47,6 +65,9 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (ConvertTimeLaunch.asksForFocus(intent)) arrivalCount.intValue += 1
+        if (ConvertTimeLaunch.asksForFocus(intent)) {
+            launchRequestCount.intValue += 1
+            arrivalCount.intValue += 1
+        }
     }
 }
