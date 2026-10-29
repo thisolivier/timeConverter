@@ -45,6 +45,13 @@ class ConverterScreenModel(initialInput: String) {
 
     val input: String get() = fieldValue.text
 
+    /**
+     * The last arrival that took focus (or that arrived while Clocks was up).
+     * Lives here, not in the screen, so switching back to Convert — which
+     * re-composes the screen — does not count as an arrival and raise the keyboard.
+     */
+    var handledArrivalCount = -1
+
     init {
         // Launch (and the debug prefill) bypasses the debounce, so a prefilled
         // screenshot shows its prompt and chips rather than an empty hint.

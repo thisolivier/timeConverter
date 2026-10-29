@@ -16,6 +16,12 @@ runs the whole suite on the JVM in about a second. The app module renders
 - **Resolution order is data.** `ZoneResolverChain.standard` is the list
   alias → abbreviation → tz-db city → country → gazetteer; the first resolver
   with a candidate answers, one candidate resolves, several prompt (P4).
+- **The world clock is the converter, re-run.** Each row is
+  `ConversionEngine.read` from local at the shifted wall-clock time to the
+  favourite, with `ConverterPresenter.zoneLine` and a day marker measured
+  against the real local today. The offset shifts the local wall clock and
+  resolves through `WallClockResolver`; at zero `now` is read straight through.
+  `SharedFixtureWorldClockTests` holds it to `fixtures/world-clock-cases.json`.
 - **Shared resources, one copy.** `build.gradle.kts` puts the Swift core's
   `zone-names.json` and `fallback-cities.json` on the classpath straight from
   `TimeConverterCore/Sources/TimeConverterCore/Resources/`.
@@ -58,7 +64,8 @@ runs the whole suite on the JVM in about a second. The app module renders
 | `parsing/Prompt.kt`, `RawTextRange.kt`, `ParsingModels.kt` | P1/P2/P4/P5 with the spec copy, sides and raw ranges; shared models. |
 | `engine/` | `WallClockResolver` (DST policy), `ConversionEngine`, `Formatting`, `ZoneNames` (iOS-origin zone names), `ResolvedZone`/`ZoneLabel`. |
 | `presentation/` | `ConverterPresenter`, `ConverterDisplayDriver` (600 ms debounce), display state, chips, `PosterLayoutMode`. |
-| `fixtures/` | The shared fixture schema and loader. |
+| `worldclock/` | Favourites and the world clock (item 32, port of Swift `WorldClock/`): `FavouriteDestination` (Swift's id rule, `resolvedZone`, `resolvingTypedZone`), `FavouritesStore` over an injected `KeyValueBacking` (Swift's Codable JSON under `favouriteDestinations`), `WorldClock.readings` + `ShiftedLocalClock`, `WorldClockDisplay`/`WorldClockRow`, `WorldClockFormatting`. |
+| `fixtures/` | The shared fixture schemas (`ConversionCase`, `WorldClockCase`) and loader. |
 
 Tests mirror the Swift suites' shape (`ZoneResolverChainTests`,
 `InputTokenizerTests`, `InputParserTests`, `ZoneSuggestionEngineTests`, …) on

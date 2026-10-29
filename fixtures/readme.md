@@ -36,7 +36,9 @@ DST policy (see `TimeConverterCore/Sources/TimeConverterCore/WorldClock/readme.m
 at zero the real instant is read directly. `SharedWorldClockFixtureTests`
 verifies the file both ways: the catalog renders to it exactly, and each
 stored case replayed from its own `favourites` and `offsetSeconds` produces its
-`expected`. The Android twin (`SharedFixtureWorldClockTests`) comes with item 32.
+`expected`. On Android, `SharedFixtureWorldClockTests` replays every case the
+same way through the Kotlin `WorldClock` and compares it exactly (item 32); its
+schema twin is `core/.../fixtures/WorldClockCase.kt`.
 
 ## The loop
 

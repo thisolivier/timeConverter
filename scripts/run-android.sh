@@ -7,6 +7,8 @@
 #
 #   scripts/run-android.sh                        # boot if needed, build, install, launch
 #   scripts/run-android.sh --input "12pm ET in London"   # launch with the field prefilled
+#   scripts/run-android.sh --favourites "London,PST,Tokyo" --tab clocks --offset-minutes 1140
+#                                                 # DEBUG only: replace favourites, open Clocks, shift the dial
 #   scripts/run-android.sh --release              # the signed, R8-shrunk release APK instead of debug
 #   scripts/run-android.sh --screenshot out.png   # ...then capture the screen to a PNG
 #   scripts/run-android.sh --window               # emulator with a window
@@ -18,6 +20,9 @@ set -euo pipefail
 source "$(dirname "$0")/lib/android-env.sh"
 
 INITIAL_INPUT=""
+FAVOURITES=""
+SELECTED_TAB=""
+CLOCK_OFFSET_MINUTES=""
 INSTALL_TASK=":app:installDebug"
 SCREENSHOT=""
 WINDOW_FLAGS=(-no-window)
@@ -28,7 +33,10 @@ while [[ $# -gt 0 ]]; do
     --window) WINDOW_FLAGS=(); shift ;;
     --release) INSTALL_TASK=":app:installRelease"; shift ;;
     --stop) adb emu kill >/dev/null 2>&1 || true; echo "emulator stopped"; exit 0 ;;
-    --help|-h) sed -n '2,15p' "$0"; exit 0 ;;
+    --favourites) FAVOURITES="$2"; shift 2 ;;
+    --tab) SELECTED_TAB="$2"; shift 2 ;;
+    --offset-minutes) CLOCK_OFFSET_MINUTES="$2"; shift 2 ;;
+    --help|-h) sed -n '2,17p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -73,11 +81,15 @@ fi
 
 echo "launching"
 adb shell am force-stop "$ANDROID_APP_ID" >/dev/null
-if [[ -n "$INITIAL_INPUT" ]]; then
-  adb shell am start -n "$ANDROID_APP_ID/.MainActivity" --es initialInput "'$INITIAL_INPUT'" >/dev/null
-else
-  adb shell am start -n "$ANDROID_APP_ID/.MainActivity" >/dev/null
-fi
+# String extras, each single-quoted because `adb shell` re-parses the line.
+# favourites / selectedTab / clockOffsetMinutes are read by DEBUG builds only
+# (DebugLaunchOptions.kt); a release build ignores them.
+LAUNCH_EXTRAS=()
+[[ -n "$INITIAL_INPUT" ]] && LAUNCH_EXTRAS+=(--es initialInput "'$INITIAL_INPUT'")
+[[ -n "$FAVOURITES" ]] && LAUNCH_EXTRAS+=(--es favourites "'$FAVOURITES'")
+[[ -n "$SELECTED_TAB" ]] && LAUNCH_EXTRAS+=(--es selectedTab "'$SELECTED_TAB'")
+[[ -n "$CLOCK_OFFSET_MINUTES" ]] && LAUNCH_EXTRAS+=(--es clockOffsetMinutes "'$CLOCK_OFFSET_MINUTES'")
+adb shell am start -n "$ANDROID_APP_ID/.MainActivity" ${LAUNCH_EXTRAS[@]+"${LAUNCH_EXTRAS[@]}"} >/dev/null
 
 if [[ -n "$SCREENSHOT" ]]; then
   sleep 2

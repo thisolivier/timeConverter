@@ -10,7 +10,7 @@ rule. Phones are the scope, sideloaded from GitHub Releases through Obtainium
 ```
 TimeConverterAndroid/
   core/   plain Kotlin/JVM library — parser, engine, presenter. No Android imports (see core/readme.md).
-  app/    the Compose shell: one activity, one screen. Strings in, layout out.
+  app/    the Compose shell: one activity, two tabs (Convert, Clocks). Strings in, layout out.
   gradle/libs.versions.toml   every tool and library version, pinned.
 ```
 
@@ -56,6 +56,7 @@ release tag against the installed versionName (see "Release lane").
 scripts/setup-android.sh              # one-off: SDK packages, licences, the AVD (idempotent)
 scripts/test-android.sh               # JVM tests, seconds — the fixture contract lives here
 scripts/run-android.sh --input "12pm ET in London" --screenshot shot.png
+scripts/run-android.sh --favourites "London,PST,Tokyo" --tab clocks --offset-minutes 1140   # DEBUG QA extras
 scripts/run-android.sh --release      # the signed, R8-shrunk release APK instead of debug
 scripts/run-android.sh --stop
 scripts/ship-android.sh 18 --dry-run  # everything but the publish
@@ -107,6 +108,34 @@ the resource is missing, which would fail silently, so `ship-android.sh`
 asserts the sub-line text on screen (via `uiautomator dump`), not just a
 screenshot. Debug and release are signed differently and can't install over
 each other; `run-android.sh` uninstalls and retries when switching.
+
+## Favourites and the Clocks tab (backlog 32)
+
+The design-free MVP of `docs/favourites-world-clock-spec.md`, mirroring iOS.
+
+- `RootScreen`: a stock `NavigationBar` (Convert / Clocks, accent selection).
+  It owns the converter model and the dial offset, so switching tabs keeps the
+  typed text and the dial. A tile/shortcut launch (`launchRequestCount`)
+  brings Convert forward and focuses; returning to Convert from Clocks, or an
+  arrival from the background while Clocks is up, never raises the keyboard
+  (`ConverterScreenModel.handledArrivalCount`).
+- `FavouriteStarButton`: far right of the result's time row; hidden for a
+  `(local)` target (`ConverterDisplay.favouritableTarget` is null).
+- `ClocksScreen` + `WorldClockRowView`: local row first, then favourites in
+  stored order, each with a remove button (no swipe-to-delete in the MVP);
+  empty-state line; re-reads the clock at each minute boundary.
+- `ClockOffset` + `ClockOffsetDial`: the endless dial. Canvas tick strip
+  (15 min, taller hourly, tallest every 6 h, accent pointer); a full-width
+  drag is 12 h measured from touch-down (slop included, as SwiftUI does),
+  pulling LEFT forwards (a timeline with later times to the right, moving
+  with the finger), swipes accumulate, 15-min snapping, tap resets. The
+  strip excludes the system back gesture so a swipe can start at the edge.
+- `FavouritesModel`: the core `FavouritesStore` on `SharedPreferences`
+  (`favourites` file, key `favouriteDestinations`), mirrored into Compose state.
+- `DebugLaunchOptions`: DEBUG-only string extras `favourites` (replaces the
+  stored list, resolved through the real parser), `selectedTab` (`clocks`),
+  `clockOffsetMinutes` (signed; `m960` also works), from `run-android.sh
+  --favourites / --tab / --offset-minutes`.
 
 ## Quick Settings tile (backlog 29)
 
@@ -171,7 +200,8 @@ without `--input`.
   the engine.
 - `core/.../engine/Formatting.kt`, `ZoneNames.kt` — the pinned, locale-free
   output shapes and the item-21 zone sub-line.
-- `core/.../fixtures/` — the fixture schema and loader.
+- `core/.../worldclock/` — favourites and the world clock (see `core/readme.md`).
+- `core/.../fixtures/` — the fixture schemas and loader.
 - `app/.../ConverterScreen.kt` — the poster (title block, input box, arrow
   band, result) and item 19's choreography: `WindowInsets.ime` drives
   `PosterLayoutMode`; tap-away and any drag dismiss the keyboard.
@@ -183,6 +213,10 @@ without `--input`.
 - `app/.../PosterPalette.kt`, `PosterTypography.kt` — the Swift
   `PosterPalette` light and dark values; system condensed-black display face
   and monospace until real fonts are bundled.
+- `app/.../RootScreen.kt`, `ClocksScreen.kt`, `WorldClockRowView.kt`,
+  `ClockOffset.kt`, `ClockOffsetDial.kt`, `FavouriteStarButton.kt`,
+  `FavouritesModel.kt`, `DebugLaunchOptions.kt` — tabs, Clocks, star,
+  persistence and QA extras (section above).
 - `app/.../MainActivity.kt` — the activity, the `initialInput` extra, and the
   arrival tick (`onStart`, plus `onNewIntent` with `focusInput`) that
   autofocuses on launch, return from background and tile/shortcut launches.

@@ -2,6 +2,7 @@ package dev.thisolivier.timeconverter.core.presentation
 
 import dev.thisolivier.timeconverter.core.parsing.RawTextEditing
 import dev.thisolivier.timeconverter.core.parsing.RawTextRange
+import dev.thisolivier.timeconverter.core.worldclock.FavouriteDestination
 
 /**
  * The three things the UI can be showing. Port of Swift `ConverterDisplayState`.
@@ -49,6 +50,8 @@ data class ConverterDisplay(
     val offsetPhrase: String,
     /** Two days a year; null otherwise. */
     val daylightSavingNote: String?,
+    /** What the star on the time row stores (items 31/32); null for a `(local)` target, which has no star. */
+    val favouritableTarget: FavouriteDestination? = null,
 )
 
 /** A prompt, ready to render: the spec's message and zero or more tap-to-replace chips. */
