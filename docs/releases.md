@@ -21,3 +21,4 @@ TestFlight; Android goes through `scripts/ship-android.sh` to GitHub Releases
 | 2026-10-28 | ios | 20 | 0.1.0 | a9b53b4 | TestFlight iOS, delivery 586473d0-0278-47dd-9ab1-c69d9187a9ed |
 | 2026-10-29 | ios | 21 | 0.1.0 | 96fb77c | TestFlight iOS, delivery 2d45ce88-c010-45d8-845c-3d0527ecba84 |
 | 2026-10-29 | ios | 22 | 0.1.0 | 8238cae | TestFlight iOS, delivery d8ce6ab2-36e3-4635-be93-f3f98eb643a2 |
+| 2026-10-29 | ios | 23 | 0.1.0 | 3a8a064 | TestFlight iOS, delivery 51c74543-deef-4ec6-9597-33f334b2cd3c |
