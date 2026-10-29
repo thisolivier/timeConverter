@@ -12,7 +12,7 @@ the rest of the package; `now` and `localZone` are always parameters.
 - **The clock is the converter, re-run.** Each row is a conversion from the
   local zone at the shifted time to the favourite, through
   `ConversionEngine.read(_:from:to:…)` and the presenter's own
-  `targetZoneLine(for:)`. Digits, zone lines, day markers and offset phrases
+  `zoneLine(zoneDetail:dayOffset:)`. Digits, zone lines and offset phrases
   therefore match the result band character for character, and the shared
   fixtures pin them for Android.
 - **The offset shifts the local wall clock, not the instant.** `+1 d` is the
@@ -21,9 +21,10 @@ the rest of the package; `now` and `localZone` are always parameters.
   moves forward and a repeat takes the earlier. At zero the real `now` is read
   straight through (no round trip that could pick the wrong half of a repeated
   hour).
-- **Day markers are relative to the local row**, which is the converter's
-  `dayOffset` with local as the source. The readout's `Today` / `Tomorrow` is
-  relative to the real today.
+- **Day markers are relative to the real local today**, on every row, the
+  local one included — the same reference as the readout's `Today` /
+  `Tomorrow`. (Build 20 measured them against the shifted local row, which
+  read backwards under the dial; changed 2026-10-29.)
 - **Strings are hand-formatted** (`Fri 31 Oct, 9:15 AM`, `−45 min`), never a
   `DateFormatter`, for the same locale-independence as `Parsing/Formatting.swift`.
 - **The store takes its `UserDefaults`.** The app injects `.standard`; tests use

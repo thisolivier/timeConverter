@@ -10,8 +10,10 @@ open; each is marked **(decision)** so they are easy to reverse.
 
 ## Favouriting
 
-- **Where**: a star on the converter's result band, next to the target header
-  (`IN LONDON ☆`). Only the *target* can be starred; "destinations" means
+- **Where**: a star on the converter's result band, at the far right of the
+  time row (`12:45 AM        ☆`; moved there from beside the header on
+  2026-10-29 so it never lengthens the `IN PST` line). Only the *target* can
+  be starred; "destinations" means
   where the user is sending a time. **(decision)** Nothing on the source side,
   nothing on the prompt states.
 - **What is stored**: the resolved zone identifier plus the `ZoneLabel` the
@@ -41,14 +43,18 @@ open; each is marked **(decision)** so they are easy to reverse.
   - the clock digits and meridiem at a reduced poster scale,
   - the zone line with item-21 semantics (zone name + representative cities
     under a place; cities only under a code) and the day marker when the row's
-    date differs from the *local row's* date (`· next day` / `· previous day`),
+    date differs from the *real local today* (`· next day` / `· previous day`,
+    `· +2 days` beyond), the local row included once the dial has crossed
+    midnight. (Amended 2026-10-29: build 20 measured against the shifted local
+    row, which made Los Angeles read "previous day" while London was pushed
+    into tomorrow and lose the marker as it crossed into tomorrow itself.)
   - the relative offset phrase against local (`5 hours ahead`), small.
 - **Empty state**: with no favourites, the local row plus one line of copy:
   "Star a destination in Convert and its clock appears here."
 - **Live**: with the slider at zero the clocks tick with the real time, to the
   minute (`TimelineView(.everyMinute)`).
 
-## The slider
+## The dial
 
 - **Meaning**: an offset applied to the *local* clock; every row is that
   shifted local instant read in its own zone. This is exactly a conversion
@@ -56,19 +62,21 @@ open; each is marked **(decision)** so they are easy to reverse.
   `ConversionEngine` and inherits its DST policy for free.
 - **Range**: unbounded in both directions (Olivier, 2026-10-28: "shift
   indefinitely into the future or past, useful for DST change conditions").
-  **Mechanic (decision)**: the offset is `days + minutes`. A stock `Slider`
-  covers −24 h … +24 h of *minutes* in 15-minute snapping steps; a stock
-  `Stepper` beside the readout moves the *day anchor* by whole days with no
-  limit. So any instant is reachable (step the days, slide the hours) and the
-  slider keeps 15-minute precision at any distance. A **tap** on the slider
-  (not a drag) resets days and minutes to zero: that is the "back to now"
-  gesture Olivier asked for, so no separate Now button in the MVP.
-- **Readout** above the slider: the shifted local time and its day —
+  **Mechanic (Olivier, 2026-10-29)**: an **endless dial**, not a slider — "it
+  can be turned and turned again. One swipe is 12 hours in one direction, a
+  second pushes it another 12 hours — this eliminates the +/- UI." A
+  full-width swipe across the control is 12 hours, rightwards forwards; each
+  swipe adds to the last, with no ends. The value snaps to 15-minute steps. A
+  **tap** on the dial (not a drag) resets to now. The MVP draws it as a strip
+  of 15-minute ticks sliding under a fixed pointer; the visuals are a design
+  question for later. (Build 20 shipped a −24 h…+24 h slider plus a day
+  stepper; both are gone.)
+- **Readout** above the dial: the shifted local time and its day —
   `Today 2:30 PM`, `Tomorrow 9:15 AM`, `Yesterday 11:00 PM`, and beyond one day
   the weekday and date, `Fri 31 Oct, 9:15 AM` — plus the signed offset once
   non-zero: `+5 h`, `−45 min`, `+3 d 2 h`.
 - **Base**: the real current time keeps advancing underneath the offset, so a
-  slider left at +2 h for ten minutes shows +2 h from the new now.
+  dial left at +2 h for ten minutes shows +2 h from the new now.
 
 ## Core (shared, fixture-tested)
 
@@ -99,15 +107,16 @@ Olivier, 2026-10-28: review first, then ship an MVP with no design work.
 The MVP keeps every behaviour above and drops only the styling and the
 polish that would want a design pass:
 
-- **Kept**: star on the result header, persistence, two tabs, local row
-  first, the slider with snapping and the day stepper, the readout,
+- **Kept**: star on the result band, persistence, two tabs, local row
+  first, the endless dial with snapping, the readout,
   tap-to-reset, live ticking,
   day markers, zone lines, offset phrases, swipe to delete, fixtures.
 - **System chrome, poster content**: the Clocks tab is a plain SwiftUI `List`
-  with system row chrome and a standard `Slider`. Inside each row the
+  with system row chrome and a plain tick-strip dial. Inside each row the
   *strings* are the poster's (same digits, same zone line, same wording), set
   in the existing poster fonts at a modest size, on the poster background.
-  Nothing is bespoke: no custom slider, no custom tab bar, no illustration.
+  Nothing is styled: the dial is ticks and a pointer, no custom tab bar, no
+  illustration.
 - **Dropped until the design sprint**: drag-to-reorder (delete and re-star to
   reorder), haptics, animations, iPad layout, the empty-state copy beyond one
   plain line.
@@ -123,6 +132,9 @@ tab (the converter is the one input), widgets, Android (phase 2, item 32).
 ## Items
 
 - **30** core: models, store, `WorldClock`, fixtures, tests.
-- **31** iOS: star, tabs, Clocks screen, slider, readout, persistence wiring,
+- **31** iOS: star, tabs, Clocks screen, dial, readout, persistence wiring,
   simulator QA, TestFlight.
+- **33** iOS build 20 feedback (2026-10-29): endless dial, day markers against
+  the real today, star on the time row, swipe-to-dismiss with text typed, no
+  autofocus on returning to Convert.
 - **32** Android: port of 30 against the fixtures, Compose UI mirroring 31.

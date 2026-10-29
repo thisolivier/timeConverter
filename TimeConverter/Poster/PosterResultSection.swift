@@ -67,34 +67,37 @@ struct PosterResultSection: View {
 
     private func convertedBand(_ display: ConverterDisplay) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // The star (item 31) sits beside the header; no star on a
-            // `(local)` target, whose clock is always the Clocks tab's first row.
-            HStack(alignment: .center, spacing: 8) {
-                Text(display.targetPlaceLabel)
-                    .posterLabel(size: 14)
-                    .foregroundStyle(PosterPalette.ink)
+            Text(display.targetPlaceLabel)
+                .posterLabel(size: 14)
+                .foregroundStyle(PosterPalette.ink)
+
+            // The star (item 31) sits at the far right of the time row, so it
+            // never lengthens the header line (Olivier, 2026-10-29). No star
+            // on a `(local)` target, whose clock is always the Clocks tab's
+            // first row.
+            HStack(alignment: .center, spacing: 12) {
+                // One `Text`, not two in an `HStack`: concatenation keeps the
+                // numerals and the meridiem on a shared baseline *and* scales
+                // them together, so `12:30 AM` shrinks as one object rather
+                // than the two parts drifting apart.
+                (
+                    Text(display.targetClockDigits)
+                        .font(PosterTypography.display(size: clockSize))
+                        + Text(" ").font(PosterTypography.display(size: meridiemSize))
+                        + Text(display.targetMeridiem)
+                        .font(PosterTypography.display(size: meridiemSize))
+                )
+                .foregroundStyle(PosterPalette.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityLabel("\(display.targetClockDigits) \(display.targetMeridiem)")
+
                 if let destination = display.favouritableTarget {
                     FavouriteStarButton(destination: destination)
                 }
             }
-
-            // One `Text`, not two in an `HStack`: concatenation keeps the
-            // numerals and the meridiem on a shared baseline *and* scales them
-            // together, so `12:30 AM` shrinks as one object rather than the
-            // two parts drifting apart.
-            (
-                Text(display.targetClockDigits)
-                    .font(PosterTypography.display(size: clockSize))
-                    + Text(" ").font(PosterTypography.display(size: meridiemSize))
-                    + Text(display.targetMeridiem)
-                    .font(PosterTypography.display(size: meridiemSize))
-            )
-            .foregroundStyle(PosterPalette.ink)
-            .lineLimit(1)
-            .minimumScaleFactor(0.3)
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 6)
-            .accessibilityLabel("\(display.targetClockDigits) \(display.targetMeridiem)")
 
             // The zone line (item 21), where `UTC-3` used to be. Hidden when
             // empty, which only happens for GMT and UTC — printing a blank

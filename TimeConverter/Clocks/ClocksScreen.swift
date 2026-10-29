@@ -4,7 +4,7 @@ import TimeConverterUI
 
 /// The Clocks tab (item 31), the design-free MVP: a stock `List` on the
 /// poster background, the local clock first, then one row per favourite
-/// (swipe to delete), and the readout, day stepper and slider at the bottom.
+/// (swipe to delete), and the readout and endless dial at the bottom.
 ///
 /// Every string comes from `WorldClock.readings`. `TimelineView(.everyMinute)`
 /// re-reads it each minute, so the rows tick at zero and the real time keeps
@@ -13,7 +13,7 @@ import TimeConverterUI
 struct ClocksScreen: View {
     @Environment(FavouritesStore.self) private var favouritesStore
     @State private var offset = ClockOffset(
-        days: LaunchArguments.initialClockOffsetDays,
+        launchDays: LaunchArguments.initialClockOffsetDays,
         launchMinutes: LaunchArguments.initialClockOffsetMinutes
     )
 

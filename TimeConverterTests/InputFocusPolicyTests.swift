@@ -15,7 +15,13 @@ import SwiftUI
 /// live. What is left here is the part that genuinely belongs to the iOS shell.
 struct InputFocusPolicyTests {
     @Test func launchFocusesTheField() {
-        #expect(InputFocusPolicy.shouldFocusOnAppear)
+        #expect(InputFocusPolicy.shouldFocusOnAppear(isFirstAppearance: true))
+    }
+
+    /// Coming back to Convert from the Clocks tab re-runs `onAppear`; the
+    /// keyboard must not pop up for that.
+    @Test func returningToTheTabDoesNotFocusTheField() {
+        #expect(!InputFocusPolicy.shouldFocusOnAppear(isFirstAppearance: false))
     }
 
     @Test func aLauncherFocusesTheFieldEvenMidSession() {

@@ -96,7 +96,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
-            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · next day"
           },
           {
             "clockDigits" : "11:42",
@@ -104,7 +104,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
-            "zoneLine" : "United Kingdom Time (London)"
+            "zoneLine" : "United Kingdom Time (London) · next day"
           },
           {
             "clockDigits" : "6:42",
@@ -112,7 +112,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
-            "zoneLine" : "New York, Toronto"
+            "zoneLine" : "New York, Toronto · next day"
           },
           {
             "clockDigits" : "8:42",
@@ -120,7 +120,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
-            "zoneLine" : "Japan Standard Time (Tokyo) · next day"
+            "zoneLine" : "Japan Standard Time (Tokyo) · +2 days"
           }
         ]
       },
@@ -144,7 +144,7 @@
       ],
       "id" : "plus-24-hours-crossing-a-day",
       "localZone" : "America/Los_Angeles",
-      "note" : "Readout says Tomorrow; markers stay relative to the local row's date.",
+      "note" : "Readout says Tomorrow; every row, local included, is marked next day against the real today.",
       "now" : "2026-01-15T23:42:00Z",
       "offsetSeconds" : 86400
     },
@@ -159,7 +159,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
-            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · next day"
           },
           {
             "clockDigits" : "6:42",
@@ -167,7 +167,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
-            "zoneLine" : "United Kingdom Time (London)"
+            "zoneLine" : "United Kingdom Time (London) · next day"
           },
           {
             "clockDigits" : "1:42",
@@ -175,7 +175,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
-            "zoneLine" : "New York, Toronto"
+            "zoneLine" : "New York, Toronto · next day"
           },
           {
             "clockDigits" : "3:42",
@@ -183,7 +183,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
-            "zoneLine" : "Japan Standard Time (Tokyo) · next day"
+            "zoneLine" : "Japan Standard Time (Tokyo) · +2 days"
           }
         ]
       },
@@ -207,7 +207,7 @@
       ],
       "id" : "plus-19-hours-next-day",
       "localZone" : "America/Los_Angeles",
-      "note" : "Local is tomorrow morning; Tokyo has moved on to the day after.",
+      "note" : "Local is tomorrow morning (marked next day); Tokyo has moved on to the day after (+2 days).",
       "now" : "2026-01-15T23:42:00Z",
       "offsetSeconds" : 68400
     },
@@ -285,7 +285,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
-            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · +3 days"
           },
           {
             "clockDigits" : "1:42",
@@ -293,7 +293,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
-            "zoneLine" : "United Kingdom Time (London) · next day"
+            "zoneLine" : "United Kingdom Time (London) · +4 days"
           }
         ]
       },
@@ -321,7 +321,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
-            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · previous day"
           },
           {
             "clockDigits" : "11:42",
@@ -329,7 +329,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
-            "zoneLine" : "United Kingdom Time (London)"
+            "zoneLine" : "United Kingdom Time (London) · previous day"
           }
         ]
       },

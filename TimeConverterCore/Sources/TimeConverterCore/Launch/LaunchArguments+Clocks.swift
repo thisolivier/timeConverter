@@ -11,8 +11,8 @@ import Foundation
 ///   do not convert (unknown, ambiguous) are skipped. Writes through to the
 ///   store, i.e. to the simulator's real defaults.
 /// - `-selectedTab clocks` — open on the Clocks tab.
-/// - `-clockOffsetDays 3` / `-clockOffsetMinutes 1140` — start the day stepper
-///   and the slider there. A negative value needs a leading `m` or a space
+/// - `-clockOffsetDays 3` / `-clockOffsetMinutes 1140` — start the dial at
+///   that offset (the two add up). A negative value needs a leading `m` or a space
 ///   inside the quotes (`-clockOffsetDays m3`, `-clockOffsetDays " -3"`),
 ///   because a bare `-3` reads as another flag to the argument parser.
 extension LaunchArguments {

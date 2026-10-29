@@ -16,6 +16,17 @@ import Foundation
 /// with no wall-clock round trip that could pick the wrong half of a repeated
 /// hour.
 ///
+/// ## What the day marker means
+///
+/// Every row's `· next day` / `· previous day` is measured against the **real
+/// local today**, the local row included, so it agrees with the readout's
+/// `Tomorrow`. Build 20 measured it against the shifted local row instead,
+/// which read backwards under the dial: push London to 1 AM tomorrow and Los
+/// Angeles, still on today, said "previous day"; push on to 9 AM and the
+/// marker vanished just as Los Angeles crossed into tomorrow (Olivier,
+/// 2026-10-29: "progressing linearly in time shouldn't jump in and out of
+/// yesterday").
+///
 /// Pure: `now` and `localZone` are injected, as everywhere in this package.
 public enum WorldClock {
     public static func readings(
@@ -39,17 +50,17 @@ public enum WorldClock {
             )
         }
 
+        let today = ConversionEngine.dayNumber(of: now, in: localZone)
         let localResult = result(for: localZoneResolved)
-        let localRow = row(for: localResult, favourite: nil)
+        let localRow = row(for: localResult, favourite: nil, today: today)
         let favouriteRows = favourites.compactMap { favourite -> WorldClockRow? in
             guard let zone = favourite.resolvedZone else { return nil }
-            return row(for: result(for: zone), favourite: favourite)
+            return row(for: result(for: zone), favourite: favourite, today: today)
         }
 
         return WorldClockDisplay(
             readout: WorldClockFormatting.readout(
-                dayDifference: ConversionEngine.dayNumber(of: shifted.instant, in: localZone)
-                    - ConversionEngine.dayNumber(of: now, in: localZone),
+                dayDifference: ConversionEngine.dayNumber(of: shifted.instant, in: localZone) - today,
                 shiftedInstant: shifted.instant,
                 localZone: localZone,
                 uppercasedTime: localResult.target.uppercasedTime
@@ -59,15 +70,21 @@ public enum WorldClock {
         )
     }
 
-    private static func row(for result: ConversionResult, favourite: FavouriteDestination?) -> WorldClockRow {
-        WorldClockRow(
+    private static func row(
+        for result: ConversionResult, favourite: FavouriteDestination?, today: Int
+    ) -> WorldClockRow {
+        let rowZone = TimeZone(identifier: result.target.timeZoneIdentifier) ?? .current
+        return WorldClockRow(
             id: favourite?.id ?? "local",
             placeName: result.target.placeNameDescription,
             clockDigits: result.target.clockDigits,
             meridiem: result.target.uppercasedMeridiem,
-            // The converter's own zone line, day marker and all; the "source"
-            // here is the local row, so the marker is relative to its date.
-            zoneLine: ConverterPresenter.targetZoneLine(for: result),
+            // The converter's own zone detail, with the day marker measured
+            // against the real local today (see the type comment).
+            zoneLine: ConverterPresenter.zoneLine(
+                zoneDetail: result.target.zoneDetailDescription,
+                dayOffset: ConversionEngine.dayNumber(of: result.instant, in: rowZone) - today
+            ),
             offsetPhrase: favourite == nil ? "" : result.relativeOffsetPhrase,
             favourite: favourite
         )

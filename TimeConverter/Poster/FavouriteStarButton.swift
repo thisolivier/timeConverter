@@ -2,7 +2,7 @@ import SwiftUI
 import TimeConverterCore
 import TimeConverterUI
 
-/// The star beside the target header (item 31): `IN LONDON ☆` / `★`.
+/// The star at the far right of the result's time row (item 31): `12:45 AM   ☆` / `★`.
 ///
 /// Tapping adds the destination to the Clocks tab, or removes it. Reads the
 /// store from the environment *optionally*, so a preview or any host without
@@ -18,7 +18,7 @@ struct FavouriteStarButton: View {
                 favouritesStore.toggle(destination)
             } label: {
                 Image(systemName: isFavourite ? "star.fill" : "star")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(PosterPalette.ink)
                     // A 44pt hit area without moving the header's layout.
                     .padding(12)

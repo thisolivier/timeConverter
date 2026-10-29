@@ -1,45 +1,63 @@
 import Foundation
 
-/// The Clocks tab's offset (item 31): whole days from the stepper plus
-/// minutes from the slider. Kept out of the view so its rules are tested.
+/// The Clocks tab's offset: minutes from now, unbounded, moved by an endless
+/// dial (Olivier, 2026-10-29: "a slider which is like a big dial … it can be
+/// turned and turned again. One swipe is 12 hours in one direction, a second
+/// pushes it another 12 hours"). That replaced build 20's bounded slider and
+/// day stepper. Kept out of the view so its rules are tested.
 ///
-/// The slider covers −24 h…+24 h in 15-minute steps; the stepper moves the
-/// day anchor with no limit, so any instant is reachable at 15-minute
-/// precision however far out.
+/// Two parts: minutes **settled** by finished drags, and the minutes of the
+/// drag **in progress**. The value the clock reads is their sum snapped to
+/// 15 minutes; the dial's tick strip moves on the unsnapped sum so it follows
+/// the finger smoothly.
 struct ClockOffset: Equatable {
-    static let sliderRangeMinutes: ClosedRange<Double> = -1440...1440
-    static let sliderStepMinutes: Double = 15
-    /// How quickly a press must lift, unmoved, to count as a tap.
-    static let tapMaximumDuration: TimeInterval = 0.35
+    static let stepMinutes: Double = 15
+    /// One full-width swipe across the dial is 12 hours.
+    static let minutesPerTrackWidth: Double = 720
 
-    var days: Int = 0
-    var sliderMinutes: Double = 0
+    var settledMinutes: Double = 0
+    var draggedMinutes: Double = 0
+
+    /// The offset the clock shows: settled plus in-progress, snapped.
+    var minutes: Double { Self.snapped(settledMinutes + draggedMinutes) }
+
+    /// The unsnapped position, for drawing the dial mid-drag.
+    var continuousMinutes: Double { settledMinutes + draggedMinutes }
 
     /// What `WorldClock.readings` takes. Unbounded.
-    var interval: TimeInterval {
-        TimeInterval(days) * 86_400 + sliderMinutes * 60
+    var interval: TimeInterval { minutes * 60 }
+
+    /// The DEBUG `-clockOffsetDays` / `-clockOffsetMinutes` start, folded into
+    /// one settled value and snapped.
+    init(launchDays: Int = 0, launchMinutes: Int = 0) {
+        settledMinutes = Self.snapped(Double(launchDays) * 1440 + Double(launchMinutes))
     }
 
-    /// Back to now: the tap-on-slider gesture.
+    /// A drag in progress: rightwards is forwards in time, a whole track width
+    /// is twelve hours, however many times over.
+    mutating func drag(translationWidth: Double, trackWidth: Double) {
+        guard trackWidth > 0 else { return }
+        draggedMinutes = translationWidth / trackWidth * Self.minutesPerTrackWidth
+    }
+
+    /// The finger lifted: bank the drag, snapped, so the next swipe adds to it.
+    mutating func settleDrag() {
+        settledMinutes = minutes
+        draggedMinutes = 0
+    }
+
+    /// Back to now: the tap-on-dial gesture.
     mutating func reset() {
         self = ClockOffset()
     }
 
-    /// The DEBUG `-clockOffsetDays` / `-clockOffsetMinutes` start, with the
-    /// minutes clamped to the slider and snapped to its step.
-    init(days: Int = 0, launchMinutes: Int = 0) {
-        self.days = days
-        self.sliderMinutes = Self.snapped(Double(launchMinutes))
+    /// VoiceOver's increment / decrement: one step.
+    mutating func step(by steps: Int) {
+        settledMinutes = minutes + Double(steps) * Self.stepMinutes
+        draggedMinutes = 0
     }
 
     static func snapped(_ minutes: Double) -> Double {
-        let clamped = min(max(minutes, sliderRangeMinutes.lowerBound), sliderRangeMinutes.upperBound)
-        return (clamped / sliderStepMinutes).rounded() * sliderStepMinutes
-    }
-
-    /// The fallback tap detector, from the slider's own editing callbacks: a
-    /// press on the thumb that ended quickly without changing the value.
-    static func editingWasATap(startValue: Double, endValue: Double, duration: TimeInterval) -> Bool {
-        startValue == endValue && duration <= tapMaximumDuration
+        (minutes / stepMinutes).rounded() * stepMinutes
     }
 }

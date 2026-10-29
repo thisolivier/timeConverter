@@ -30,6 +30,9 @@ struct ContentView: View {
     @State private var keyboardIsVisible: Bool = KeyboardVisibility.initialValue
     @FocusState private var inputFieldIsFocused: Bool
     @Environment(\.scenePhase) private var scenePhase
+    /// `onAppear` fires again every time the Convert tab is re-selected
+    /// (item 31); only the first is launch. See `InputFocusPolicy`.
+    @State private var hasAppearedBefore = false
 
     /// Where the App Shortcut and the Control Center control post their one
     /// request (backlog item 11). Not `@State`: the app owns one mailbox and the
@@ -65,7 +68,13 @@ struct ContentView: View {
                 // fighting over the same layout.
                 .animation(.easeInOut(duration: 0.24), value: layoutMode)
         }
-        .scrollBounceBehavior(.basedOnSize)
+        // Bounce only when there is something to scroll — except with the
+        // keyboard up. Interactive keyboard dismissal rides the scroll view's
+        // pan, and a scroll view whose content fits and does not bounce never
+        // starts one; in compact mode (item 19) the content fits by design,
+        // so without this a swipe dismissed nothing once anything was typed
+        // (Olivier, 2026-10-29).
+        .scrollBounceBehavior(keyboardIsVisible ? .always : .basedOnSize)
         // Item 31: under the floating tab bar the full poster is ~70pt taller
         // than the room left above it, so a top-anchored poster puts the
         // footer sentence under the bar at rest. (The bar's inset *is*
@@ -100,7 +109,10 @@ struct ContentView: View {
             // launch-argument run shows its conversion — or its prompt and
             // chips — immediately.
             showResultWithoutWaiting()
-            inputFieldIsFocused = InputFocusPolicy.shouldFocusOnAppear
+            if InputFocusPolicy.shouldFocusOnAppear(isFirstAppearance: !hasAppearedBefore) {
+                inputFieldIsFocused = true
+            }
+            hasAppearedBefore = true
             // A cold launch from a launcher can perform its intent before the
             // view exists, so the mailbox is drained here as well as below.
             honourPendingLaunchRequest()

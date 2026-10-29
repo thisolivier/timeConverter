@@ -35,31 +35,56 @@ struct WorldClockTests {
         #expect(display.offsetDescription == nil)
     }
 
-    @Test func dayMarkerIsRelativeToTheLocalRowAcrossMidnight() {
+    @Test func dayMarkersAreRelativeToTheRealLocalToday() {
         let live = readings([Self.london, Self.tokyo])
+        #expect(live.rows[0].zoneLine == "Pacific Time (Los Angeles, Vancouver)")
         #expect(live.rows[1].zoneLine == "United Kingdom Time (London)")
         #expect(live.rows[2].zoneLine == "Japan Standard Time (Tokyo) · next day")
 
-        // +9 h: London passes midnight, but so has nothing local — 12:42 AM
-        // Friday in Los Angeles; London 8:42 AM Fri, same day as local now.
+        // +9 h: 12:42 AM Friday locally, so the local row itself is on the
+        // next day; London 8:42 AM Fri too; Tokyo 5:42 PM Fri, still "next
+        // day" — nothing has gone backwards.
         let shifted = readings([Self.london, Self.tokyo], minutes: 9 * 60)
         #expect(shifted.readout == "Tomorrow 12:42 AM")
-        #expect(shifted.rows[1].zoneLine == "United Kingdom Time (London)")
-        #expect(shifted.rows[2].zoneLine == "Japan Standard Time (Tokyo)")
+        #expect(shifted.rows[0].zoneLine == "Pacific Time (Los Angeles, Vancouver) · next day")
+        #expect(shifted.rows[1].zoneLine == "United Kingdom Time (London) · next day")
+        #expect(shifted.rows[2].zoneLine == "Japan Standard Time (Tokyo) · next day")
 
-        // Going back far enough puts London on the local day and Los Angeles
-        // ahead of nobody: −16 h is 11:42 PM Wed; London 7:42 AM Thu.
+        // −16 h is 11:42 PM Wed locally (previous day); London 7:42 AM Thu,
+        // which is today, so no marker there.
         let back = readings([Self.london], minutes: -16 * 60)
         #expect(back.readout == "Yesterday 11:42 PM")
-        #expect(back.rows[1].zoneLine == "United Kingdom Time (London) · next day")
+        #expect(back.rows[0].zoneLine == "Pacific Time (Los Angeles, Vancouver) · previous day")
+        #expect(back.rows[1].zoneLine == "United Kingdom Time (London)")
+    }
+
+    /// Olivier's report on build 20 (London local, Los Angeles favourited):
+    /// sweeping the dial forward must move Los Angeles from today to next day
+    /// exactly once, never through "previous day".
+    @Test func sweepingForwardNeverShowsPreviousDay() {
+        let losAngeles = FavouriteDestination(
+            timeZoneIdentifier: "America/Los_Angeles", label: .place(name: "PST", isDeviceLocal: false)
+        )
+        // 9:00 PM Thu 29 Oct in London (GMT again; Los Angeles still on PDT).
+        let londonEvening = FixedDates.utc(year: 2026, month: 10, day: 29, hour: 21)
+        var markers: [String] = []
+        for quarterHours in 0...(48 * 4) {
+            let display = readings([losAngeles], minutes: quarterHours * 15,
+                                   now: londonEvening, localZone: FixedZones.london)
+            let marker = display.rows[1].zoneLine.components(separatedBy: " · ").dropFirst().first ?? ""
+            if markers.last != marker { markers.append(marker) }
+        }
+        #expect(markers == ["", "next day", "+2 days"])
     }
 
     @Test func aWestwardFavouriteCanBeOnThePreviousDay() {
         let honolulu = FavouriteDestination(
             timeZoneIdentifier: "Pacific/Honolulu", label: .place(name: "Honolulu", isDeviceLocal: false)
         )
-        // 12:30 AM Fri in Los Angeles is 10:30 PM Thu in Honolulu.
-        let display = readings([honolulu], minutes: 8 * 60 + 48)
+        // 10:30 PM Wed in Honolulu is 12:30 AM Thu in Los Angeles — still
+        // today's date locally, Honolulu on the day before.
+        let display = readings([honolulu], minutes: -(15 * 60 + 12))
+        #expect(display.readout == "Today 12:30 AM")
         #expect(display.rows[1].clockDigits == "10:30")
         #expect(display.rows[1].zoneLine.hasSuffix(" · previous day"))
         #expect(display.rows[1].offsetPhrase == "2 hours behind")

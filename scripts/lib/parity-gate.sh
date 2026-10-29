@@ -21,7 +21,7 @@
 PARITY_RELEASE_LOG="$REPO_DIR/docs/releases.md"
 # Paths whose change means "the shared behaviour moved": the Swift core
 # sources (parser, engine, resources) and the generated contract itself.
-PARITY_CORE_PATHS=("TimeConverterCore/Sources" "fixtures/conversion-cases.json")
+PARITY_CORE_PATHS=("TimeConverterCore/Sources" "fixtures/conversion-cases.json" "fixtures/world-clock-cases.json")
 
 # parity_gate_swift_core — runs the Swift core package suite.
 #

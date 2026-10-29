@@ -27,7 +27,8 @@ public struct WorldClockRow: Equatable, Sendable, Identifiable {
     /// `PM`.
     public let meridiem: String
     /// Item-21 zone line plus a day marker when this row's date differs from
-    /// the local row's: `Japan Standard Time (Tokyo) · next day`. Empty for
+    /// the real local today (the local row carries one too once the dial has
+    /// crossed midnight): `Japan Standard Time (Tokyo) · next day`. Empty for
     /// GMT/UTC with no marker, as on the result band.
     public let zoneLine: String
     /// `5 hours ahead`, `Same time`, against the local zone at the shown

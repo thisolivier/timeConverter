@@ -3,7 +3,7 @@
 One row per shipped build per lane, appended by the ship scripts
 (`scripts/lib/parity-gate.sh` `record_release`). `commit` is the code that
 shipped; the lane-drift report compares it with HEAD over the shared core
-(`TimeConverterCore/Sources`, `fixtures/conversion-cases.json`) to say which
+(`TimeConverterCore/Sources`, `fixtures/conversion-cases.json`, `fixtures/world-clock-cases.json`) to say which
 lanes are behind. Build numbers are shared across lanes via `project.yml`.
 
 Rule: **a core change ships to all three lanes** at the same build number.

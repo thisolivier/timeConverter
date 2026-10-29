@@ -417,8 +417,8 @@ see `LaunchArguments+Clocks.swift`):
 |---|---|
 | `-favourites "London,ET,Tokyo"` | **Replaces** the stored favourites with what starring the target of `12pm in <zone>` stores, per zone. `""` clears them. |
 | `-selectedTab clocks` | Opens on the Clocks tab. |
-| `-clockOffsetDays 3` / `m3` | Starts the day stepper there (`m` for minus: a bare `-3` reads as a flag). |
-| `-clockOffsetMinutes 1140` | Starts the slider there (clamped to ±1440, snapped to 15). |
+| `-clockOffsetDays 3` / `m3` | Starts the dial that many days out (`m` for minus: a bare `-3` reads as a flag). |
+| `-clockOffsetMinutes 1140` | Starts the dial that many minutes out (adds to the days; snapped to 15). |
 
 ```
 xcrun simctl launch booted dev.thisolivier.timeconverter \

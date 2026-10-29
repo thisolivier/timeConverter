@@ -110,8 +110,13 @@ struct ConverterPresenter: Sendable {
     /// the offset must not take `next day` with it — a conversion that silently
     /// lands on tomorrow is the worst thing this app could do.
     static func targetZoneLine(for result: ConversionResult) -> String {
-        let zoneDetail = result.target.zoneDetailDescription
-        guard let rollover = result.dayRolloverNote else { return zoneDetail }
+        zoneLine(zoneDetail: result.target.zoneDetailDescription, dayOffset: result.dayOffset)
+    }
+
+    /// The same line from its parts, for the world clock, whose day offset is
+    /// measured against the real local today rather than the source reading.
+    static func zoneLine(zoneDetail: String, dayOffset: Int) -> String {
+        guard let rollover = DayRollover.note(forDayOffset: dayOffset) else { return zoneDetail }
         guard !zoneDetail.isEmpty else { return rollover }
         return "\(zoneDetail) · \(rollover)"
     }

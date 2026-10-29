@@ -16,7 +16,14 @@ import SwiftUI
 enum InputFocusPolicy {
     /// Launch (and the DEBUG `-initialInput` prefill): always focus. The
     /// prefilled text stays put; focusing only places the cursor in it.
-    static let shouldFocusOnAppear = true
+    ///
+    /// Since the tabs (item 31) the Convert view *appears* again every time
+    /// the user comes back from Clocks, and that is mid-session: they went to
+    /// look at clocks, not to type, so the keyboard stays down (Olivier,
+    /// 2026-10-29). Only the first appearance is launch.
+    static func shouldFocusOnAppear(isFirstAppearance: Bool) -> Bool {
+        isFirstAppearance
+    }
 
     /// A launcher (App Shortcut phrase, Control Center control — backlog item
     /// 11) always focuses, even mid-session. Unlike a scene-phase change this

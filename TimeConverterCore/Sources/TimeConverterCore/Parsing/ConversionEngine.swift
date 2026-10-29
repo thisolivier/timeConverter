@@ -183,12 +183,7 @@ struct ConversionResult: Equatable, Sendable {
     /// layout's offset line (`UTC+9 · next day`), where there is no echo
     /// sentence to hang a marker off.
     var dayRolloverNote: String? {
-        switch dayOffset {
-        case 0: return nil
-        case 1: return "next day"
-        case -1: return "previous day"
-        default: return dayOffset > 0 ? "+\(dayOffset) days" : "\(dayOffset) days"
-        }
+        DayRollover.note(forDayOffset: dayOffset)
     }
 
     /// The footer sentence (spec amendment 2026-10-23, re-worded the same day
@@ -304,5 +299,18 @@ struct ConversionEngine: Sendable {
             day: localDay.day
         )) else { return 0 }
         return Int((dayStartInUTC.timeIntervalSince1970 / 86_400).rounded(.down))
+    }
+}
+
+/// The day marker's wording, shared by the converter (target day minus source
+/// day) and the world clock (each row's day minus the real local today).
+enum DayRollover {
+    static func note(forDayOffset dayOffset: Int) -> String? {
+        switch dayOffset {
+        case 0: return nil
+        case 1: return "next day"
+        case -1: return "previous day"
+        default: return dayOffset > 0 ? "+\(dayOffset) days" : "\(dayOffset) days"
+        }
     }
 }
