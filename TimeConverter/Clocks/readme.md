@@ -17,7 +17,8 @@ fonts and background, rust tint on the selection and the dial's pointer.
   `TimeConverterTests`; reworked 2026-10-29 from build 20's slider + day
   stepper). A full-width swipe is 12 hours, rightwards forwards; the next
   swipe adds to it, with no ends either way. The value snaps to 15 minutes,
-  the tick strip follows the finger unsnapped.
+  the tick strip follows the finger unsnapped (so later times come in from
+  the left, like a tape pulled through).
 - **Tap on the dial = back to now.** The drag needs 6 pt of travel before it
   is a drag, so a touch that lifts in place is the reset tap.
 - **Persistence** is the app-owned `FavouritesStore` on `UserDefaults.standard`,

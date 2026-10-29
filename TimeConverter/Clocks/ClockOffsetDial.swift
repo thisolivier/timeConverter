@@ -6,6 +6,11 @@ import TimeConverterUI
 /// time by up to twelve hours and the next swipe carries on from there
 /// (`ClockOffset`). A tap, not a drag, resets to now.
 ///
+/// The strip moves *with* the finger: dragging right is forwards in time, so
+/// the ticks for later times come in from the left, as on a tape being
+/// pulled through. Build 21 drew them the other way round, with later times
+/// to the right, and the strip ran against the swipe (Olivier, 2026-10-29).
+///
 /// Drawn in a `Canvas`, so the strip is one draw call however far out the
 /// offset is: only the ticks inside the frame are computed. The ticks are
 /// texture, not a scale — the readout above says where the dial is.
@@ -53,7 +58,7 @@ struct ClockOffsetDial: View {
         var tick = firstTick
         while tick <= lastTick {
             let tickMinutes = tick * ClockOffset.stepMinutes
-            let x = size.width / 2 + (tickMinutes - centreMinutes) * pointsPerMinute
+            let x = size.width / 2 - (tickMinutes - centreMinutes) * pointsPerMinute
             let isHour = tickMinutes.truncatingRemainder(dividingBy: 60) == 0
             let isSixHours = tickMinutes.truncatingRemainder(dividingBy: 360) == 0
             let tickHeight: CGFloat = isSixHours ? 28 : (isHour ? 18 : 9)
