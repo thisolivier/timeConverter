@@ -20,9 +20,12 @@ object WallClockResolver {
     data class Outcome(val instant: Instant, val disposition: Disposition)
 
     /** `referenceInstant` supplies "today", read in the source zone. */
-    fun resolve(wallClock: ParsedTime, referenceInstant: Instant, zone: ZoneId): Outcome {
-        val today: LocalDate = referenceInstant.atZone(zone).toLocalDate()
-        val requestedLocal = LocalDateTime.of(today, java.time.LocalTime.of(wallClock.hour, wallClock.minute))
+    fun resolve(wallClock: ParsedTime, referenceInstant: Instant, zone: ZoneId): Outcome =
+        resolve(wallClock, onCalendarDay = referenceInstant.atZone(zone).toLocalDate(), zone = zone)
+
+    /** The same policy on an explicit calendar day — the world clock's shifted wall clock (item 30). */
+    fun resolve(wallClock: ParsedTime, onCalendarDay: LocalDate, zone: ZoneId): Outcome {
+        val requestedLocal = LocalDateTime.of(onCalendarDay, java.time.LocalTime.of(wallClock.hour, wallClock.minute))
         val rules = zone.rules
         val validOffsets = rules.getValidOffsets(requestedLocal)
         return when (validOffsets.size) {

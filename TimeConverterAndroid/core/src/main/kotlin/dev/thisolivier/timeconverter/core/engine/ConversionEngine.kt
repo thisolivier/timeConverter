@@ -2,6 +2,7 @@ package dev.thisolivier.timeconverter.core.engine
 
 import dev.thisolivier.timeconverter.core.parsing.ParsedTime
 import java.time.Instant
+import java.time.ZoneId
 
 /** How one zone reads the converted instant. Port of Swift `ZoneReading`. */
 data class ZoneReading(
@@ -67,13 +68,7 @@ data class ConversionResult(
             return dayRolloverMarker?.let { "$line $it" } ?: line
         }
 
-    val dayRolloverNote: String?
-        get() = when (dayOffset) {
-            0 -> null
-            1 -> "next day"
-            -1 -> "previous day"
-            else -> if (dayOffset > 0) "+$dayOffset days" else "$dayOffset days"
-        }
+    val dayRolloverNote: String? get() = DayRollover.note(dayOffset)
 
     private val relativeOffsetSeconds: Int get() = target.utcOffsetSeconds - source.utcOffsetSeconds
 
@@ -95,17 +90,37 @@ data class ConversionRequest(
 object ConversionEngine {
     fun convert(request: ConversionRequest): ConversionResult {
         val wallClockOutcome = WallClockResolver.resolve(request.time, request.referenceInstant, request.sourceZone.zone)
-        val instant = wallClockOutcome.instant
-        return ConversionResult(
-            instant = instant,
-            source = reading(instant, request.sourceZone),
-            target = reading(instant, request.targetZone),
-            dayOffset = (instant.atZone(request.targetZone.zone).toLocalDate().toEpochDay()
-                - instant.atZone(request.sourceZone.zone).toLocalDate().toEpochDay()).toInt(),
-            wallClockDisposition = wallClockOutcome.disposition,
+        return read(
+            wallClockOutcome.instant,
+            from = request.sourceZone,
+            to = request.targetZone,
             requestedTime = request.time,
+            wallClockDisposition = wallClockOutcome.disposition,
         )
     }
+
+    /**
+     * Reads an already-resolved instant through both zones. Split out of
+     * [convert] for the world clock (item 30), which resolves its own shifted
+     * instant and then wants exactly the converter's reading of it.
+     */
+    fun read(
+        instant: Instant,
+        from: ResolvedZone,
+        to: ResolvedZone,
+        requestedTime: ParsedTime,
+        wallClockDisposition: WallClockResolver.Disposition,
+    ): ConversionResult = ConversionResult(
+        instant = instant,
+        source = reading(instant, from),
+        target = reading(instant, to),
+        dayOffset = dayNumber(instant, to.zone) - dayNumber(instant, from.zone),
+        wallClockDisposition = wallClockDisposition,
+        requestedTime = requestedTime,
+    )
+
+    /** Days since the epoch of the calendar date [instant] falls on in [zone]. */
+    fun dayNumber(instant: Instant, zone: ZoneId): Int = instant.atZone(zone).toLocalDate().toEpochDay().toInt()
 
     private fun reading(instant: Instant, zone: ResolvedZone): ZoneReading {
         val local = instant.atZone(zone.zone)
@@ -119,5 +134,19 @@ object ConversionEngine {
             utcOffsetSeconds = local.offset.totalSeconds,
             isDeviceLocalZone = zone.isDeviceLocalZone,
         )
+    }
+}
+
+/**
+ * The day marker's wording, shared by the converter (target day minus source
+ * day) and the world clock (each row's day minus the real local today).
+ * Port of Swift `DayRollover`.
+ */
+object DayRollover {
+    fun note(dayOffset: Int): String? = when (dayOffset) {
+        0 -> null
+        1 -> "next day"
+        -1 -> "previous day"
+        else -> if (dayOffset > 0) "+$dayOffset days" else "$dayOffset days"
     }
 }

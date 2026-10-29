@@ -1,12 +1,14 @@
 package dev.thisolivier.timeconverter.core.presentation
 
 import dev.thisolivier.timeconverter.core.engine.ConversionResult
+import dev.thisolivier.timeconverter.core.engine.DayRollover
 import dev.thisolivier.timeconverter.core.engine.WallClockResolver
 import dev.thisolivier.timeconverter.core.engine.ZoneNames
 import dev.thisolivier.timeconverter.core.engine.ZoneReading
 import dev.thisolivier.timeconverter.core.parsing.InputParser
 import dev.thisolivier.timeconverter.core.parsing.Prompt
 import dev.thisolivier.timeconverter.core.parsing.ZoneSuggestionEngine
+import dev.thisolivier.timeconverter.core.worldclock.FavouriteDestination
 import java.time.Instant
 import java.time.ZoneId
 
@@ -93,6 +95,7 @@ class ConverterPresenter(
                 footerSentence = result.relativeOffsetSentence,
                 offsetPhrase = result.relativeOffsetPhrase,
                 daylightSavingNote = note,
+                favouritableTarget = FavouriteDestination.fromConverterTarget(result.target),
             )
         }
 
@@ -101,9 +104,15 @@ class ConverterPresenter(
             "${result.source.placeDescription} · ${result.source.uppercasedTime}"
 
         /** The zone name and cities, with the rollover note riding along — `next day` must never be lost. */
-        fun targetZoneLine(result: ConversionResult): String {
-            val zoneDetail = zoneDetail(result.target)
-            val rollover = result.dayRolloverNote ?: return zoneDetail
+        fun targetZoneLine(result: ConversionResult): String =
+            zoneLine(zoneDetail(result.target), result.dayOffset)
+
+        /**
+         * The same line from its parts, for the world clock, whose day offset is
+         * measured against the real local today rather than the source reading.
+         */
+        fun zoneLine(zoneDetail: String, dayOffset: Int): String {
+            val rollover = DayRollover.note(dayOffset) ?: return zoneDetail
             return if (zoneDetail.isEmpty()) rollover else "$zoneDetail · $rollover"
         }
 
@@ -121,6 +130,6 @@ class ConverterPresenter(
         }
 
         /** The iOS-origin zone name plus representative cities, or an abbreviation's own cities. */
-        private fun zoneDetail(reading: ZoneReading): String = ZoneNames.zoneDetailLine(reading)
+        fun zoneDetail(reading: ZoneReading): String = ZoneNames.zoneDetailLine(reading)
     }
 }
