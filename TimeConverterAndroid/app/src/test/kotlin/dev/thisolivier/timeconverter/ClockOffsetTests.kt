@@ -7,26 +7,27 @@ import org.junit.Test
 class ClockOffsetTests {
     @Test
     fun aFullWidthSwipeIsTwelveHoursAndTheNextSwipeAddsToIt() {
-        var offset = ClockOffset().dragged(translationWidth = 390.0, trackWidth = 390.0)
+        // Pulling left is forwards.
+        var offset = ClockOffset().dragged(translationWidth = -390.0, trackWidth = 390.0)
         assertEquals(720.0, offset.minutes, 0.0)
         offset = offset.settled()
         assertEquals(ClockOffset(settledMinutes = 720.0, draggedMinutes = 0.0), offset)
 
-        offset = offset.dragged(390.0, 390.0).settled()
+        offset = offset.dragged(-390.0, 390.0).settled()
         assertEquals(1440.0, offset.minutes, 0.0)
         assertEquals(1440, offset.wholeMinutes)
 
-        // Leftwards is backwards; nothing stops it going past zero.
-        offset = offset.dragged(-3 * 390.0, 390.0).settled()
+        // Rightwards is backwards; nothing stops it going past zero.
+        offset = offset.dragged(3 * 390.0, 390.0).settled()
         assertEquals(-720.0, offset.minutes, 0.0)
     }
 
     @Test
     fun theValueSnapsToFifteenMinutesButTheStripDoesNot() {
-        var offset = ClockOffset().dragged(10.0, 720.0)
+        var offset = ClockOffset().dragged(-10.0, 720.0)
         assertEquals(15.0, offset.minutes, 0.0)
         assertEquals(10.0, offset.continuousMinutes, 0.0)
-        offset = offset.dragged(7.0, 720.0)
+        offset = offset.dragged(-7.0, 720.0)
         assertEquals(0.0, offset.minutes, 0.0)
         assertEquals(0.0, offset.settled().settledMinutes, 0.0)
         // Halves round away from zero, both ways, as Swift's `.rounded()` does.
@@ -36,12 +37,12 @@ class ClockOffsetTests {
 
     @Test
     fun aZeroWidthTrackIsIgnored() {
-        assertEquals(0.0, ClockOffset().dragged(100.0, 0.0).minutes, 0.0)
+        assertEquals(0.0, ClockOffset().dragged(-100.0, 0.0).minutes, 0.0)
     }
 
     @Test
     fun aDragFromALaunchOffsetStartsThereAndResetIsAFreshOffset() {
-        val moved = ClockOffset.launching(1140).dragged(50.0, 390.0)
+        val moved = ClockOffset.launching(1140).dragged(-50.0, 390.0)
         assertEquals(1140.0 + 50.0 / 390.0 * 720.0, moved.continuousMinutes, 1e-9)
         assertEquals(0, ClockOffset().wholeMinutes)
         assertEquals(null, ClockOffset().minutes.takeIf { it != 0.0 })

@@ -53,11 +53,12 @@ fun ClockOffsetControls(
 
 /**
  * A strip of 15-minute ticks sliding under a fixed accent pointer. A
- * full-width drag is twelve hours, rightwards forwards, and swipes accumulate
- * with no ends ([ClockOffset]); a tap (no drag) resets to now.
+ * full-width drag is twelve hours, pulling LEFT forwards, and swipes
+ * accumulate with no ends ([ClockOffset]); a tap (no drag) resets to now.
  *
- * The strip moves *with* the finger: later times come in from the left, so a
- * tick sits at `centre − (tickMinutes − centreMinutes) × pointsPerMinute`.
+ * The strip is a timeline with later times to the right and moves *with* the
+ * finger, so a tick sits at `centre + (tickMinutes − centreMinutes) × pointsPerMinute`
+ * and pulling the later ticks left under the pointer moves time forwards.
  * Only the ticks inside the frame are drawn, however far out the offset is.
  */
 @Composable
@@ -105,7 +106,7 @@ fun ClockOffsetDial(offset: ClockOffset, onOffsetChange: (ClockOffset) -> Unit, 
         val middle = size.height / 2
         for (tick in firstTick..lastTick) {
             val tickMinutes = tick * ClockOffset.STEP_MINUTES.toLong()
-            val horizontalPosition = (size.width / 2 - (tickMinutes - centreMinutes) * pointsPerMinute).toFloat()
+            val horizontalPosition = (size.width / 2 + (tickMinutes - centreMinutes) * pointsPerMinute).toFloat()
             val isHour = tickMinutes % 60 == 0L
             val isSixHours = tickMinutes % 360 == 0L
             val tickHeight = (if (isSixHours) 28 else if (isHour) 18 else 9).dp.toPx()

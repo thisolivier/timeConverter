@@ -23,10 +23,15 @@ data class ClockOffset(val settledMinutes: Double = 0.0, val draggedMinutes: Dou
     /** What `WorldClock.readings` takes. */
     val wholeMinutes: Int get() = minutes.toInt()
 
-    /** A drag in progress: rightwards is forwards; a whole track width is twelve hours, however many times over. */
+    /**
+     * A drag in progress: pulling LEFT is forwards in time (Olivier, after
+     * build 22 — the strip is a timeline with later times to the right, pulled
+     * along under the pointer); a whole track width is twelve hours, however
+     * many times over.
+     */
     fun dragged(translationWidth: Double, trackWidth: Double): ClockOffset {
         if (trackWidth <= 0) return this
-        return copy(draggedMinutes = translationWidth / trackWidth * MINUTES_PER_TRACK_WIDTH)
+        return copy(draggedMinutes = -translationWidth / trackWidth * MINUTES_PER_TRACK_WIDTH)
     }
 
     /** The finger lifted: bank the drag, snapped, so the next swipe adds to it. */

@@ -127,7 +127,8 @@ The design-free MVP of `docs/favourites-world-clock-spec.md`, mirroring iOS.
 - `ClockOffset` + `ClockOffsetDial`: the endless dial. Canvas tick strip
   (15 min, taller hourly, tallest every 6 h, accent pointer); a full-width
   drag is 12 h measured from touch-down (slop included, as SwiftUI does),
-  rightwards forwards, swipes accumulate, 15-min snapping, tap resets. The
+  pulling LEFT forwards (a timeline with later times to the right, moving
+  with the finger), swipes accumulate, 15-min snapping, tap resets. The
   strip excludes the system back gesture so a swipe can start at the edge.
 - `FavouritesModel`: the core `FavouritesStore` on `SharedPreferences`
   (`favourites` file, key `favouriteDestinations`), mirrored into Compose state.
