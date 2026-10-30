@@ -17,16 +17,31 @@ struct OfflineFallbackZoneResolver: ZoneResolver {
     /// mutation path.
     let identifiersByPlaceName: [String: [String]]
 
-    /// Defaults to the bundled file. The parameter exists so tests (and a
+    /// For a name split across zones, what each zone's picker chip says and
+    /// writes back (item 34b): `portland` → `Portland, Oregon` / `Portland
+    /// Oregon`, not `Los Angeles`. Parallel to the entry's identifiers; absent
+    /// for the single-zone majority, which never show a picker.
+    let choicesByPlaceName: [String: [PlaceChoice]]
+
+    /// Defaults to the bundled file. The parameters exist so tests (and a
     /// future "downloaded gazetteer" path) can supply their own entries.
-    init(identifiersByPlaceName: [String: [String]] = OfflineFallbackGazetteer.bundledEntries) {
+    init(
+        identifiersByPlaceName: [String: [String]] = OfflineFallbackGazetteer.bundledEntries,
+        choicesByPlaceName: [String: [PlaceChoice]] = OfflineFallbackGazetteer.bundledChoices
+    ) {
         self.identifiersByPlaceName = identifiersByPlaceName
+        self.choicesByPlaceName = choicesByPlaceName
     }
 
     func candidates(for normalizedZoneToken: String) -> [ZoneCandidate] {
         guard let identifiers = identifiersByPlaceName[normalizedZoneToken] else { return [] }
-        return identifiers.map {
-            ZoneCandidate(timeZoneIdentifier: $0, matchSource: matchSource)
+        let choices = choicesByPlaceName[normalizedZoneToken] ?? []
+        return identifiers.enumerated().map { index, identifier in
+            ZoneCandidate(
+                timeZoneIdentifier: identifier,
+                matchSource: matchSource,
+                placeChoice: index < choices.count ? choices[index] : nil
+            )
         }
     }
 
@@ -49,6 +64,7 @@ enum OfflineFallbackGazetteer {
 
     /// Decoded once, on first use.
     static let bundledEntries: [String: [String]] = decodeEntries(at: bundledFileURL)
+    static let bundledChoices: [String: [PlaceChoice]] = decodeChoices(at: bundledFileURL)
 
     /// `Bundle.module` — the resource bundle SwiftPM generates for this target
     /// — and nothing else.
@@ -66,15 +82,30 @@ enum OfflineFallbackGazetteer {
     }
 
     static func decodeEntries(at fileURL: URL?) -> [String: [String]] {
-        guard let fileURL, let fileData = try? Data(contentsOf: fileURL) else { return [:] }
-        guard let file = try? JSONDecoder().decode(GazetteerFile.self, from: fileData) else {
-            return [:]
-        }
         var identifiersByPlaceName: [String: [String]] = [:]
-        for entry in file.entries where !entry.timeZoneIdentifiers.isEmpty {
+        for entry in decodeFile(at: fileURL)?.entries ?? [] where !entry.timeZoneIdentifiers.isEmpty {
             identifiersByPlaceName[entry.name.lowercased()] = entry.timeZoneIdentifiers
         }
         return identifiersByPlaceName
+    }
+
+    /// Only entries that carry `choices` appear here; a mismatched count is
+    /// kept as-is and left for `GazetteerCoverageTests` to reject, rather than
+    /// silently dropping labels.
+    static func decodeChoices(at fileURL: URL?) -> [String: [PlaceChoice]] {
+        var choicesByPlaceName: [String: [PlaceChoice]] = [:]
+        for entry in decodeFile(at: fileURL)?.entries ?? [] {
+            guard let choices = entry.choices, !choices.isEmpty else { continue }
+            choicesByPlaceName[entry.name.lowercased()] = choices.map {
+                PlaceChoice(label: $0.label, typedForm: $0.typed)
+            }
+        }
+        return choicesByPlaceName
+    }
+
+    private static func decodeFile(at fileURL: URL?) -> GazetteerFile? {
+        guard let fileURL, let fileData = try? Data(contentsOf: fileURL) else { return nil }
+        return try? JSONDecoder().decode(GazetteerFile.self, from: fileData)
     }
 
     struct GazetteerFile: Decodable {
@@ -84,6 +115,16 @@ enum OfflineFallbackGazetteer {
         struct Entry: Decodable {
             let name: String
             let timeZoneIdentifiers: [String]
+            /// Parallel to `timeZoneIdentifiers`, present only on split names.
+            let choices: [Choice]?
+
+            struct Choice: Decodable {
+                /// What the chip and the prompt say: `Portland, Oregon`.
+                let label: String
+                /// What tapping the chip writes into the sentence, which must
+                /// itself resolve to this zone: `Portland Oregon`.
+                let typed: String
+            }
         }
     }
 }

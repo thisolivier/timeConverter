@@ -56,7 +56,7 @@ class ConverterPresenter(
         is Prompt.AmbiguousZone -> prompt.choices.map { choice ->
             ReplacementChip(
                 label = "${choice.representativeCity} (${choice.utcOffsetDescription})",
-                replacementText = choice.representativeCity,
+                replacementText = choice.typedForm,
                 replacementRange = prompt.tokenRange,
             )
         }

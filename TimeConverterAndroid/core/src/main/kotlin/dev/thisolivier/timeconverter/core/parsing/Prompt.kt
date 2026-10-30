@@ -6,8 +6,11 @@ package dev.thisolivier.timeconverter.core.parsing
  */
 data class ZoneChoice(
     val timeZoneIdentifier: String,
+    /** What the row says: the identifier's city, or a split place name's own label (`Portland, Oregon`, item 34b). */
     val representativeCity: String,
     val utcOffsetDescription: String,
+    /** What tapping the row writes into the sentence; equal to the label except for split names (`Portland Oregon`). */
+    val typedForm: String = representativeCity,
 )
 
 /**

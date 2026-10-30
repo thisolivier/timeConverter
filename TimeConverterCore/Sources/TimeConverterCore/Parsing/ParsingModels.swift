@@ -67,6 +67,18 @@ enum ZoneMatchSource: String, Equatable, Sendable {
     case deviceLocalZone
 }
 
+/// How a split place name's picker names one of its zones (item 34b).
+///
+/// `portland` means Oregon or Maine, and a person who types it may not know
+/// which coast's clock is which — so the chip says `Portland, Oregon`, not
+/// `Los Angeles`. `typedForm` is what the tap writes into the sentence, and it
+/// has to resolve to the same zone on its own (`Portland Oregon` is its own
+/// gazetteer entry); `GazetteerCoverageTests` enforces that.
+struct PlaceChoice: Equatable, Sendable {
+    let label: String
+    let typedForm: String
+}
+
 /// One possible meaning of a zone token, as emitted by a resolver.
 struct ZoneCandidate: Equatable, Sendable {
     let timeZoneIdentifier: String
@@ -75,15 +87,21 @@ struct ZoneCandidate: Equatable, Sendable {
     /// their curated tables cover. Everything else leaves it nil and keeps the
     /// identifier-derived city name (item 13).
     let abbreviationDisplay: AbbreviationDisplay?
+    /// Set only by the gazetteer, and only for a split name that carries
+    /// per-zone labels. Nil everywhere else, where the identifier's city is
+    /// the right chip.
+    let placeChoice: PlaceChoice?
 
     init(
         timeZoneIdentifier: String,
         matchSource: ZoneMatchSource,
-        abbreviationDisplay: AbbreviationDisplay? = nil
+        abbreviationDisplay: AbbreviationDisplay? = nil,
+        placeChoice: PlaceChoice? = nil
     ) {
         self.timeZoneIdentifier = timeZoneIdentifier
         self.matchSource = matchSource
         self.abbreviationDisplay = abbreviationDisplay
+        self.placeChoice = placeChoice
     }
 
     /// City-style name derived from the identifier (`America/New_York` → `New
@@ -92,6 +110,17 @@ struct ZoneCandidate: Equatable, Sendable {
     /// label has to be something the user can also type.
     var representativeCityName: String {
         ZoneDisplayName.forIdentifier(timeZoneIdentifier)
+    }
+
+    /// What a picker row for this candidate says — the place's own label when
+    /// it has one, the identifier's city otherwise.
+    var pickerLabel: String {
+        placeChoice?.label ?? representativeCityName
+    }
+
+    /// What tapping that row writes into the sentence.
+    var pickerTypedForm: String {
+        placeChoice?.typedForm ?? representativeCityName
     }
 
     /// Name for the echo line: expanded for abbreviations, the plain city

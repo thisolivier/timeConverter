@@ -150,7 +150,22 @@ chain stops at the **first resolver with ≥1 candidate**.
    suburbs, towns well below that notability, ordinary words and first names
    that happen to be places (`orange`, `mary`, `young`), two-to-four-letter
    codes (those belong in the alias table; `dc` and `hcmc` are the
-   exceptions), and sovereign countries (country table).
+   exceptions).
+   **Amended the same day (item 34b)**: (a) sovereign countries the country
+   table does not carry are in the gazetteer after all (v5) — 120 single-clock
+   countries resolve (`tonga`, `bolivia`, `myanmar`), and the multi-clock ones
+   are split entries that prompt (`kiribati` = Gilbert / Phoenix / Line
+   Islands, `papua new guinea`, `mongolia`, `ecuador` = mainland / Galápagos,
+   `dr congo`); (b) **a split name's P4 chips name the place, not the zone's
+   representative city**. `9am in Portland` offers `Portland, Oregon (UTC-8)`
+   and `Portland, Maine (UTC-5)`, and a tap writes `Portland Oregon` into the
+   sentence, which resolves on its own. Each split entry carries `choices`
+   parallel to its identifiers — `label` (shown) and `typed` (written back) —
+   and the typed form must resolve to exactly that zone; where the split is a
+   region, the typed form is a representative city (`tennessee` → `Nashville`
+   / `Knoxville`, `kentucky` → `Louisville` / `Bowling Green`). Every other
+   P4 (CST, Portugal, Antarctica) keeps the identifier city as both label and
+   replacement.
 
 Outcomes per token:
 - **1 candidate** (including a country's canonical zone) → resolved; the echoed

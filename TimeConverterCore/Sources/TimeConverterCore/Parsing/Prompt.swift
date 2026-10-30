@@ -11,8 +11,21 @@ import Foundation
 /// offset at the injected reference date.
 struct ZoneChoice: Equatable, Sendable {
     let timeZoneIdentifier: String
+    /// What the row says: the identifier's city (`Chicago`), or for a split
+    /// place name its own label (`Portland, Oregon`, item 34b).
     let representativeCity: String
     let utcOffsetDescription: String
+    /// What tapping the row writes into the sentence. Equal to
+    /// `representativeCity` except for split names, whose label has a comma
+    /// the tokenizer would keep (`Portland Oregon`).
+    let typedForm: String
+
+    init(timeZoneIdentifier: String, representativeCity: String, utcOffsetDescription: String, typedForm: String? = nil) {
+        self.timeZoneIdentifier = timeZoneIdentifier
+        self.representativeCity = representativeCity
+        self.utcOffsetDescription = utcOffsetDescription
+        self.typedForm = typedForm ?? representativeCity
+    }
 }
 
 /// The spec's prompts, as values. Item 4 renders these; the parser never

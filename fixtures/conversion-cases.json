@@ -559,6 +559,39 @@
         ],
         "dayOffset" : 0,
         "display" : {
+          "detailLine" : "Pacific/Tongatapu → Pacific/Efate",
+          "echoLine" : "3:00 pm Tongatapu (UTC+13) → 1:00 pm Efate (UTC+11)",
+          "footerSentence" : "Efate is 2 hours behind Tongatapu.",
+          "offsetPhrase" : "2 hours behind",
+          "sourceClockDigits" : "3:00",
+          "sourceEchoLine" : "Tongatapu · 3:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Tongatapu",
+          "sourceZoneLine" : "Tonga Standard Time (Tongatapu)",
+          "targetClockDigits" : "1:00",
+          "targetMeridiem" : "PM",
+          "targetPlaceLabel" : "In Efate",
+          "targetPlaceName" : "Efate",
+          "targetZoneLine" : "Vanuatu Standard Time (Efate)"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "15:00",
+        "sourceZone" : "Pacific/Tongatapu",
+        "targetZone" : "Pacific/Efate"
+      },
+      "id" : "gazetteer-small-countries",
+      "input" : "3pm Tonga to Vanuatu",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Item 34b: countries the country table does not carry ride the gazetteer.",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
+        "dayOffset" : 0,
+        "display" : {
           "detailLine" : "Asia/Kathmandu → Europe/London",
           "echoLine" : "3:00 pm Kathmandu (UTC+5:45) → 9:15 am London (UTC+0)",
           "footerSentence" : "London is 5.75 hours behind Kathmandu.",
@@ -1178,26 +1211,58 @@
       "expected" : {
         "chips" : [
           {
-            "label" : "Los Angeles (UTC-8)",
+            "label" : "Portland, Oregon (UTC-8)",
             "replacementEnd" : 15,
             "replacementStart" : 7,
-            "replacementText" : "Los Angeles"
+            "replacementText" : "Portland Oregon"
           },
           {
-            "label" : "New York (UTC-5)",
+            "label" : "Portland, Maine (UTC-5)",
             "replacementEnd" : 15,
             "replacementStart" : 7,
-            "replacementText" : "New York"
+            "replacementText" : "Portland Maine"
           }
         ],
         "kind" : "prompt",
-        "message" : "'portland' could mean more than one place — pick one: Los Angeles (UTC-8), New York (UTC-5)",
+        "message" : "'portland' could mean more than one place — pick one: Portland, Oregon (UTC-8), Portland, Maine (UTC-5)",
         "promptId" : "P4"
       },
       "id" : "p4-split-city-name",
       "input" : "9am in Portland",
       "localZone" : "America/Los_Angeles",
-      "note" : "Item 34: a name shared by notable places in different zones (Oregon, Maine) prompts.",
+      "note" : "Item 34b: a name shared by notable places in different zones prompts, and the chips name the place (Portland, Oregon), writing back a long form that resolves (Portland Oregon).",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+          {
+            "label" : "Kiribati, Gilbert Islands (UTC+12)",
+            "replacementEnd" : 15,
+            "replacementStart" : 7,
+            "replacementText" : "Gilbert Islands"
+          },
+          {
+            "label" : "Kiribati, Phoenix Islands (UTC+13)",
+            "replacementEnd" : 15,
+            "replacementStart" : 7,
+            "replacementText" : "Phoenix Islands"
+          },
+          {
+            "label" : "Kiribati, Line Islands (UTC+14)",
+            "replacementEnd" : 15,
+            "replacementStart" : 7,
+            "replacementText" : "Line Islands"
+          }
+        ],
+        "kind" : "prompt",
+        "message" : "'kiribati' could mean more than one place — pick one: Kiribati, Gilbert Islands (UTC+12), Kiribati, Phoenix Islands (UTC+13), Kiribati, Line Islands (UTC+14)",
+        "promptId" : "P4"
+      },
+      "id" : "p4-split-country",
+      "input" : "9am in Kiribati",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Item 34b: a country with three clocks prompts with its island groups as chips.",
       "now" : "2026-01-15T12:00:00Z"
     },
     {

@@ -40,15 +40,30 @@ data class AbbreviationDisplay(val name: String, val representativeCities: List<
         get() = if (representativeCities.isEmpty()) name else "$name (${representativeCities.joinToString(", ")})"
 }
 
+/**
+ * How a split place name's picker names one of its zones (item 34b): the chip
+ * for `portland` says `Portland, Oregon`, not `Los Angeles`, and writes back
+ * `typedForm`, which must resolve to the same zone on its own. Port of Swift `PlaceChoice`.
+ */
+data class PlaceChoice(val label: String, val typedForm: String)
+
 /** One possible meaning of a zone token, as emitted by a resolver. Port of Swift `ZoneCandidate`. */
 data class ZoneCandidate(
     val timeZoneIdentifier: String,
     val matchSource: ZoneMatchSource,
     /** Set only by the two abbreviation resolvers, for abbreviations their curated tables cover. */
     val abbreviationDisplay: AbbreviationDisplay? = null,
+    /** Set only by the gazetteer, for a split name that carries per-zone labels. */
+    val placeChoice: PlaceChoice? = null,
 ) {
     /** `America/New_York` → `New York` — what pickers and chips show, because a chip writes it back. */
     val representativeCityName: String get() = ZoneDisplayName.forIdentifier(timeZoneIdentifier)
+
+    /** The place's own label when it has one, the identifier's city otherwise. */
+    val pickerLabel: String get() = placeChoice?.label ?: representativeCityName
+
+    /** What tapping that row writes into the sentence. */
+    val pickerTypedForm: String get() = placeChoice?.typedForm ?: representativeCityName
 
     /** Expanded for abbreviations, the plain city otherwise. */
     val echoDisplayName: String get() = abbreviationDisplay?.name ?: representativeCityName

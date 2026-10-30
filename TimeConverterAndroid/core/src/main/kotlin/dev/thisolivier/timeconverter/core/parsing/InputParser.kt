@@ -77,8 +77,9 @@ class InputParser(val zoneResolverChain: ZoneResolverChain = ZoneResolverChain.s
             candidates.filter { ZoneResolverChain.isValidIdentifier(it.timeZoneIdentifier) }.map { candidate ->
                 ZoneChoice(
                     timeZoneIdentifier = candidate.timeZoneIdentifier,
-                    representativeCity = candidate.representativeCityName,
+                    representativeCity = candidate.pickerLabel,
                     utcOffsetDescription = UtcOffsetFormatting.description(ZoneId.of(candidate.timeZoneIdentifier), instant),
+                    typedForm = candidate.pickerTypedForm,
                 )
             }
     }

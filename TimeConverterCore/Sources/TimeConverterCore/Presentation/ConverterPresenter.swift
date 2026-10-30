@@ -170,7 +170,7 @@ struct ConverterPresenter: Sendable {
             return choices.map { choice in
                 ReplacementChip(
                     label: "\(choice.representativeCity) (\(choice.utcOffsetDescription))",
-                    replacementText: choice.representativeCity,
+                    replacementText: choice.typedForm,
                     replacementRange: tokenRange
                 )
             }

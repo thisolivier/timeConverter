@@ -47,6 +47,23 @@ class OfflineFallbackGazetteerTests {
         assertTrue(sanJose.size > 1)
     }
 
+    /** Item 34b: the chips for a split name say which place, and write back a form that resolves to that zone. */
+    @Test
+    fun `a split name carries a label and a typed form per zone`() {
+        val portland = assertIs<ZoneResolution.Ambiguous>(ZoneResolverChain.standard.resolve("portland")).candidates
+        assertEquals(listOf("Portland, Oregon", "Portland, Maine"), portland.map { it.pickerLabel })
+        assertEquals(listOf("Portland Oregon", "Portland Maine"), portland.map { it.pickerTypedForm })
+        for ((name, identifiers) in entries) {
+            if (identifiers.size < 2) continue
+            val choices = OfflineFallbackGazetteer.bundledChoices[name].orEmpty()
+            assertEquals(identifiers.size, choices.size, name)
+            for ((identifier, choice) in identifiers.zip(choices)) {
+                val resolved = assertIs<ZoneResolution.Resolved>(ZoneResolverChain.standard.resolve(choice.typedForm.lowercase()), "$name → ${choice.label}")
+                assertEquals(identifier, resolved.zone.zone.id, "$name → ${choice.label}")
+            }
+        }
+    }
+
     @Test
     fun `a malformed file degrades to an empty table`() {
         assertTrue(OfflineFallbackGazetteer.decodeEntries("not json").isEmpty())

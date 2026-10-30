@@ -88,6 +88,60 @@ struct GazetteerCoverageTests {
         #expect(prompt.ambiguousChoices?.count == expectedChoiceCount)
     }
 
+    /// Item 34b — a split name's chips name the place, not the zone's city
+    /// (`Portland, Oregon`, not `Los Angeles`), and what a chip writes back
+    /// resolves straight to that zone on its own.
+    @Test func everySplitNameCarriesChoicesThatResolve() {
+        let choicesByName = OfflineFallbackGazetteer.bundledChoices
+        for (name, identifiers) in entries where identifiers.count > 1 {
+            let choices = choicesByName[name] ?? []
+            #expect(choices.count == identifiers.count, Comment(rawValue: name))
+            for (identifier, choice) in zip(identifiers, choices) {
+                #expect(choice.label != ZoneDisplayName.forIdentifier(identifier), Comment(rawValue: "\(name): \(choice.label) is just the zone's city"))
+                guard case let .resolved(resolved) = ZoneResolverChain.standard.resolve(choice.typedForm.lowercased()) else {
+                    Issue.record("\(name): '\(choice.typedForm)' does not resolve to one zone")
+                    continue
+                }
+                #expect(resolved.timeZone.identifier == identifier, Comment(rawValue: "\(name) → \(choice.label)"))
+            }
+        }
+        // And no single-zone entry carries choices it would never show.
+        for name in choicesByName.keys {
+            #expect((entries[name]?.count ?? 0) > 1, Comment(rawValue: name))
+        }
+    }
+
+    /// The motivating case end to end: a person who types Portland may not
+    /// know which coast's clock is which, so the chips say which Portland.
+    @Test func portlandChipsNameThePlaceAndWriteBackALongForm() throws {
+        let prompt = try #require(parser.parse("9am in Portland", now: FixedDates.winterMidday).promptValue)
+        #expect(prompt.ambiguousChoices?.map(\.representativeCity) == ["Portland, Oregon", "Portland, Maine"])
+        #expect(prompt.ambiguousChoices?.map(\.typedForm) == ["Portland Oregon", "Portland Maine"])
+        let chosen = try #require(parser.parse("9am in Portland Oregon", now: FixedDates.winterMidday).requestValue)
+        #expect(chosen.targetZone.timeZone.identifier == "America/Los_Angeles")
+    }
+
+    /// Countries the country table does not carry ride the gazetteer (v5);
+    /// the multi-clock ones prompt with per-zone chips like any split name.
+    @Test(arguments: [
+        ("tonga", "Pacific/Tongatapu"), ("vanuatu", "Pacific/Efate"), ("myanmar", "Asia/Yangon"),
+        ("bolivia", "America/La_Paz"), ("tanzania", "Africa/Dar_es_Salaam"), ("kazakhstan", "Asia/Almaty"),
+    ])
+    func smallCountriesResolve(token: String, expectedIdentifier: String) throws {
+        guard case let .resolved(resolvedZone) = ZoneResolverChain.standard.resolve(token) else {
+            Issue.record("\(token) did not resolve to a single zone")
+            return
+        }
+        #expect(resolvedZone.timeZone.identifier == expectedIdentifier)
+    }
+
+    @Test(arguments: [("kiribati", 3), ("papua new guinea", 2), ("mongolia", 2), ("ecuador", 2), ("dr congo", 2)])
+    func multiClockCountriesPrompt(token: String, expectedChoiceCount: Int) throws {
+        let prompt = try #require(parser.parse("9am in \(token)", now: FixedDates.winterMidday).promptValue)
+        #expect(prompt.specIdentifier == "P4")
+        #expect(prompt.ambiguousChoices?.count == expectedChoiceCount)
+    }
+
     /// A split name never lists the same zone twice, and never lists two zones
     /// that merely share a clock — a prompt between identical offsets would be
     /// a question with no answer.
@@ -108,8 +162,10 @@ struct GazetteerCoverageTests {
         ("portlnd", "portland"), ("salzberg", "salzburg"),
     ])
     func newCitiesAreOfferedForTheirTypos(typo: String, expected: String) {
+        // `contains`, not `first`: the engine ranks by edit distance alone, and
+        // `mumbia` sits two edits from both `mumbai` and `gambia` (v5).
         let offered = ZoneSuggestionEngine.suggestions(for: typo, in: .standard).map(\.token)
-        #expect(offered.first == expected)
+        #expect(offered.contains(expected))
     }
 
     /// The abbreviation guard still holds: a code-shaped typo never gets a city

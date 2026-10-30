@@ -127,9 +127,11 @@ struct InputParser: Sendable {
                 timeZoneIdentifier: candidate.timeZoneIdentifier,
                 // The city, not the expanded abbreviation name: a chip's label
                 // has to be something the user could also have typed, and
-                // tapping it writes exactly this word into the sentence.
-                representativeCity: candidate.representativeCityName,
-                utcOffsetDescription: UTCOffsetFormatting.description(for: timeZone, at: instant)
+                // tapping it writes the typed form into the sentence. A split
+                // place name supplies both itself (item 34b).
+                representativeCity: candidate.pickerLabel,
+                utcOffsetDescription: UTCOffsetFormatting.description(for: timeZone, at: instant),
+                typedForm: candidate.pickerTypedForm
             )
         }
     }

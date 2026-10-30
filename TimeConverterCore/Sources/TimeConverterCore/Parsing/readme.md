@@ -194,12 +194,30 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   earlier step answers is omitted, because it could never be reached. A name
   shared by notable places in *different* zones lists every zone so it prompts
   (`portland` = Oregon / Maine, `springfield`, `cambridge`, `hamilton`,
-  `victoria`), and the long form (`portland oregon`) resolves directly; a name
-  whose other bearers are obscure, or in the same zone, maps straight to the
-  famous one (`richmond` → Virginia, `augusta` → Eastern either way).
-  Sovereign countries stay out of the file — they belong to the country table
-  and its canonical-clock policy. `GazetteerCoverageTests` enforces
-  reachability, valid identifiers and distinct clocks on every split name.
+  `victoria`); a name whose other bearers are obscure, or in the same zone,
+  maps straight to the famous one (`richmond` → Virginia, `augusta` → Eastern
+  either way). Sovereign countries the country table does not carry are in the
+  file too (v5, item 34b): single-clock ones resolve, multi-clock ones
+  (`kiribati`, `papua new guinea`, `mongolia`, `ecuador`, `dr congo`) prompt.
+  `GazetteerCoverageTests` enforces reachability, valid identifiers and
+  distinct clocks on every split name.
+- **A split name's chips name the place, not the zone's city** (item 34b,
+  2026-10-30). Someone who types `Portland` may not know which coast's clock
+  is which, so `Los Angeles (UTC-8)` / `New York (UTC-5)` was a poor choice to
+  offer. Split entries carry `choices` parallel to their identifiers: a
+  `label` the chip and the prompt show (`Portland, Oregon`) and a `typed` form
+  the tap writes into the sentence (`Portland Oregon`) — the comma stays out
+  because the tokenizer would keep it. The typed form must itself be a name
+  that resolves to that one zone, which is why the file also carries the long
+  forms (`portland oregon`, `santa cruz de tenerife`, `georgia country`); for
+  region splits it is a representative city (`tennessee` → `Nashville` /
+  `Knoxville`). The gazetteer resolver attaches the choice to its
+  `ZoneCandidate`, the parser copies label and typed form onto `ZoneChoice`,
+  and the presenter writes `typedForm` while labelling with
+  `representativeCity` — every other candidate leaves both equal to the
+  identifier's city, so CST and Antarctica chips are untouched. After the tap
+  the echo still names the zone used (`Los Angeles`), as for every gazetteer
+  place.
 - **Echo always names the zone actually used**, derived from the resolved
   identifier rather than the typed token: `porto` echoes as Lisbon. That is what
   makes the canonical-zone and alias choices visible.
