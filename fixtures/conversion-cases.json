@@ -524,6 +524,39 @@
         "chips" : [
 
         ],
+        "dayOffset" : 1,
+        "display" : {
+          "detailLine" : "Europe/Vienna → Australia/Brisbane",
+          "echoLine" : "5:00 pm Vienna (UTC+1) → 2:00 am Brisbane (UTC+10) +1d",
+          "footerSentence" : "Brisbane is 9 hours ahead of Vienna.",
+          "offsetPhrase" : "9 hours ahead",
+          "sourceClockDigits" : "5:00",
+          "sourceEchoLine" : "Vienna · 5:00 PM",
+          "sourceMeridiem" : "PM",
+          "sourcePlaceName" : "Vienna",
+          "sourceZoneLine" : "Central European Time (Vienna)",
+          "targetClockDigits" : "2:00",
+          "targetMeridiem" : "AM",
+          "targetPlaceLabel" : "In Brisbane",
+          "targetPlaceName" : "Brisbane",
+          "targetZoneLine" : "Australian Eastern Standard Time (Brisbane) · next day"
+        },
+        "kind" : "conversion",
+        "requestedTime" : "17:00",
+        "sourceZone" : "Europe/Vienna",
+        "targetZone" : "Australia/Brisbane"
+      },
+      "id" : "gazetteer-regional-capitals",
+      "input" : "5pm Salzburg to Cairns",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Item 34: regional capitals on both sides via the grown gazetteer; rolls to the next day.",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+
+        ],
         "dayOffset" : 0,
         "display" : {
           "detailLine" : "Asia/Kathmandu → Europe/London",
@@ -1145,6 +1178,32 @@
       "expected" : {
         "chips" : [
           {
+            "label" : "Los Angeles (UTC-8)",
+            "replacementEnd" : 15,
+            "replacementStart" : 7,
+            "replacementText" : "Los Angeles"
+          },
+          {
+            "label" : "New York (UTC-5)",
+            "replacementEnd" : 15,
+            "replacementStart" : 7,
+            "replacementText" : "New York"
+          }
+        ],
+        "kind" : "prompt",
+        "message" : "'portland' could mean more than one place — pick one: Los Angeles (UTC-8), New York (UTC-5)",
+        "promptId" : "P4"
+      },
+      "id" : "p4-split-city-name",
+      "input" : "9am in Portland",
+      "localZone" : "America/Los_Angeles",
+      "note" : "Item 34: a name shared by notable places in different zones (Oregon, Maine) prompts.",
+      "now" : "2026-01-15T12:00:00Z"
+    },
+    {
+      "expected" : {
+        "chips" : [
+          {
             "label" : "London?",
             "replacementEnd" : 10,
             "replacementStart" : 4,
@@ -1163,7 +1222,24 @@
     {
       "expected" : {
         "chips" : [
-
+          {
+            "label" : "Halle?",
+            "replacementEnd" : 5,
+            "replacementStart" : 0,
+            "replacementText" : "Halle"
+          },
+          {
+            "label" : "Hilo?",
+            "replacementEnd" : 5,
+            "replacementStart" : 0,
+            "replacementText" : "Hilo"
+          },
+          {
+            "label" : "Hull?",
+            "replacementEnd" : 5,
+            "replacementStart" : 0,
+            "replacementText" : "Hull"
+          }
         ],
         "kind" : "prompt",
         "message" : "Don't recognize 'hello' — try a timezone (ET, PST), a major city, or a country",

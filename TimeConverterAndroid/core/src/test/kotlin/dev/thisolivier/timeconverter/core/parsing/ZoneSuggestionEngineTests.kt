@@ -41,7 +41,10 @@ class ZoneSuggestionEngineTests {
         assertFalse("london" in suggestedTokens("london"))
         assertTrue(suggestedTokens("qqqqqqqqqq").isEmpty())
         assertTrue(suggestedTokens("").isEmpty())
-        assertTrue(suggestedTokens("hello").isEmpty())
+        // Since item 34 the gazetteer is big enough that "hello" finds real cities
+        // within two edits (Halle, Hilo, Hull — pinned by the shared fixture); a
+        // word with no neighbours still gets nothing.
+        assertTrue(suggestedTokens("zzzzzz").isEmpty())
     }
 
     @Test

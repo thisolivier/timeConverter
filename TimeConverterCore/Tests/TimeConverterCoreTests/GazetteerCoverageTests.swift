@@ -2,7 +2,8 @@ import Testing
 import Foundation
 @testable import TimeConverterCore
 
-/// Item 26 — the grown offline gazetteer (spec amended 2026-10-28).
+/// Item 26 — the grown offline gazetteer (spec amended 2026-10-28), grown
+/// again for item 34 (2026-10-30) to regional capitals and comparable places.
 ///
 /// The file is editorial data, so these tests pin a sample of real cities to
 /// their zones and check the whole file's integrity: every identifier is a real
@@ -31,6 +32,32 @@ struct GazetteerCoverageTests {
         ("quito", "America/Guayaquil"),
         ("salvador", "America/Bahia"),
         ("washington dc", "America/New_York"),
+        // Item 34 — regional capitals and places of comparable notoriety.
+        ("montgomery", "America/Chicago"),
+        ("sacramento", "America/Los_Angeles"),
+        ("portland oregon", "America/Los_Angeles"),
+        ("fredericton", "America/Moncton"),
+        ("oaxaca", "America/Mexico_City"),
+        ("florianopolis", "America/Sao_Paulo"),
+        ("sheffield", "Europe/London"),
+        ("galway", "Europe/Dublin"),
+        ("salzburg", "Europe/Vienna"),
+        ("wiesbaden", "Europe/Berlin"),
+        ("bavaria", "Europe/Berlin"),
+        ("tenerife", "Atlantic/Canary"),
+        ("svalbard", "Arctic/Longyearbyen"),
+        ("kazan", "Europe/Moscow"),
+        ("tyumen", "Asia/Yekaterinburg"),
+        ("thiruvananthapuram", "Asia/Kolkata"),
+        ("kerala", "Asia/Kolkata"),
+        ("hohhot", "Asia/Shanghai"),
+        ("okinawa", "Asia/Tokyo"),
+        ("cairns", "Australia/Brisbane"),
+        ("queensland", "Australia/Brisbane"),
+        ("dunedin", "Pacific/Auckland"),
+        ("bora bora", "Pacific/Tahiti"),
+        ("texas", "America/Chicago"),
+        ("dc", "America/New_York"),
     ])
     func sampleCitiesResolveToTheirZone(token: String, expectedIdentifier: String) throws {
         guard case let .resolved(resolvedZone) = ZoneResolverChain.standard.resolve(token) else {
@@ -49,18 +76,37 @@ struct GazetteerCoverageTests {
         #expect(mumbai.sourceZone.timeZone.identifier == "Asia/Kolkata")
     }
 
-    /// Names shared by places in different zones list both, so they prompt.
-    @Test(arguments: ["san jose", "washington"])
-    func splitNamesPrompt(token: String) throws {
+    /// Names shared by notable places in different zones list every zone, so
+    /// they prompt — Portland (Oregon, Maine) is item 34's motivating case.
+    @Test(arguments: [
+        ("san jose", 2), ("washington", 2), ("portland", 2), ("cambridge", 2), ("newcastle", 2),
+        ("valencia", 2), ("springfield", 3), ("hamilton", 3), ("victoria", 3), ("santa cruz", 3),
+    ])
+    func splitNamesPrompt(token: String, expectedChoiceCount: Int) throws {
         let prompt = try #require(parser.parse("9am in \(token)", now: FixedDates.winterMidday).promptValue)
         #expect(prompt.specIdentifier == "P4")
-        #expect(prompt.ambiguousChoices?.count == 2)
+        #expect(prompt.ambiguousChoices?.count == expectedChoiceCount)
+    }
+
+    /// A split name never lists the same zone twice, and never lists two zones
+    /// that merely share a clock — a prompt between identical offsets would be
+    /// a question with no answer.
+    @Test func splitNamesOfferDistinctClocks() {
+        for (name, identifiers) in entries where identifiers.count > 1 {
+            let offsets = identifiers.compactMap { TimeZone(identifier: $0) }.map {
+                [$0.secondsFromGMT(for: FixedDates.winterMidday), $0.secondsFromGMT(for: FixedDates.summerMidday)]
+            }
+            #expect(Set(offsets.map { "\($0)" }).count == identifiers.count, Comment(rawValue: name))
+        }
     }
 
     /// The suggester reads the gazetteer's vocabulary, so the new cities are
     /// offered for their own typos — and the larger vocabulary still leaves
     /// the original typo rows (`ZoneSuggestionEngineTests`) untouched.
-    @Test(arguments: [("barcelna", "barcelona"), ("mumbia", "mumbai"), ("shenzen", "shenzhen")])
+    @Test(arguments: [
+        ("barcelna", "barcelona"), ("mumbia", "mumbai"), ("shenzen", "shenzhen"),
+        ("portlnd", "portland"), ("salzberg", "salzburg"),
+    ])
     func newCitiesAreOfferedForTheirTypos(typo: String, expected: String) {
         let offered = ZoneSuggestionEngine.suggestions(for: typo, in: .standard).map(\.token)
         #expect(offered.first == expected)
@@ -74,7 +120,7 @@ struct GazetteerCoverageTests {
     }
 
     @Test func everyIdentifierIsARealTimeZone() {
-        #expect(entries.count > 250)
+        #expect(entries.count > 3000)
         for (name, identifiers) in entries {
             #expect(!identifiers.isEmpty, Comment(rawValue: name))
             for identifier in identifiers {

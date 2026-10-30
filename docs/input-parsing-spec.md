@@ -132,6 +132,25 @@ chain stops at the **first resolver with ≥1 candidate**.
    `valencia`, `hamilton`, `victoria`, `st john's`) or lists both zones so it
    prompts (`san jose` = California / Costa Rica, `washington` = DC / state);
    a clear winner is mapped with a comment (`birmingham` → England).
+   **Grown again 2026-10-30 (item 34)**: ~3,100 names. The brief was "cities
+   of Portland's notoriety — regional capitals": every US state capital and
+   major US city, Canadian provincial capitals, Mexican and Brazilian state
+   capitals, UK and Irish cities, European regional capitals (German states,
+   Italian regions, Spanish autonomous communities, French regions), Russian
+   regional capitals, Indian state capitals, Chinese provincial capitals,
+   Japanese prefectural capitals, South-East Asian and Australian regional
+   centres, Pacific islands and territories — plus well-known regions (US
+   states, Canadian provinces, `bavaria`, `tuscany`, `kerala`, `queensland`)
+   and destinations (`aspen`, `zermatt`, `uluru`, `bora bora`). The split-name
+   rule changed: the names left out in item 26 now list every notable zone so
+   they prompt (`portland` = Oregon / Maine; `springfield`, `hamilton`,
+   `victoria`, `santa cruz` three ways), and a long form (`portland oregon`,
+   `hamilton ontario`) resolves directly. Two zones that merely share a clock
+   are never listed together. Deliberately excluded: neighbourhoods and
+   suburbs, towns well below that notability, ordinary words and first names
+   that happen to be places (`orange`, `mary`, `young`), two-to-four-letter
+   codes (those belong in the alias table; `dc` and `hcmc` are the
+   exceptions), and sovereign countries (country table).
 
 Outcomes per token:
 - **1 candidate** (including a country's canonical zone) → resolved; the echoed

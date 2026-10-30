@@ -5,7 +5,7 @@ import kotlinx.serialization.json.Json
 
 /**
  * Step 5 — the offline fallback gazetteer: cities the tz database has no zone
- * for (Porto, Mumbai, Barcelona — ~300 editorial entries since item 26). Port
+ * for (Porto, Mumbai, Barcelona, Portland — ~3,100 editorial entries since item 34). Port
  * of Swift `OfflineFallbackZoneResolver`. Knowledge lives in data, not code.
  */
 class OfflineFallbackZoneResolver(

@@ -2,10 +2,11 @@ import Foundation
 
 /// Step 5 — the offline fallback gazetteer.
 ///
-/// Cities the tz database has no zone for (Porto, Mumbai, Barcelona — ~300
-/// editorial entries since item 26). This is the one resolver whose knowledge
-/// lives in **data, not code**: it reads a bundled JSON file, so growing or
-/// swapping the gazetteer is a file change with no recompilation of the chain.
+/// Places the tz database has no zone for (Porto, Mumbai, Barcelona, and
+/// since item 34 Portland, Salzburg, Kerala — ~3,100 editorial entries). This
+/// is the one resolver whose knowledge lives in **data, not code**: it reads a
+/// bundled JSON file, so growing or swapping the gazetteer is a file change
+/// with no recompilation of the chain.
 struct OfflineFallbackZoneResolver: ZoneResolver {
     let matchSource: ZoneMatchSource = .offlineFallbackList
 

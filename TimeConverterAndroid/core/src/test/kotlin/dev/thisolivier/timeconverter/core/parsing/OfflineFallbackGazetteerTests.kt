@@ -15,7 +15,7 @@ class OfflineFallbackGazetteerTests {
 
     @Test
     fun `the bundled file is on the classpath and decodes`() {
-        assertTrue(entries.size > 250, "fallback-cities.json missing from the classpath? (${entries.size} entries)")
+        assertTrue(entries.size > 3000, "fallback-cities.json missing from the classpath? (${entries.size} entries)")
         assertEquals(listOf("Europe/Lisbon"), entries["porto"])
         assertTrue(entries.keys.all { it == it.lowercase() })
     }

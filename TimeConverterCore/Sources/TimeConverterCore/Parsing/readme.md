@@ -98,7 +98,7 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 | `FoundationAbbreviationZoneResolver.swift` | Step 2 + the curated expanded-name table. |
 | `TimeZoneDatabaseCityResolver.swift` | Step 3 + the legacy-identifier guard. |
 | `CountryZoneResolver.swift`, `CountryZoneTable.swift` | Step 4 + its table. |
-| `OfflineFallbackZoneResolver.swift`, `../Resources/fallback-cities.json` | Step 5 + its bundled data, reached through `Bundle.module`: ~300 editorial city names (item 26), integrity-checked by `GazetteerCoverageTests`. |
+| `OfflineFallbackZoneResolver.swift`, `../Resources/fallback-cities.json` | Step 5 + its bundled data, reached through `Bundle.module`: ~3,100 editorial place names (items 26 and 34), integrity-checked by `GazetteerCoverageTests`. |
 | `WallClockResolver.swift` | Wall-clock time → instant, applying the DST policy explicitly. |
 | `ConversionEngine.swift` | `ConversionRequest` → display-ready `ConversionResult`. |
 | `Formatting.swift` | Deterministic time, zone-name, UTC-offset and calendar helpers. |
@@ -184,12 +184,22 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   Depending on OS version the known-identifier list can also carry legacy
   backward names — `Portugal`, `Japan`, `GB`, `US/Pacific`, `Etc/*`. Indexing
   those would let `portugal` resolve as a "city" and bypass the country policy.
-- **The gazetteer is editorial, and every entry must be reachable** (item 26).
-  `fallback-cities.json` holds the ~200 largest cities plus capitals that are
-  not identifier cities. A name an earlier step answers is omitted, because it
-  could never be reached; a name split across zones either lists both (so it
-  prompts: `san jose`, `washington`) or is left out (`portland`, `valencia`).
-  `GazetteerCoverageTests` enforces reachability and valid identifiers.
+- **The gazetteer is editorial, and every entry must be reachable** (items 26
+  and 34). `fallback-cities.json` holds the ~200 largest cities and the
+  national capitals that are not identifier cities, and since item 34 the
+  regional capitals and places of comparable notoriety — US state capitals and
+  major cities, provincial and state capitals elsewhere, European regional
+  centres, well-known regions (`texas`, `bavaria`, `kerala`, `queensland`) and
+  destinations (`aspen`, `zermatt`, `uluru`) — about 3,100 names. A name an
+  earlier step answers is omitted, because it could never be reached. A name
+  shared by notable places in *different* zones lists every zone so it prompts
+  (`portland` = Oregon / Maine, `springfield`, `cambridge`, `hamilton`,
+  `victoria`), and the long form (`portland oregon`) resolves directly; a name
+  whose other bearers are obscure, or in the same zone, maps straight to the
+  famous one (`richmond` → Virginia, `augusta` → Eastern either way).
+  Sovereign countries stay out of the file — they belong to the country table
+  and its canonical-clock policy. `GazetteerCoverageTests` enforces
+  reachability, valid identifiers and distinct clocks on every split name.
 - **Echo always names the zone actually used**, derived from the resolved
   identifier rather than the typed token: `porto` echoes as Lisbon. That is what
   makes the canonical-zone and alias choices visible.
