@@ -7,8 +7,9 @@
 #
 #   scripts/run-android.sh                        # boot if needed, build, install, launch
 #   scripts/run-android.sh --input "12pm ET in London"   # launch with the field prefilled
-#   scripts/run-android.sh --favourites "London,PST,Tokyo" --tab clocks --offset-minutes 1140
-#                                                 # DEBUG only: replace favourites, open Clocks, shift the dial
+#   scripts/run-android.sh --favourites "London,PST,Tokyo" --tab saved --offset-minutes 1140
+#                                                 # DEBUG only: replace favourites, open Saved, shift the dial
+#   scripts/run-android.sh --add-place "Portland"  # DEBUG only: open Saved's add-a-place sheet with that typed
 #   scripts/run-android.sh --release              # the signed, R8-shrunk release APK instead of debug
 #   scripts/run-android.sh --screenshot out.png   # ...then capture the screen to a PNG
 #   scripts/run-android.sh --window               # emulator with a window
@@ -23,6 +24,7 @@ INITIAL_INPUT=""
 FAVOURITES=""
 SELECTED_TAB=""
 CLOCK_OFFSET_MINUTES=""
+ADD_PLACE=""
 INSTALL_TASK=":app:installDebug"
 SCREENSHOT=""
 WINDOW_FLAGS=(-no-window)
@@ -36,6 +38,7 @@ while [[ $# -gt 0 ]]; do
     --favourites) FAVOURITES="$2"; shift 2 ;;
     --tab) SELECTED_TAB="$2"; shift 2 ;;
     --offset-minutes) CLOCK_OFFSET_MINUTES="$2"; shift 2 ;;
+    --add-place) ADD_PLACE="$2"; shift 2 ;;
     --help|-h) sed -n '2,17p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1"; exit 1 ;;
   esac
@@ -89,6 +92,7 @@ LAUNCH_EXTRAS=()
 [[ -n "$FAVOURITES" ]] && LAUNCH_EXTRAS+=(--es favourites "'$FAVOURITES'")
 [[ -n "$SELECTED_TAB" ]] && LAUNCH_EXTRAS+=(--es selectedTab "'$SELECTED_TAB'")
 [[ -n "$CLOCK_OFFSET_MINUTES" ]] && LAUNCH_EXTRAS+=(--es clockOffsetMinutes "'$CLOCK_OFFSET_MINUTES'")
+[[ -n "${ADD_PLACE:-}" ]] && LAUNCH_EXTRAS+=(--es addPlace "'$ADD_PLACE'")
 adb shell am start -n "$ANDROID_APP_ID/.MainActivity" ${LAUNCH_EXTRAS[@]+"${LAUNCH_EXTRAS[@]}"} >/dev/null
 
 if [[ -n "$SCREENSHOT" ]]; then

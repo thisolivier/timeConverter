@@ -130,6 +130,29 @@ until further notice — the Mac lane stays behind in `docs/releases.md` on
 purpose this phase), iCloud sync, adding a favourite by typing in the Clocks
 tab (the converter is the one input), widgets, Android (phase 2, item 32).
 
+## Design pass (2026-11-04, item 37) — the Saved tab
+
+The designs in the `widgets and saved` set replace the MVP list. Decided:
+
+- **The tab is "Saved"**, clock icon unchanged.
+- **The layout follows the clock count**, local included: 1–3 clocks → one
+  column, full offset phrases (`8 hours behind`); 4–8 → two columns, full
+  phrases; 9+ → three columns, short phrases (`8h behind`), compact names
+  (`Portland`, `ET`, local without `(local)`; the caption says `Local time`).
+  Hairlines between rows and columns; a short last row keeps column width.
+  `SavedGridLayout` in both cores is the single decision point.
+- **Every cell in a layout shares one numeral size** (92 / 56 / 40 pt with a
+  28 / 18 / 13 pt meridiem); a numeral that will not fit its column scales
+  down alone.
+- **Tap a saved cell → confirm removal** (Cancel / Remove). No affordance on
+  the cell; the local cell is inert. Swipe-to-delete and the Android remove
+  button are gone.
+- **`+` → the add-a-place sheet**, which runs the Convert tab's own input
+  resolution (same driver, prompts and chips) and saves what the star would.
+- Stress-tested on both platforms with 0, 2, 3, 7, 9 and 20 saved places,
+  long names (`Portland, Oregon`, `ET (Eastern Time)`, `St John's, Antigua`),
+  the widest time (`12:38 PM`), the sheet's three states, light and dark.
+
 ## Items
 
 - **30** core: models, store, `WorldClock`, fixtures, tests.

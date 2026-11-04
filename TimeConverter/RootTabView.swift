@@ -3,8 +3,9 @@ import TimeConverterCore
 import TimeConverterUI
 
 /// The two tabs (item 31): **Convert**, today's poster unchanged, and
-/// **Clocks**. The standard system tab bar; the poster palette only colours
-/// the selection (rust).
+/// **Saved** (called Clocks until item 37; the clock icon stays). The
+/// standard system tab bar; the poster palette only colours the selection
+/// (rust).
 ///
 /// It also owns one piece of the launcher story: a launcher means "let me type
 /// a time", so whenever a request arrives — App Shortcut, Control Center, the
@@ -12,7 +13,7 @@ import TimeConverterUI
 /// mailbox and takes focus exactly as before; it also focuses on appearing,
 /// which is what lands the cursor when the switch happens from Clocks.
 struct RootTabView: View {
-    @State private var selectedTab: AppTab = LaunchArguments.opensOnClocksTab ? .clocks : .convert
+    @State private var selectedTab: AppTab = LaunchArguments.opensOnSavedTab ? .saved : .convert
     private let launchRequests = LaunchRequestInbox.shared
 
     var body: some View {
@@ -20,8 +21,8 @@ struct RootTabView: View {
             Tab("Convert", systemImage: "arrow.left.arrow.right", value: AppTab.convert) {
                 ContentView()
             }
-            Tab("Clocks", systemImage: "clock", value: AppTab.clocks) {
-                ClocksScreen()
+            Tab("Saved", systemImage: "clock", value: AppTab.saved) {
+                SavedScreen()
             }
         }
         .tint(PosterPalette.accent)
@@ -43,5 +44,5 @@ struct RootTabView: View {
 
 enum AppTab: Hashable {
     case convert
-    case clocks
+    case saved
 }

@@ -24,9 +24,11 @@ struct LaunchArgumentsClocksTests {
 
     @Test func selectedTabAndSignedOffsets() {
         withDefaults { defaults in
-            #expect(!LaunchArguments.opensOnClocksTab(readingFrom: defaults))
+            #expect(!LaunchArguments.opensOnSavedTab(readingFrom: defaults))
             defaults.set("Clocks", forKey: LaunchArguments.selectedTabKey)
-            #expect(LaunchArguments.opensOnClocksTab(readingFrom: defaults))
+            #expect(LaunchArguments.opensOnSavedTab(readingFrom: defaults))
+            defaults.set("saved", forKey: LaunchArguments.selectedTabKey)
+            #expect(LaunchArguments.opensOnSavedTab(readingFrom: defaults))
 
             #expect(LaunchArguments.signedInteger(forKey: LaunchArguments.clockOffsetDaysKey, readingFrom: defaults) == 0)
             for (text, value) in [("3", 3), ("m3", -3), (" -3", -3), ("1140", 1140), ("junk", 0)] {

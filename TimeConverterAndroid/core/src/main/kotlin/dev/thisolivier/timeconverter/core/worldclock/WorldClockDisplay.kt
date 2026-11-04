@@ -19,6 +19,8 @@ data class WorldClockRow(
     val id: String,
     /** `London`, `ET (Eastern Time)`, `Los Angeles (local)` — natural case; the view uppercases. */
     val placeName: String,
+    /** What a narrow cell can hold (item 37): local without `(local)`, a code without its expansion, a place up to its comma. */
+    val compactPlaceName: String,
     /** `5:00`. */
     val clockDigits: String,
     /** `PM`. */
@@ -27,6 +29,8 @@ data class WorldClockRow(
     val zoneLine: String,
     /** `5 hours ahead`, `Same time`; empty on the local row. */
     val offsetPhrase: String,
+    /** `5h ahead` — the narrow-cell form (item 37); empty on the local row. */
+    val shortOffsetPhrase: String,
     /** The favourite this row shows, for delete; null on the local row. */
     val favourite: FavouriteDestination?,
 ) {

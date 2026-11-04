@@ -1,6 +1,7 @@
 package dev.thisolivier.timeconverter.core.worldclock
 
 import dev.thisolivier.timeconverter.core.engine.ConversionEngine
+import dev.thisolivier.timeconverter.core.engine.ZoneLabel
 import dev.thisolivier.timeconverter.core.engine.ConversionResult
 import dev.thisolivier.timeconverter.core.engine.ResolvedZone
 import dev.thisolivier.timeconverter.core.engine.WallClockResolver
@@ -61,11 +62,19 @@ object WorldClock {
         )
     }
 
+    /** See `WorldClockRow.compactPlaceName`. */
+    fun compactPlaceName(favourite: FavouriteDestination?, zoneDisplayName: String): String = when (val label = favourite?.label) {
+        null -> zoneDisplayName
+        is ZoneLabel.Abbreviation -> label.code
+        is ZoneLabel.Place -> label.name.substringBefore(',')
+    }
+
     private fun row(result: ConversionResult, favourite: FavouriteDestination?, today: Int): WorldClockRow {
         val rowZone = ZoneId.of(result.target.timeZoneIdentifier)
         return WorldClockRow(
             id = favourite?.id ?: "local",
             placeName = result.target.placeNameDescription,
+            compactPlaceName = compactPlaceName(favourite, result.target.zoneDisplayName),
             clockDigits = result.target.clockDigits,
             meridiem = result.target.uppercasedMeridiem,
             // The converter's own zone detail, with the day marker against the real local today.
@@ -74,6 +83,7 @@ object WorldClock {
                 dayOffset = ConversionEngine.dayNumber(result.instant, rowZone) - today,
             ),
             offsetPhrase = if (favourite == null) "" else result.relativeOffsetPhrase,
+            shortOffsetPhrase = if (favourite == null) "" else result.shortRelativeOffsetPhrase,
             favourite = favourite,
         )
     }

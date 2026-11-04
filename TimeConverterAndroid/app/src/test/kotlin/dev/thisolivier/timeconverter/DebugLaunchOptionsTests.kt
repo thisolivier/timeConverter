@@ -19,8 +19,8 @@ class DebugLaunchOptionsTests {
 
     @Test
     fun selectedTabAndSignedOffsets() {
-        assertFalse(DebugLaunchOptions.parse(null, null, null).opensOnClocksTab)
-        assertTrue(DebugLaunchOptions.parse(null, "Clocks", null).opensOnClocksTab)
+        assertFalse(DebugLaunchOptions.parse(null, null, null).opensOnSavedTab)
+        assertTrue(DebugLaunchOptions.parse(null, "Clocks", null).opensOnSavedTab)
         for ((text, value) in listOf("3" to 3, "m3" to -3, " -3" to -3, "1140" to 1140, "junk" to 0, null to 0)) {
             assertEquals("$text", value, DebugLaunchOptions.signedInteger(text))
         }

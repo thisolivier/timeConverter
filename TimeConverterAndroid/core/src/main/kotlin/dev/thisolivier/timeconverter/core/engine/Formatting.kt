@@ -61,6 +61,13 @@ object RelativeOffsetFormatting {
         return "${hourCountDescription(abs(differenceInSeconds))} $direction"
     }
 
+    /** `8h behind`, `4.5h ahead`, `Same time` — for a cell with no room for words (item 37). Port of Swift `shortPhrase`. */
+    fun shortPhrase(differenceInSeconds: Int): String {
+        if (differenceInSeconds == 0) return "Same time"
+        val direction = if (differenceInSeconds > 0) "ahead" else "behind"
+        return "${hourCountDescription(abs(differenceInSeconds)).substringBefore(' ')}h $direction"
+    }
+
     /** `1 hour`, `4 hours`, `4.5 hours`, `5.75 hours` — exact, since offsets are quarter-hours. */
     fun hourCountDescription(seconds: Int): String {
         val wholeHours = seconds / 3600

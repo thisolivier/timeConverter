@@ -54,4 +54,5 @@ data class ExpectedWorldClockRow(
     val meridiem: String,
     val zoneLine: String,
     val offsetPhrase: String,
+    val shortOffsetPhrase: String,
 )

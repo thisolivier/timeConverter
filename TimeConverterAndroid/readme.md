@@ -109,9 +109,17 @@ asserts the sub-line text on screen (via `uiautomator dump`), not just a
 screenshot. Debug and release are signed differently and can't install over
 each other; `run-android.sh` uninstalls and retries when switching.
 
-## Favourites and the Clocks tab (backlog 32)
+## Favourites and the Saved tab (backlog 32, redesigned in 37)
 
-The design-free MVP of `docs/favourites-world-clock-spec.md`, mirroring iOS.
+Mirrors iOS. Item 37 (2026-11-04 designs) renamed the tab **Saved** (clock
+icon kept) and replaced the list with a grid: `SavedScreen` + `SavedClockCell`,
+one column up to three clocks, two up to eight, three from nine
+(`SavedGridLayout` in `:core` decides; `SavedCellDensity` holds the sizes,
+point for point the iPhone's; `TextAutoSize` steps a numeral down only when
+it will not fit its column). Tapping a saved cell asks before removing it
+(`AlertDialog`); the floating `+` opens `AddSavedPlaceSheet`, a
+`ModalBottomSheet` over a second `ConverterScreenModel` — the Convert tab's
+own resolution, chips included — whose `Add` saves what the star would.
 
 - `RootScreen`: a stock `NavigationBar` (Convert / Clocks, accent selection).
   It owns the converter model and the dial offset, so switching tabs keeps the
@@ -121,9 +129,9 @@ The design-free MVP of `docs/favourites-world-clock-spec.md`, mirroring iOS.
   (`ConverterScreenModel.handledArrivalCount`).
 - `FavouriteStarButton`: far right of the result's time row; hidden for a
   `(local)` target (`ConverterDisplay.favouritableTarget` is null).
-- `ClocksScreen` + `WorldClockRowView`: local row first, then favourites in
-  stored order, each with a remove button (no swipe-to-delete in the MVP);
-  empty-state line; re-reads the clock at each minute boundary.
+- `SavedScreen` + `SavedClockCell` + `AddSavedPlaceSheet`: the grid above
+  (local first, then favourites in stored order), tap-to-remove, the add
+  sheet; empty-state line; re-reads the clock at each minute boundary.
 - `ClockOffset` + `ClockOffsetDial`: the endless dial. Canvas tick strip
   (15 min, taller hourly, tallest every 6 h, accent pointer); a full-width
   drag is 12 h measured from touch-down (slop included, as SwiftUI does),
@@ -133,9 +141,10 @@ The design-free MVP of `docs/favourites-world-clock-spec.md`, mirroring iOS.
 - `FavouritesModel`: the core `FavouritesStore` on `SharedPreferences`
   (`favourites` file, key `favouriteDestinations`), mirrored into Compose state.
 - `DebugLaunchOptions`: DEBUG-only string extras `favourites` (replaces the
-  stored list, resolved through the real parser), `selectedTab` (`clocks`),
-  `clockOffsetMinutes` (signed; `m960` also works), from `run-android.sh
-  --favourites / --tab / --offset-minutes`.
+  stored list, resolved through the real parser), `selectedTab` (`saved`, or
+  `clocks`), `clockOffsetMinutes` (signed; `m960` also works), `addPlace`
+  (opens the sheet with that typed), from `run-android.sh --favourites /
+  --tab / --offset-minutes / --add-place`.
 
 ## Saved-cities home-screen widget (backlog 36)
 
@@ -238,10 +247,10 @@ without `--input`.
 - `app/.../PosterPalette.kt`, `PosterTypography.kt` — the Swift
   `PosterPalette` light and dark values; system condensed-black display face
   and monospace until real fonts are bundled.
-- `app/.../RootScreen.kt`, `ClocksScreen.kt`, `WorldClockRowView.kt`,
-  `ClockOffset.kt`, `ClockOffsetDial.kt`, `FavouriteStarButton.kt`,
-  `FavouritesModel.kt`, `DebugLaunchOptions.kt` — tabs, Clocks, star,
-  persistence and QA extras (section above).
+- `app/.../RootScreen.kt`, `SavedScreen.kt`, `SavedClockCell.kt`,
+  `AddSavedPlaceSheet.kt`, `ClockOffset.kt`, `ClockOffsetDial.kt`,
+  `FavouriteStarButton.kt`, `FavouritesModel.kt`, `DebugLaunchOptions.kt` —
+  tabs, Saved, star, persistence and QA extras (section above).
 - `app/.../MainActivity.kt` — the activity, the `initialInput` extra, and the
   arrival tick (`onStart`, plus `onNewIntent` with `focusInput`) that
   autofocuses on launch, return from background and tile/shortcut launches.

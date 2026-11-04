@@ -27,6 +27,15 @@ the rest of the package; `now` and `localZone` are always parameters.
   read backwards under the dial; changed 2026-10-29.)
 - **Strings are hand-formatted** (`Fri 31 Oct, 9:15 AM`, `−45 min`), never a
   `DateFormatter`, for the same locale-independence as `Parsing/Formatting.swift`.
+- **Rows carry both a long and a short form** (item 37): `offsetPhrase`
+  (`8 hours behind`) and `shortOffsetPhrase` (`8h behind`), `placeName`
+  (`Portland, Oregon`, `ET (Eastern Time)`, `Los Angeles (local)`) and
+  `compactPlaceName` (`Portland`, `ET`, `Los Angeles`). The Saved grid's
+  three-column layout and the widgets use the short ones; the fixtures pin
+  the phrases, the compact name is a view hook.
+- **The Saved grid's shape is decided here** (`SavedGridLayout`): one column
+  up to three clocks, two up to eight, three from nine — pure arithmetic
+  shared with Android so the two tabs agree; the views own the sizes.
 - **The store takes its `UserDefaults`.** The app injects `.standard`; tests use
   a throwaway suite. One JSON array under `favouriteDestinations`.
 - **The store can mirror itself** (item 36). An optional `FavouritesMirror`
@@ -48,6 +57,7 @@ the rest of the package; `now` and `localZone` are always parameters.
 | `WorldClock.swift` | `readings(favourites:offset:now:localZone:)` and the shifted-wall-clock resolution. |
 | `WorldClockDisplay.swift` | `WorldClockDisplay` (readout, signed offset, rows) and `WorldClockRow`. |
 | `WorldClockFormatting.swift` | The readout and the signed offset strings. |
+| `SavedGridLayout.swift` | Column count by clock count, short-phrase rule, row chunking (item 37). |
 
 Fixtures: `fixtures/world-clock-cases.json`, from `SharedWorldClockCatalog` in
 the tests (see `fixtures/readme.md`).

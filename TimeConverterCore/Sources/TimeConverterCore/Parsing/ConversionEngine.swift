@@ -208,6 +208,12 @@ struct ConversionResult: Equatable, Sendable {
         RelativeOffsetFormatting.phrase(differenceInSeconds: relativeOffsetSeconds)
     }
 
+    /// `4h behind` — the same relationship for a cell too narrow for words
+    /// (item 37).
+    var shortRelativeOffsetPhrase: String {
+        RelativeOffsetFormatting.shortPhrase(differenceInSeconds: relativeOffsetSeconds)
+    }
+
     /// Target minus source at the resolved instant. Positive means the target
     /// is ahead.
     private var relativeOffsetSeconds: Int {

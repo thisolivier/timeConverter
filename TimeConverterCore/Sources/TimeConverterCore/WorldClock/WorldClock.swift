@@ -77,6 +77,7 @@ public enum WorldClock {
         return WorldClockRow(
             id: favourite?.id ?? "local",
             placeName: result.target.placeNameDescription,
+            compactPlaceName: compactPlaceName(for: favourite, zoneDisplayName: result.target.zoneDisplayName),
             clockDigits: result.target.clockDigits,
             meridiem: result.target.uppercasedMeridiem,
             // The converter's own zone detail, with the day marker measured
@@ -86,8 +87,22 @@ public enum WorldClock {
                 dayOffset: ConversionEngine.dayNumber(of: result.instant, in: rowZone) - today
             ),
             offsetPhrase: favourite == nil ? "" : result.relativeOffsetPhrase,
+            shortOffsetPhrase: favourite == nil ? "" : result.shortRelativeOffsetPhrase,
             favourite: favourite
         )
+    }
+}
+
+extension WorldClock {
+    /// See `WorldClockRow.compactPlaceName`.
+    static func compactPlaceName(for favourite: FavouriteDestination?, zoneDisplayName: String) -> String {
+        guard let favourite else { return zoneDisplayName }
+        switch favourite.label {
+        case let .abbreviation(code, _):
+            return code
+        case let .place(name, _):
+            return String(name.prefix { $0 != "," })
+        }
     }
 }
 

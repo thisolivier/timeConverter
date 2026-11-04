@@ -28,5 +28,8 @@ class FormattingTests {
         assertEquals("5.75 hours ahead", RelativeOffsetFormatting.phrase(5 * 3600 + 2700))
         assertEquals("4.5 hours behind", RelativeOffsetFormatting.phrase(-(4 * 3600 + 1800)))
         assertEquals("Same time", RelativeOffsetFormatting.phrase(0))
+        assertEquals("8h behind", RelativeOffsetFormatting.shortPhrase(-8 * 3600))
+        assertEquals("5.5h ahead", RelativeOffsetFormatting.shortPhrase(5 * 3600 + 1800))
+        assertEquals("Same time", RelativeOffsetFormatting.shortPhrase(0))
     }
 }

@@ -10,23 +10,38 @@ import Foundation
 ///   comma-separated zone, so the labels are exactly a real tap's. Zones that
 ///   do not convert (unknown, ambiguous) are skipped. Writes through to the
 ///   store, i.e. to the simulator's real defaults.
-/// - `-selectedTab clocks` — open on the Clocks tab.
+/// - `-selectedTab saved` (or `clocks`, the tab's old name) — open on the
+///   Saved tab.
 /// - `-clockOffsetDays 3` / `-clockOffsetMinutes 1140` — start the dial at
 ///   that offset (the two add up). A negative value needs a leading `m` or a space
 ///   inside the quotes (`-clockOffsetDays m3`, `-clockOffsetDays " -3"`),
 ///   because a bare `-3` reads as another flag to the argument parser.
+/// - `-addPlace "Portland"` — open the Saved tab's add-a-place sheet with
+///   that text typed (item 37), so the sheet's three states can be
+///   photographed. Implies `-selectedTab saved`.
 extension LaunchArguments {
     static let favouritesKey = "favourites"
     static let selectedTabKey = "selectedTab"
     static let clockOffsetDaysKey = "clockOffsetDays"
     static let clockOffsetMinutesKey = "clockOffsetMinutes"
+    static let addPlaceKey = "addPlace"
 
     public static var seededFavourites: [FavouriteDestination]? {
         seededFavourites(readingFrom: .standard)
     }
 
-    public static var opensOnClocksTab: Bool {
-        opensOnClocksTab(readingFrom: .standard)
+    public static var opensOnSavedTab: Bool {
+        opensOnSavedTab(readingFrom: .standard) || addPlaceInput != nil
+    }
+
+    /// The text to open the add-a-place sheet with; `nil` (always, in
+    /// Release) means the sheet stays closed.
+    public static var addPlaceInput: String? {
+        #if DEBUG
+        return UserDefaults.standard.string(forKey: addPlaceKey)
+        #else
+        return nil
+        #endif
     }
 
     public static var initialClockOffsetDays: Int {
@@ -52,9 +67,10 @@ extension LaunchArguments {
         #endif
     }
 
-    static func opensOnClocksTab(readingFrom defaults: UserDefaults) -> Bool {
+    static func opensOnSavedTab(readingFrom defaults: UserDefaults) -> Bool {
         #if DEBUG
-        return defaults.string(forKey: selectedTabKey)?.lowercased() == "clocks"
+        let selectedTab = defaults.string(forKey: selectedTabKey)?.lowercased()
+        return selectedTab == "saved" || selectedTab == "clocks"
         #else
         return false
         #endif

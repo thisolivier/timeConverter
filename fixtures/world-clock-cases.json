@@ -10,6 +10,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           }
         ]
@@ -33,6 +34,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -41,6 +43,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
+            "shortOffsetPhrase" : "8h ahead",
             "zoneLine" : "United Kingdom Time (London)"
           },
           {
@@ -49,6 +52,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
+            "shortOffsetPhrase" : "3h ahead",
             "zoneLine" : "New York, Toronto"
           },
           {
@@ -57,6 +61,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
+            "shortOffsetPhrase" : "17h ahead",
             "zoneLine" : "Japan Standard Time (Tokyo) · next day"
           }
         ]
@@ -96,6 +101,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · next day"
           },
           {
@@ -104,6 +110,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
+            "shortOffsetPhrase" : "8h ahead",
             "zoneLine" : "United Kingdom Time (London) · next day"
           },
           {
@@ -112,6 +119,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
+            "shortOffsetPhrase" : "3h ahead",
             "zoneLine" : "New York, Toronto · next day"
           },
           {
@@ -120,6 +128,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
+            "shortOffsetPhrase" : "17h ahead",
             "zoneLine" : "Japan Standard Time (Tokyo) · +2 days"
           }
         ]
@@ -159,6 +168,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · next day"
           },
           {
@@ -167,6 +177,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
+            "shortOffsetPhrase" : "8h ahead",
             "zoneLine" : "United Kingdom Time (London) · next day"
           },
           {
@@ -175,6 +186,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
+            "shortOffsetPhrase" : "3h ahead",
             "zoneLine" : "New York, Toronto · next day"
           },
           {
@@ -183,6 +195,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
+            "shortOffsetPhrase" : "17h ahead",
             "zoneLine" : "Japan Standard Time (Tokyo) · +2 days"
           }
         ]
@@ -222,6 +235,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -230,6 +244,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
+            "shortOffsetPhrase" : "8h ahead",
             "zoneLine" : "United Kingdom Time (London)"
           },
           {
@@ -238,6 +253,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
+            "shortOffsetPhrase" : "3h ahead",
             "zoneLine" : "New York, Toronto"
           },
           {
@@ -246,6 +262,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
+            "shortOffsetPhrase" : "17h ahead",
             "zoneLine" : "Japan Standard Time (Tokyo) · next day"
           }
         ]
@@ -285,6 +302,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · +3 days"
           },
           {
@@ -293,6 +311,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
+            "shortOffsetPhrase" : "8h ahead",
             "zoneLine" : "United Kingdom Time (London) · +4 days"
           }
         ]
@@ -321,6 +340,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · previous day"
           },
           {
@@ -329,6 +349,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
+            "shortOffsetPhrase" : "8h ahead",
             "zoneLine" : "United Kingdom Time (London) · previous day"
           }
         ]
@@ -355,6 +376,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -363,6 +385,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "13.5 hours ahead",
             "placeName" : "Kolkata",
+            "shortOffsetPhrase" : "13.5h ahead",
             "zoneLine" : "India Standard Time (Kolkata, Mumbai) · next day"
           },
           {
@@ -371,6 +394,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "13.75 hours ahead",
             "placeName" : "Kathmandu",
+            "shortOffsetPhrase" : "13.75h ahead",
             "zoneLine" : "Nepal Time (Kathmandu) · next day"
           }
         ]
@@ -404,6 +428,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "",
             "placeName" : "New York (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Eastern Time (New York, Toronto)"
           },
           {
@@ -412,6 +437,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "4 hours ahead",
             "placeName" : "London",
+            "shortOffsetPhrase" : "4h ahead",
             "zoneLine" : "United Kingdom Time (London)"
           }
         ]
@@ -439,6 +465,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "",
             "placeName" : "New York (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Eastern Time (New York, Toronto)"
           },
           {
@@ -447,6 +474,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "5 hours ahead",
             "placeName" : "London",
+            "shortOffsetPhrase" : "5h ahead",
             "zoneLine" : "United Kingdom Time (London)"
           }
         ]
@@ -474,6 +502,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -482,6 +511,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
+            "shortOffsetPhrase" : "3h ahead",
             "zoneLine" : "New York, Toronto"
           },
           {
@@ -490,6 +520,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "JST (Japan Standard Time)",
+            "shortOffsetPhrase" : "17h ahead",
             "zoneLine" : "Tokyo · next day"
           },
           {
@@ -498,6 +529,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "East Coast (Eastern Time)",
+            "shortOffsetPhrase" : "3h ahead",
             "zoneLine" : "New York, Toronto"
           }
         ]
@@ -538,6 +570,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
+            "shortOffsetPhrase" : "",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -546,6 +579,7 @@
             "meridiem" : "PM",
             "offsetPhrase" : "Same time",
             "placeName" : "Portland, Oregon",
+            "shortOffsetPhrase" : "Same time",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -554,6 +588,7 @@
             "meridiem" : "AM",
             "offsetPhrase" : "9 hours ahead",
             "placeName" : "Salzburg",
+            "shortOffsetPhrase" : "9h ahead",
             "zoneLine" : "Central European Time (Vienna) · next day"
           }
         ]

@@ -22,6 +22,11 @@ public struct WorldClockRow: Equatable, Sendable, Identifiable {
     /// `London`, `ET (Eastern Time)`, `Los Angeles (local)` — natural case;
     /// uppercasing is the view's job.
     public let placeName: String
+    /// The name a narrow cell can hold (item 37, the three-column grid):
+    /// the local row without its `(local)` marker (its caption says `Local
+    /// time`), a code without its expansion (`ET`), a place up to its comma
+    /// (`Portland` for `Portland, Oregon`). Everything else is `placeName`.
+    public let compactPlaceName: String
     /// `5:00`.
     public let clockDigits: String
     /// `PM`.
@@ -34,6 +39,9 @@ public struct WorldClockRow: Equatable, Sendable, Identifiable {
     /// `5 hours ahead`, `Same time`, against the local zone at the shown
     /// instant. Empty on the local row, which has nothing to be relative to.
     public let offsetPhrase: String
+    /// `5h ahead` — the same relationship for a narrow cell (item 37: the
+    /// three-column Saved grid, the widgets). Empty on the local row.
+    public let shortOffsetPhrase: String
     /// The favourite this row shows, for swipe-to-delete; `nil` on the local row.
     public let favourite: FavouriteDestination?
 

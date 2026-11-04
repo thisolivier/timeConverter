@@ -14,21 +14,26 @@ import dev.thisolivier.timeconverter.core.worldclock.FavouriteDestination
  * - `favourites` — `London,ET,Tokyo`: REPLACES the stored favourites with what
  *   starring the target of `12pm in <zone>` would store, through the real
  *   parser; zones that do not convert (unknown, ambiguous) are skipped.
- * - `selectedTab` — `clocks` opens on the Clocks tab.
+ * - `selectedTab` — `saved` (or `clocks`, the tab's old name) opens on the
+ *   Saved tab.
  * - `clockOffsetMinutes` — a signed integer; `m960` also means −960 (the iOS
  *   spelling, for shells that eat a leading minus).
+ * - `addPlace` — opens the Saved tab's add-a-place sheet with that text typed
+ *   (item 37); implies `selectedTab=saved`.
  */
 data class DebugLaunchOptions(
     val seededFavourites: List<FavouriteDestination>? = null,
-    val opensOnClocksTab: Boolean = false,
+    val opensOnSavedTab: Boolean = false,
     val clockOffsetMinutes: Int = 0,
+    val addPlaceInput: String? = null,
 ) {
-    val isScripted: Boolean get() = seededFavourites != null || opensOnClocksTab || clockOffsetMinutes != 0
+    val isScripted: Boolean get() = seededFavourites != null || opensOnSavedTab || clockOffsetMinutes != 0 || addPlaceInput != null
 
     companion object {
         const val FAVOURITES_EXTRA = "favourites"
         const val SELECTED_TAB_EXTRA = "selectedTab"
         const val CLOCK_OFFSET_MINUTES_EXTRA = "clockOffsetMinutes"
+        const val ADD_PLACE_EXTRA = "addPlace"
 
         fun read(context: Context, intent: Intent?): DebugLaunchOptions {
             val isDebuggable = context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
@@ -37,15 +42,20 @@ data class DebugLaunchOptions(
                 favourites = intent.getStringExtra(FAVOURITES_EXTRA),
                 selectedTab = intent.getStringExtra(SELECTED_TAB_EXTRA),
                 clockOffsetMinutes = intent.getStringExtra(CLOCK_OFFSET_MINUTES_EXTRA),
+                addPlace = intent.getStringExtra(ADD_PLACE_EXTRA),
             )
         }
 
         /** The pure half, for JVM tests. */
-        fun parse(favourites: String?, selectedTab: String?, clockOffsetMinutes: String?) = DebugLaunchOptions(
-            seededFavourites = favourites?.let(::seededFavourites),
-            opensOnClocksTab = selectedTab?.trim().equals("clocks", ignoreCase = true),
-            clockOffsetMinutes = signedInteger(clockOffsetMinutes),
-        )
+        fun parse(favourites: String?, selectedTab: String?, clockOffsetMinutes: String?, addPlace: String? = null): DebugLaunchOptions {
+            val tab = selectedTab?.trim()?.lowercase()
+            return DebugLaunchOptions(
+                seededFavourites = favourites?.let(::seededFavourites),
+                opensOnSavedTab = tab == "saved" || tab == "clocks" || addPlace != null,
+                clockOffsetMinutes = signedInteger(clockOffsetMinutes),
+                addPlaceInput = addPlace,
+            )
+        }
 
         fun seededFavourites(commaSeparatedZones: String): List<FavouriteDestination> =
             commaSeparatedZones.split(',')

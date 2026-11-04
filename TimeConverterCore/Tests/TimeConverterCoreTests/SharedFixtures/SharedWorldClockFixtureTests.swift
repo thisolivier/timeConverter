@@ -93,7 +93,8 @@ struct SharedWorldClockFixtureTests {
             rows: display.rows.map {
                 ExpectedWorldClockRow(
                     isLocal: $0.isLocal, placeName: $0.placeName, clockDigits: $0.clockDigits,
-                    meridiem: $0.meridiem, zoneLine: $0.zoneLine, offsetPhrase: $0.offsetPhrase
+                    meridiem: $0.meridiem, zoneLine: $0.zoneLine, offsetPhrase: $0.offsetPhrase,
+                    shortOffsetPhrase: $0.shortOffsetPhrase
                 )
             }
         )

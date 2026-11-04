@@ -175,6 +175,22 @@ enum RelativeOffsetFormatting {
         return "\(hourCountDescription(seconds: abs(differenceInSeconds))) \(direction)"
     }
 
+    /// The phrase for a cell with no room for words (item 37, the Saved
+    /// grid's three-column layout and the widgets): `8h behind`, `4.5h
+    /// ahead`, `Same time`. The hour count is the same exact quarter-hour
+    /// figure as the long form, so the two never disagree.
+    static func shortPhrase(differenceInSeconds: Int) -> String {
+        guard differenceInSeconds != 0 else { return "Same time" }
+        let direction = differenceInSeconds > 0 ? "ahead" : "behind"
+        return "\(shortHourCount(seconds: abs(differenceInSeconds)))h \(direction)"
+    }
+
+    /// `4`, `4.5`, `5.75` — `hourCountDescription` without its unit.
+    static func shortHourCount(seconds: Int) -> String {
+        let described = hourCountDescription(seconds: seconds)
+        return String(described.prefix { $0 != " " })
+    }
+
     /// `1 hour`, `4 hours`, `4.5 hours`, `5.75 hours`.
     ///
     /// Two decimal places are exact rather than rounded: every zone offset in

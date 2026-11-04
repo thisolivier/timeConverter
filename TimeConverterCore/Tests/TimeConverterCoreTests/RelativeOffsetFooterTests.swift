@@ -73,6 +73,15 @@ struct RelativeOffsetSentenceFormattingTests {
             == "3 hours ahead")
     }
 
+    /// Item 37: the narrow-cell form keeps the exact quarter-hour figure.
+    @Test func theShortPhraseDropsTheUnitWord() {
+        #expect(RelativeOffsetFormatting.shortPhrase(differenceInSeconds: -8 * 3600) == "8h behind")
+        #expect(RelativeOffsetFormatting.shortPhrase(differenceInSeconds: 3600) == "1h ahead")
+        #expect(RelativeOffsetFormatting.shortPhrase(differenceInSeconds: 5 * 3600 + 1800) == "5.5h ahead")
+        #expect(RelativeOffsetFormatting.shortPhrase(differenceInSeconds: -(5 * 3600 + 45 * 60)) == "5.75h behind")
+        #expect(RelativeOffsetFormatting.shortPhrase(differenceInSeconds: 0) == "Same time")
+    }
+
     @Test func thePhraseKeepsTheSameGrammarAsTheSentence() {
         #expect(RelativeOffsetFormatting.phrase(differenceInSeconds: 0) == "Same time")
         #expect(RelativeOffsetFormatting.phrase(differenceInSeconds: 3600) == "1 hour ahead")

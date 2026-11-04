@@ -76,6 +76,9 @@ data class ConversionResult(
         get() = RelativeOffsetFormatting.sentence(relativeOffsetSeconds, target.zoneDisplayName, source.zoneDisplayName)
 
     val relativeOffsetPhrase: String get() = RelativeOffsetFormatting.phrase(relativeOffsetSeconds)
+
+    /** `4h behind` — for a cell too narrow for words (item 37). */
+    val shortRelativeOffsetPhrase: String get() = RelativeOffsetFormatting.shortPhrase(relativeOffsetSeconds)
 }
 
 data class ConversionRequest(

@@ -84,6 +84,7 @@ class SharedFixtureWorldClockTests {
                 meridiem = row.meridiem,
                 zoneLine = row.zoneLine,
                 offsetPhrase = row.offsetPhrase,
+                shortOffsetPhrase = row.shortOffsetPhrase,
             )
         },
     )

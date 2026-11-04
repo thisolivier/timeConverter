@@ -19,12 +19,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 
-enum class AppTab { Convert, Clocks }
+enum class AppTab { Convert, Saved }
 
 /**
  * The two tabs (item 32, the twin of the iPhone's `RootTabView`): **Convert**,
- * the poster unchanged, and **Clocks**. A stock `NavigationBar` on the poster
- * paper; the palette's accent marks the selection.
+ * the poster unchanged, and **Saved** (Clocks until item 37; the clock icon
+ * stays). A stock `NavigationBar` on the poster paper; the palette's accent
+ * marks the selection.
  *
  * The converter's model and the dial's offset live here, so switching tabs
  * keeps the typed text and the dial position. Focus rules:
@@ -42,7 +43,7 @@ fun RootScreen(
     launchRequestCount: Int,
 ) {
     val converterModel = remember { ConverterScreenModel(initialInput) }
-    var selectedTab by remember { mutableStateOf(if (debugLaunchOptions.opensOnClocksTab) AppTab.Clocks else AppTab.Convert) }
+    var selectedTab by remember { mutableStateOf(if (debugLaunchOptions.opensOnSavedTab) AppTab.Saved else AppTab.Convert) }
     var clockOffset by remember { mutableStateOf(ClockOffset.launching(debugLaunchOptions.clockOffsetMinutes)) }
     var handledLaunchRequestCount by remember { mutableIntStateOf(0) }
 
@@ -50,7 +51,7 @@ fun RootScreen(
         if (launchRequestCount != handledLaunchRequestCount) {
             handledLaunchRequestCount = launchRequestCount
             selectedTab = AppTab.Convert
-        } else if (selectedTab == AppTab.Clocks) {
+        } else if (selectedTab == AppTab.Saved) {
             converterModel.handledArrivalCount = arrivalCount
         }
     }
@@ -76,10 +77,10 @@ fun RootScreen(
                         colors = itemColors,
                     )
                     NavigationBarItem(
-                        selected = selectedTab == AppTab.Clocks,
-                        onClick = { selectedTab = AppTab.Clocks },
+                        selected = selectedTab == AppTab.Saved,
+                        onClick = { selectedTab = AppTab.Saved },
                         icon = { Icon(painterResource(R.drawable.ic_tab_clocks), contentDescription = null) },
-                        label = { Text("Clocks") },
+                        label = { Text("Saved") },
                         colors = itemColors,
                     )
                 }
@@ -88,11 +89,12 @@ fun RootScreen(
             val contentModifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
             when (selectedTab) {
                 AppTab.Convert -> ConverterScreen(converterModel, arrivalCount, favouritesModel, contentModifier)
-                AppTab.Clocks -> ClocksScreen(
+                AppTab.Saved -> SavedScreen(
                     favouritesModel = favouritesModel,
                     offset = clockOffset,
                     onOffsetChange = { clockOffset = it },
                     arrivalCount = arrivalCount,
+                    addPlacePrefill = debugLaunchOptions.addPlaceInput,
                     modifier = contentModifier,
                 )
             }
