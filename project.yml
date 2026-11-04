@@ -55,6 +55,10 @@ targets:
           - "**/readme.md"
           # Signed via CODE_SIGN_ENTITLEMENTS below, not copied as a resource.
           - "*.entitlements"
+      # The widget's face (item 36b), compiled into the app as well so the
+      # DEBUG `-widgetPreview` screen can draw every family and count at
+      # widget size on the simulator, which cannot place a real widget.
+      - TimeConverterControls/SavedCitiesWidgetFace.swift
     dependencies:
       # Everything below the view layer. `import TimeConverterCore` in
       # ContentView, PromptChipRow and ConvertATimeIntent.

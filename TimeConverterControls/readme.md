@@ -18,10 +18,26 @@ would be a macOS extension of its own, and is not on the backlog.
   app (`project.yml`) — the extension needs the type to resolve the button's
   action, the app needs it to run `perform()`. Compiling it into only one is
   the classic "tapping the control does nothing" bug.
-- **The widget is the Clocks tab, read-only.** `SavedCitiesWidget` draws the
-  local row and up to five favourites through `WorldClock.readings` — the
-  same digits, zone lines and offset phrases as the app — one size
-  (`.systemLarge`) for the MVP. Tapping it opens the app.
+- **The widget is the Saved tab, read-only, in three sizes** (item 36b,
+  from the 2026-11-04 designs). `SavedCitiesWidget` draws the saved places —
+  not the local clock; the home screen has one — through
+  `WorldClock.readings`, the same digits and offset phrases as the app.
+  **The city count chooses the layout, the family chooses what a cell can
+  carry**: `WidgetLayoutPlan` (core, shared with Android) decides columns,
+  rows, full name or three-letter code (`shortPlaceName`: `LON`, `LAX`,
+  `TYO`, from `short-names.json`), full / short / no caption; one city is a
+  hero; five leave the last cell spanning its row; seven or more show six.
+  `SavedCitiesWidgetFace` owns the point sizes (`WidgetTypeSizes`): every
+  cell in a face shares one numeral size chosen for the widest time at that
+  layout's narrowest column, so numerals never resize with the clock. The
+  face follows the device's 12/24-hour setting (`Locale.hourCycle`): a 24-hour
+  device gets `20:38`, a 12-hour one `8:38` with a small `PM`. Tapping opens
+  the app.
+- **The face is also compiled into the app** (`project.yml`) for the DEBUG
+  `-widgetPreview 1` screen, which draws every family × count × clock
+  setting at widget size and writes each to `Documents/widget-previews/` as a
+  PNG — the simulator cannot place a widget, so that is how the faces are
+  photographed and checked.
 - **It stays on time with a timeline, not a reload.** One entry per minute
   for the next hour, pre-rendered, then `.atEnd`. Entries are free; reloads
   are what WidgetKit budgets.
@@ -68,8 +84,11 @@ nothing else moves.
 - `SavedCitiesWidget.swift` — the `Widget`, its `TimelineEntry` and the
   `TimelineProvider` (keychain read, hour of minute entries, sample favourites
   for the gallery).
-- `SavedCitiesWidgetView.swift` — the face: poster paper and ink, one compact
-  row per clock, the empty-state line.
+- `SavedCitiesWidgetFace.swift` — the face, WidgetKit-free: hero, rows and
+  grids per `WidgetLayoutPlan`, the type sizes, the hairlines, the empty
+  state. Shared with the app's preview screen.
+- `SavedCitiesWidgetView.swift` — the WidgetKit wrapper: family from the
+  environment, paper container background.
 - `TimeConverterControls.entitlements` — the keychain access group.
 - `Info.plist` — **generated** by xcodegen from `project.yml` (and gitignored).
   Its one meaningful key is

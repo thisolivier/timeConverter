@@ -11,6 +11,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           }
         ]
@@ -35,6 +37,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -44,6 +48,8 @@
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
             "shortOffsetPhrase" : "8h ahead",
+            "shortPlaceName" : "LON",
+            "twentyFourHourDigits" : "23:42",
             "zoneLine" : "United Kingdom Time (London)"
           },
           {
@@ -53,6 +59,8 @@
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
             "shortOffsetPhrase" : "3h ahead",
+            "shortPlaceName" : "ET",
+            "twentyFourHourDigits" : "18:42",
             "zoneLine" : "New York, Toronto"
           },
           {
@@ -62,6 +70,8 @@
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
             "shortOffsetPhrase" : "17h ahead",
+            "shortPlaceName" : "TYO",
+            "twentyFourHourDigits" : "08:42",
             "zoneLine" : "Japan Standard Time (Tokyo) · next day"
           }
         ]
@@ -92,7 +102,7 @@
     },
     {
       "expected" : {
-        "offsetDescription" : "+1 d",
+        "offsetDescription" : "+01d 00h 00m",
         "readout" : "Tomorrow 3:42 PM",
         "rows" : [
           {
@@ -102,6 +112,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · next day"
           },
           {
@@ -111,6 +123,8 @@
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
             "shortOffsetPhrase" : "8h ahead",
+            "shortPlaceName" : "LON",
+            "twentyFourHourDigits" : "23:42",
             "zoneLine" : "United Kingdom Time (London) · next day"
           },
           {
@@ -120,6 +134,8 @@
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
             "shortOffsetPhrase" : "3h ahead",
+            "shortPlaceName" : "ET",
+            "twentyFourHourDigits" : "18:42",
             "zoneLine" : "New York, Toronto · next day"
           },
           {
@@ -129,6 +145,8 @@
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
             "shortOffsetPhrase" : "17h ahead",
+            "shortPlaceName" : "TYO",
+            "twentyFourHourDigits" : "08:42",
             "zoneLine" : "Japan Standard Time (Tokyo) · +2 days"
           }
         ]
@@ -159,7 +177,7 @@
     },
     {
       "expected" : {
-        "offsetDescription" : "+19 h",
+        "offsetDescription" : "+00d 19h 00m",
         "readout" : "Tomorrow 10:42 AM",
         "rows" : [
           {
@@ -169,6 +187,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "10:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · next day"
           },
           {
@@ -178,6 +198,8 @@
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
             "shortOffsetPhrase" : "8h ahead",
+            "shortPlaceName" : "LON",
+            "twentyFourHourDigits" : "18:42",
             "zoneLine" : "United Kingdom Time (London) · next day"
           },
           {
@@ -187,6 +209,8 @@
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
             "shortOffsetPhrase" : "3h ahead",
+            "shortPlaceName" : "ET",
+            "twentyFourHourDigits" : "13:42",
             "zoneLine" : "New York, Toronto · next day"
           },
           {
@@ -196,6 +220,8 @@
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
             "shortOffsetPhrase" : "17h ahead",
+            "shortPlaceName" : "TYO",
+            "twentyFourHourDigits" : "03:42",
             "zoneLine" : "Japan Standard Time (Tokyo) · +2 days"
           }
         ]
@@ -226,7 +252,7 @@
     },
     {
       "expected" : {
-        "offsetDescription" : "−45 min",
+        "offsetDescription" : "−00d 00h 45m",
         "readout" : "Today 2:57 PM",
         "rows" : [
           {
@@ -236,6 +262,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "14:57",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -245,6 +273,8 @@
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
             "shortOffsetPhrase" : "8h ahead",
+            "shortPlaceName" : "LON",
+            "twentyFourHourDigits" : "22:57",
             "zoneLine" : "United Kingdom Time (London)"
           },
           {
@@ -254,6 +284,8 @@
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
             "shortOffsetPhrase" : "3h ahead",
+            "shortPlaceName" : "ET",
+            "twentyFourHourDigits" : "17:57",
             "zoneLine" : "New York, Toronto"
           },
           {
@@ -263,6 +295,8 @@
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
             "shortOffsetPhrase" : "17h ahead",
+            "shortPlaceName" : "TYO",
+            "twentyFourHourDigits" : "07:57",
             "zoneLine" : "Japan Standard Time (Tokyo) · next day"
           }
         ]
@@ -293,7 +327,7 @@
     },
     {
       "expected" : {
-        "offsetDescription" : "+3 d 2 h",
+        "offsetDescription" : "+03d 02h 00m",
         "readout" : "Sun 18 Jan, 5:42 PM",
         "rows" : [
           {
@@ -303,6 +337,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "17:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · +3 days"
           },
           {
@@ -312,6 +348,8 @@
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
             "shortOffsetPhrase" : "8h ahead",
+            "shortPlaceName" : "LON",
+            "twentyFourHourDigits" : "01:42",
             "zoneLine" : "United Kingdom Time (London) · +4 days"
           }
         ]
@@ -331,7 +369,7 @@
     },
     {
       "expected" : {
-        "offsetDescription" : "−1 d",
+        "offsetDescription" : "−01d 00h 00m",
         "readout" : "Yesterday 3:42 PM",
         "rows" : [
           {
@@ -341,6 +379,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · previous day"
           },
           {
@@ -350,6 +390,8 @@
             "offsetPhrase" : "8 hours ahead",
             "placeName" : "London",
             "shortOffsetPhrase" : "8h ahead",
+            "shortPlaceName" : "LON",
+            "twentyFourHourDigits" : "23:42",
             "zoneLine" : "United Kingdom Time (London) · previous day"
           }
         ]
@@ -377,6 +419,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -386,6 +430,8 @@
             "offsetPhrase" : "13.5 hours ahead",
             "placeName" : "Kolkata",
             "shortOffsetPhrase" : "13.5h ahead",
+            "shortPlaceName" : "CCU",
+            "twentyFourHourDigits" : "05:12",
             "zoneLine" : "India Standard Time (Kolkata, Mumbai) · next day"
           },
           {
@@ -395,6 +441,8 @@
             "offsetPhrase" : "13.75 hours ahead",
             "placeName" : "Kathmandu",
             "shortOffsetPhrase" : "13.75h ahead",
+            "shortPlaceName" : "KAT",
+            "twentyFourHourDigits" : "05:27",
             "zoneLine" : "Nepal Time (Kathmandu) · next day"
           }
         ]
@@ -419,7 +467,7 @@
     },
     {
       "expected" : {
-        "offsetDescription" : "+1 h",
+        "offsetDescription" : "+00d 01h 00m",
         "readout" : "Today 3:00 AM",
         "rows" : [
           {
@@ -429,6 +477,8 @@
             "offsetPhrase" : "",
             "placeName" : "New York (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "NYC",
+            "twentyFourHourDigits" : "03:00",
             "zoneLine" : "Eastern Time (New York, Toronto)"
           },
           {
@@ -438,6 +488,8 @@
             "offsetPhrase" : "4 hours ahead",
             "placeName" : "London",
             "shortOffsetPhrase" : "4h ahead",
+            "shortPlaceName" : "LON",
+            "twentyFourHourDigits" : "07:00",
             "zoneLine" : "United Kingdom Time (London)"
           }
         ]
@@ -466,6 +518,8 @@
             "offsetPhrase" : "",
             "placeName" : "New York (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "NYC",
+            "twentyFourHourDigits" : "01:30",
             "zoneLine" : "Eastern Time (New York, Toronto)"
           },
           {
@@ -475,6 +529,8 @@
             "offsetPhrase" : "5 hours ahead",
             "placeName" : "London",
             "shortOffsetPhrase" : "5h ahead",
+            "shortPlaceName" : "LON",
+            "twentyFourHourDigits" : "06:30",
             "zoneLine" : "United Kingdom Time (London)"
           }
         ]
@@ -503,6 +559,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -512,6 +570,8 @@
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "ET (Eastern Time)",
             "shortOffsetPhrase" : "3h ahead",
+            "shortPlaceName" : "ET",
+            "twentyFourHourDigits" : "18:42",
             "zoneLine" : "New York, Toronto"
           },
           {
@@ -521,6 +581,8 @@
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "JST (Japan Standard Time)",
             "shortOffsetPhrase" : "17h ahead",
+            "shortPlaceName" : "JST",
+            "twentyFourHourDigits" : "08:42",
             "zoneLine" : "Tokyo · next day"
           },
           {
@@ -530,6 +592,8 @@
             "offsetPhrase" : "3 hours ahead",
             "placeName" : "East Coast (Eastern Time)",
             "shortOffsetPhrase" : "3h ahead",
+            "shortPlaceName" : "East Coast",
+            "twentyFourHourDigits" : "18:42",
             "zoneLine" : "New York, Toronto"
           }
         ]
@@ -571,6 +635,8 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
+            "shortPlaceName" : "LAX",
+            "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -580,6 +646,8 @@
             "offsetPhrase" : "Same time",
             "placeName" : "Portland, Oregon",
             "shortOffsetPhrase" : "Same time",
+            "shortPlaceName" : "POR",
+            "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
           {
@@ -589,6 +657,8 @@
             "offsetPhrase" : "9 hours ahead",
             "placeName" : "Salzburg",
             "shortOffsetPhrase" : "9h ahead",
+            "shortPlaceName" : "SAL",
+            "twentyFourHourDigits" : "00:42",
             "zoneLine" : "Central European Time (Vienna) · next day"
           }
         ]

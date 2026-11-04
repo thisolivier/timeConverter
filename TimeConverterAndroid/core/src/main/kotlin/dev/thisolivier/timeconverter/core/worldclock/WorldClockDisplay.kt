@@ -21,10 +21,14 @@ data class WorldClockRow(
     val placeName: String,
     /** What a narrow cell can hold (item 37): local without `(local)`, a code without its expansion, a place up to its comma. */
     val compactPlaceName: String,
+    /** Three letters for the widgets' tightest cells (item 36b): `LON`, `LAX`, a code as itself. */
+    val shortPlaceName: String,
     /** `5:00`. */
     val clockDigits: String,
     /** `PM`. */
     val meridiem: String,
+    /** `17:00`, zero-padded — for widgets on a 24-hour device (item 36b). */
+    val twentyFourHourDigits: String,
     /** Item-21 zone line plus a day marker against the real local today; empty for GMT/UTC with no marker. */
     val zoneLine: String,
     /** `5 hours ahead`, `Same time`; empty on the local row. */

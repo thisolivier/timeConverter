@@ -55,4 +55,6 @@ data class ExpectedWorldClockRow(
     val zoneLine: String,
     val offsetPhrase: String,
     val shortOffsetPhrase: String,
+    val shortPlaceName: String,
+    val twentyFourHourDigits: String,
 )

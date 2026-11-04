@@ -9,15 +9,11 @@ public enum SavedCitiesWidgetSupport {
     /// Changing it orphans every widget already on a home screen.
     public static let kind = "dev.thisolivier.timeconverter.widgets.savedcities"
 
-    /// The large widget shows the local row and this many favourites; the
-    /// rest are in the app. Five fills a large widget at the row height the
-    /// view uses without clipping on the smallest iPhone.
-    public static let maximumFavouriteRows = 5
-
-    /// The rows a widget draws: local first, then favourites in stored order,
-    /// capped.
-    public static func rows(for display: WorldClockDisplay) -> [WorldClockRow] {
-        Array(display.rows.prefix(1 + maximumFavouriteRows))
+    /// The cells a widget draws (item 36b): the saved places in stored order,
+    /// at most `WidgetLayoutPlan.maximumCities`. The local clock is left out —
+    /// the home screen already shows one (Olivier, 2026-11-04).
+    public static func cities(for display: WorldClockDisplay) -> [WorldClockRow] {
+        Array(display.rows.filter { !$0.isLocal }.prefix(WidgetLayoutPlan.maximumCities))
     }
 
     /// When the timeline's entries fall: `now` itself, then every minute

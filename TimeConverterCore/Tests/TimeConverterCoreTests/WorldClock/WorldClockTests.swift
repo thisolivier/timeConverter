@@ -92,7 +92,7 @@ struct WorldClockTests {
 
     @Test func minusFortyFiveMinutes() {
         let display = readings([Self.london], minutes: -45)
-        #expect(display.offsetDescription == "\u{2212}45 min")
+        #expect(display.offsetDescription == "\u{2212}00d 00h 45m")
         #expect(display.readout == "Today 2:57 PM")
         #expect(display.rows[1].clockDigits == "10:57")
         #expect(display.rows[1].meridiem == "PM")
@@ -101,8 +101,8 @@ struct WorldClockTests {
     @Test func plusThreeDaysReadsAsAWeekdayAndDate() {
         let display = readings([Self.london], minutes: 3 * 1440)
         #expect(display.readout == "Sun 18 Jan, 3:42 PM")
-        #expect(display.offsetDescription == "+3 d")
-        #expect(readings([], minutes: 3 * 1440 + 135).offsetDescription == "+3 d 2 h 15 min")
+        #expect(display.offsetDescription == "+03d 00h 00m")
+        #expect(readings([], minutes: 3 * 1440 + 135).offsetDescription == "+03d 02h 15m")
         #expect(readings([], minutes: -3 * 1440).readout == "Mon 12 Jan, 3:42 PM")
     }
 
@@ -110,7 +110,7 @@ struct WorldClockTests {
     @Test func theOffsetIsUnbounded() {
         let display = readings([Self.london], minutes: 365 * 1440)
         #expect(display.readout == "Fri 15 Jan, 3:42 PM")
-        #expect(display.offsetDescription == "+365 d")
+        #expect(display.offsetDescription == "+365d 00h 00m")
     }
 
     /// 1:30 AM EST + 1 h = 2:30 AM, which never happens on 8 March in New

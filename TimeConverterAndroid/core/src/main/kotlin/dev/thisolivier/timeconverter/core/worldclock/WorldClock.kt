@@ -71,12 +71,15 @@ object WorldClock {
 
     private fun row(result: ConversionResult, favourite: FavouriteDestination?, today: Int): WorldClockRow {
         val rowZone = ZoneId.of(result.target.timeZoneIdentifier)
+        val compactPlaceName = compactPlaceName(favourite, result.target.zoneDisplayName)
         return WorldClockRow(
             id = favourite?.id ?: "local",
             placeName = result.target.placeNameDescription,
-            compactPlaceName = compactPlaceName(favourite, result.target.zoneDisplayName),
+            compactPlaceName = compactPlaceName,
+            shortPlaceName = ShortPlaceNames.shortName(favourite?.label, compactPlaceName),
             clockDigits = result.target.clockDigits,
             meridiem = result.target.uppercasedMeridiem,
+            twentyFourHourDigits = result.target.twentyFourHourDigits,
             // The converter's own zone detail, with the day marker against the real local today.
             zoneLine = ConverterPresenter.zoneLine(
                 zoneDetail = ConverterPresenter.zoneDetail(result.target),

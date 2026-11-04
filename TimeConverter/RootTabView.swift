@@ -17,6 +17,14 @@ struct RootTabView: View {
     private let launchRequests = LaunchRequestInbox.shared
 
     var body: some View {
+        if LaunchArguments.showsWidgetPreview {
+            WidgetPreviewScreen()
+        } else {
+            tabs
+        }
+    }
+
+    private var tabs: some View {
         TabView(selection: $selectedTab) {
             Tab("Convert", systemImage: "arrow.left.arrow.right", value: AppTab.convert) {
                 ContentView()

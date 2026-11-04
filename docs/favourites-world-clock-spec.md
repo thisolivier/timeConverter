@@ -75,7 +75,9 @@ open; each is marked **(decision)** so they are easy to reverse.
 - **Readout** above the dial: the shifted local time and its day —
   `Today 2:30 PM`, `Tomorrow 9:15 AM`, `Yesterday 11:00 PM`, and beyond one day
   the weekday and date, `Fri 31 Oct, 9:15 AM` — plus the signed offset once
-  non-zero: `+5 h`, `−45 min`, `+3 d 2 h`.
+  non-zero: `+00d 04h 00m`, `−00d 00h 45m` — every part present and
+  zero-padded since 2026-11-04 (Olivier: dropping zero parts made the label
+  flicker between widths while the dial turned).
 - **Base**: the real current time keeps advancing underneath the offset, so a
   dial left at +2 h for ten minutes shows +2 h from the new now.
 

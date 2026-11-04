@@ -20,11 +20,13 @@ dependencies {
 // from their one file, so there is no second copy to drift:
 // - `/zone-names.json`, the zone-name snapshot captured on iOS (iOS is the
 //   origin — see fixtures/readme.md);
-// - `/fallback-cities.json`, the offline gazetteer (resolver step 5).
+// - `/fallback-cities.json`, the offline gazetteer (resolver step 5);
+// - `/short-names.json`, the widgets' three-letter place names (item 36b).
 tasks.processResources {
     val swiftResources = "../TimeConverterCore/Sources/TimeConverterCore/Resources"
     from(rootProject.file("$swiftResources/zone-names.json"))
     from(rootProject.file("$swiftResources/fallback-cities.json"))
+    from(rootProject.file("$swiftResources/short-names.json"))
 }
 
 tasks.test {

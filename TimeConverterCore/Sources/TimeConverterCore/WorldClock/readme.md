@@ -25,7 +25,9 @@ the rest of the package; `now` and `localZone` are always parameters.
   local one included — the same reference as the readout's `Today` /
   `Tomorrow`. (Build 20 measured them against the shifted local row, which
   read backwards under the dial; changed 2026-10-29.)
-- **Strings are hand-formatted** (`Fri 31 Oct, 9:15 AM`, `−45 min`), never a
+- **Strings are hand-formatted** (`Fri 31 Oct, 9:15 AM`, `−00d 00h 45m` —
+  the dial's offset keeps every part, zero-padded, so it never changes width
+  under the finger), never a
   `DateFormatter`, for the same locale-independence as `Parsing/Formatting.swift`.
 - **Rows carry both a long and a short form** (item 37): `offsetPhrase`
   (`8 hours behind`) and `shortOffsetPhrase` (`8h behind`), `placeName`
@@ -53,11 +55,13 @@ the rest of the package; `now` and `localZone` are always parameters.
 | `FavouriteDestination.swift` | The stored value; rebuilds the `ResolvedZone` the engine needs (a code label recovers its curated cities from the resolver chain); `resolvingTypedZone` for the DEBUG seed and the fixture catalog. |
 | `FavouritesStore.swift` | `@Observable` list over injected defaults: `toggle`, `remove`, `remove(atOffsets:)`, `isFavourite`, `replaceAll`; publishes to an optional mirror. |
 | `FavouritesMirror.swift` | `FavouritesMirror` and `KeychainFavouritesMirror` (write after save, `read()` for the widget). |
-| `SavedCitiesWidgetSupport.swift` | The widget's `kind`, the row cap (local + 5) and the minute-boundary entry dates — the testable part of the widget. |
+| `SavedCitiesWidgetSupport.swift` | The widget's `kind`, the cells (saved places only, at most six) and the minute-boundary entry dates — the testable part of the widget. |
 | `WorldClock.swift` | `readings(favourites:offset:now:localZone:)` and the shifted-wall-clock resolution. |
 | `WorldClockDisplay.swift` | `WorldClockDisplay` (readout, signed offset, rows) and `WorldClockRow`. |
 | `WorldClockFormatting.swift` | The readout and the signed offset strings. |
 | `SavedGridLayout.swift` | Column count by clock count, short-phrase rule, row chunking (item 37). |
+| `WidgetLayoutPlan.swift` | The widgets' layout by family and city count: columns, rows, name and caption style, hero, spanning last cell (item 36b). |
+| `ShortPlaceNames.swift` + `../Resources/short-names.json` | Three-letter place names for the widgets' tightest cells; curated forms in the file, first-three-letters otherwise, a code as itself. |
 
 Fixtures: `fixtures/world-clock-cases.json`, from `SharedWorldClockCatalog` in
 the tests (see `fixtures/readme.md`).

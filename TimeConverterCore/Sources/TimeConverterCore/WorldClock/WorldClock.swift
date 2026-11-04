@@ -74,12 +74,15 @@ public enum WorldClock {
         for result: ConversionResult, favourite: FavouriteDestination?, today: Int
     ) -> WorldClockRow {
         let rowZone = TimeZone(identifier: result.target.timeZoneIdentifier) ?? .current
+        let compactPlaceName = compactPlaceName(for: favourite, zoneDisplayName: result.target.zoneDisplayName)
         return WorldClockRow(
             id: favourite?.id ?? "local",
             placeName: result.target.placeNameDescription,
-            compactPlaceName: compactPlaceName(for: favourite, zoneDisplayName: result.target.zoneDisplayName),
+            compactPlaceName: compactPlaceName,
+            shortPlaceName: ShortPlaceNames.shortName(for: favourite?.label, compactPlaceName: compactPlaceName),
             clockDigits: result.target.clockDigits,
             meridiem: result.target.uppercasedMeridiem,
+            twentyFourHourDigits: result.target.twentyFourHourDigits,
             // The converter's own zone detail, with the day marker measured
             // against the real local today (see the type comment).
             zoneLine: ConverterPresenter.zoneLine(

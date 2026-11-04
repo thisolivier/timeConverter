@@ -42,6 +42,15 @@ data class ZoneReading(
     val clockDigits: String get() = formattedTime.substringBefore(' ')
     /** `PM` from `4:00 pm`. */
     val uppercasedMeridiem: String get() = formattedTime.substringAfter(' ').uppercase()
+
+    /** `17:00` from `5:00 pm`, `00:05` from `12:05 am` — zero-padded, for the widgets on a 24-hour device (item 36b). */
+    val twentyFourHourDigits: String
+        get() {
+            val parts = clockDigits.split(':')
+            val twelveHour = parts.getOrNull(0)?.toIntOrNull() ?: return clockDigits
+            val hour = (twelveHour % 12) + (if (uppercasedMeridiem == "PM") 12 else 0)
+            return (if (hour < 10) "0" else "") + "$hour:${parts[1]}"
+        }
 }
 
 /** Display-ready output. Port of Swift `ConversionResult`. */

@@ -92,7 +92,7 @@ class WorldClockTests {
     @Test
     fun `minus forty-five minutes`() {
         val display = readings(listOf(london), minutes = -45)
-        assertEquals("−45 min", display.offsetDescription)
+        assertEquals("−00d 00h 45m", display.offsetDescription)
         assertEquals("Today 2:57 PM", display.readout)
         assertEquals("10:57", display.rows[1].clockDigits)
         assertEquals("PM", display.rows[1].meridiem)
@@ -102,8 +102,8 @@ class WorldClockTests {
     fun `plus three days reads as a weekday and date`() {
         val display = readings(listOf(london), minutes = 3 * 1440)
         assertEquals("Sun 18 Jan, 3:42 PM", display.readout)
-        assertEquals("+3 d", display.offsetDescription)
-        assertEquals("+3 d 2 h 15 min", readings(emptyList(), minutes = 3 * 1440 + 135).offsetDescription)
+        assertEquals("+03d 00h 00m", display.offsetDescription)
+        assertEquals("+03d 02h 15m", readings(emptyList(), minutes = 3 * 1440 + 135).offsetDescription)
         assertEquals("Mon 12 Jan, 3:42 PM", readings(emptyList(), minutes = -3 * 1440).readout)
     }
 
@@ -111,7 +111,7 @@ class WorldClockTests {
     fun `the offset is unbounded`() {
         val display = readings(listOf(london), minutes = 365 * 1440)
         assertEquals("Fri 15 Jan, 3:42 PM", display.readout)
-        assertEquals("+365 d", display.offsetDescription)
+        assertEquals("+365d 00h 00m", display.offsetDescription)
     }
 
     @Test
@@ -167,8 +167,8 @@ class WorldClockTests {
     @Test
     fun `offset descriptions drop zero parts`() {
         assertNull(WorldClockFormatting.offsetDescription(0))
-        assertEquals("+5 h", WorldClockFormatting.offsetDescription(300))
-        assertEquals("+1 d 15 min", WorldClockFormatting.offsetDescription(1455))
-        assertEquals("−1 d", WorldClockFormatting.offsetDescription(-1440))
+        assertEquals("+00d 05h 00m", WorldClockFormatting.offsetDescription(300))
+        assertEquals("+01d 00h 15m", WorldClockFormatting.offsetDescription(1455))
+        assertEquals("−01d 00h 00m", WorldClockFormatting.offsetDescription(-1440))
     }
 }

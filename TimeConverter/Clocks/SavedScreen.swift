@@ -15,8 +15,10 @@ import TimeConverterUI
 /// `TimeZone.current` is read here, as `ContentView` does.
 ///
 /// Tapping a saved cell asks before removing it (the design shows no
-/// affordance on the cell itself, and a grid has no swipe-to-delete). The
-/// local cell is inert.
+/// affordance on the cell itself, and a grid has no swipe-to-delete) — in a
+/// popover anchored to that cell, on the iPhone too
+/// (`presentationCompactAdaptation(.popover)`), rather than a sheet under
+/// the whole grid (Olivier, 2026-11-04). The local cell is inert.
 struct SavedScreen: View {
     @Environment(FavouritesStore.self) private var favouritesStore
     @State private var offset = ClockOffset(
@@ -47,29 +49,33 @@ struct SavedScreen: View {
                 }
         }
         .background(PosterPalette.paper.ignoresSafeArea())
-        .confirmationDialog(
-            removalTitle,
-            isPresented: Binding(
-                get: { favouriteToRemove != nil },
-                set: { if !$0 { favouriteToRemove = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("Remove", role: .destructive) {
-                if let favourite = favouriteToRemove { favouritesStore.remove(favourite) }
-                favouriteToRemove = nil
-            }
-            Button("Cancel", role: .cancel) { favouriteToRemove = nil }
-        }
         .sheet(isPresented: $isAddingAPlace) {
             AddSavedPlaceSheet(initialText: LaunchArguments.addPlaceInput ?? "")
                 .environment(favouritesStore)
         }
     }
 
-    private var removalTitle: String {
-        guard let favourite = favouriteToRemove else { return "" }
-        return "Remove \(favourite.label.placeNameDescription) from Saved?"
+    /// The popover under a tapped cell: the question, Cancel, Remove.
+    private func removalPopover(for favourite: FavouriteDestination) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Remove \(favourite.label.placeNameDescription) from Saved?")
+                .font(PosterTypography.mono(size: 14))
+                .foregroundStyle(PosterPalette.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 10) {
+                Button("Cancel") { favouriteToRemove = nil }
+                    .buttonStyle(RemovalPopoverButtonStyle(isDestructive: false))
+                Button("Remove") {
+                    favouritesStore.remove(favourite)
+                    favouriteToRemove = nil
+                }
+                .buttonStyle(RemovalPopoverButtonStyle(isDestructive: true))
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: 300, alignment: .leading)
+        .presentationCompactAdaptation(.popover)
+        .presentationBackground(PosterPalette.paper)
     }
 
     // MARK: - The grid
@@ -117,6 +123,16 @@ struct SavedScreen: View {
                 guard let favourite = clock.favourite else { return }
                 favouriteToRemove = favourite
             }
+            .popover(
+                isPresented: Binding(
+                    get: { favouriteToRemove != nil && favouriteToRemove == clock.favourite },
+                    set: { if !$0 { favouriteToRemove = nil } }
+                ),
+                attachmentAnchor: .rect(.bounds),
+                arrowEdge: .top
+            ) {
+                if let favourite = clock.favourite { removalPopover(for: favourite) }
+            }
             .accessibilityAddTraits(clock.isLocal ? [] : .isButton)
             .accessibilityHint(clock.isLocal ? "" : "Removes this place from Saved")
     }
@@ -138,6 +154,23 @@ struct SavedScreen: View {
         .padding(.trailing, 20)
         .padding(.bottom, 16)
         .accessibilityLabel("Add a place")
+    }
+}
+
+/// Cancel in outline, Remove filled rust — the poster's chip vocabulary.
+private struct RemovalPopoverButtonStyle: ButtonStyle {
+    let isDestructive: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(PosterTypography.mono(size: 13))
+            .foregroundStyle(isDestructive ? PosterPalette.paper : PosterPalette.ink)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(isDestructive ? PosterPalette.accent : Color.clear)
+            .overlay(Rectangle().strokeBorder(PosterPalette.ink, lineWidth: isDestructive ? 0 : 1.5))
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .contentShape(Rectangle())
     }
 }
 

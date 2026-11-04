@@ -6,9 +6,6 @@ package dev.thisolivier.timeconverter.core.worldclock
  * so the two widgets show the same list.
  */
 object SavedCitiesWidgetSupport {
-    /** The widget shows the local row and this many favourites; the rest are in the app. */
-    const val MAXIMUM_FAVOURITE_ROWS = 5
-
-    /** Local first, then favourites in stored order, capped. */
-    fun rows(display: WorldClockDisplay): List<WorldClockRow> = display.rows.take(1 + MAXIMUM_FAVOURITE_ROWS)
+    /** The saved places in stored order, at most `WidgetLayoutPlan.MAXIMUM_CITIES`; the local clock is left out (the home screen has one). */
+    fun cities(display: WorldClockDisplay): List<WorldClockRow> = display.rows.filter { !it.isLocal }.take(WidgetLayoutPlan.MAXIMUM_CITIES)
 }

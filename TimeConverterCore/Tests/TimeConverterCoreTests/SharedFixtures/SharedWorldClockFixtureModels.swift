@@ -51,4 +51,6 @@ struct ExpectedWorldClockRow: Codable, Equatable {
     var zoneLine: String
     var offsetPhrase: String
     var shortOffsetPhrase: String
+    var shortPlaceName: String
+    var twentyFourHourDigits: String
 }

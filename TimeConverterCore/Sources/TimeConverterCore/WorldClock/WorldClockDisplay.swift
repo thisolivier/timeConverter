@@ -27,10 +27,17 @@ public struct WorldClockRow: Equatable, Sendable, Identifiable {
     /// time`), a code without its expansion (`ET`), a place up to its comma
     /// (`Portland` for `Portland, Oregon`). Everything else is `placeName`.
     public let compactPlaceName: String
+    /// Three letters for the widgets' tightest cells (item 36b): `LON`,
+    /// `LAX`, `TYO`, a code as itself (`ET`), otherwise the first three
+    /// letters of `compactPlaceName`.
+    public let shortPlaceName: String
     /// `5:00`.
     public let clockDigits: String
     /// `PM`.
     public let meridiem: String
+    /// `17:00`, `03:38` — the 24-hour form, zero-padded, for widgets on a
+    /// device set to 24-hour time (item 36b).
+    public let twentyFourHourDigits: String
     /// Item-21 zone line plus a day marker when this row's date differs from
     /// the real local today (the local row carries one too once the dial has
     /// crossed midnight): `Japan Standard Time (Tokyo) · next day`. Empty for

@@ -25,6 +25,7 @@ extension LaunchArguments {
     static let clockOffsetDaysKey = "clockOffsetDays"
     static let clockOffsetMinutesKey = "clockOffsetMinutes"
     static let addPlaceKey = "addPlace"
+    static let widgetPreviewKey = "widgetPreview"
 
     public static var seededFavourites: [FavouriteDestination]? {
         seededFavourites(readingFrom: .standard)
@@ -32,6 +33,18 @@ extension LaunchArguments {
 
     public static var opensOnSavedTab: Bool {
         opensOnSavedTab(readingFrom: .standard) || addPlaceInput != nil
+    }
+
+    /// `-widgetPreview 1` (item 36b): show every widget face — three families
+    /// by seven city counts — at widget size instead of the tabs, so the
+    /// faces can be photographed on the simulator, which cannot place a
+    /// widget. Always false in Release.
+    public static var showsWidgetPreview: Bool {
+        #if DEBUG
+        return UserDefaults.standard.bool(forKey: widgetPreviewKey)
+        #else
+        return false
+        #endif
     }
 
     /// The text to open the add-a-place sheet with; `nil` (always, in

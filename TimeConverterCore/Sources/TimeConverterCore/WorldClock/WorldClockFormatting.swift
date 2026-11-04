@@ -31,18 +31,19 @@ enum WorldClockFormatting {
         }
     }
 
-    /// `+5 h`, `−45 min`, `+3 d 2 h`, `+1 d 15 min`; `nil` at zero. Zero parts
-    /// are dropped so the common cases stay short.
+    /// `+00d 04h 00m`, `−01d 12h 30m`; `nil` at zero, where the readout says
+    /// `Now`. Every part is always present and zero-padded (the 2026-11-04
+    /// design's form) so the string keeps one width while the dial turns —
+    /// dropping zero parts, as build 20 did, made the label flicker between
+    /// `+5 h` and `+4 h 45 min` under the finger (Olivier, 2026-11-04).
     static func offsetDescription(minutes: Int) -> String? {
         guard minutes != 0 else { return nil }
         let magnitude = abs(minutes)
         let days = magnitude / 1440
         let hours = (magnitude % 1440) / 60
         let remainingMinutes = magnitude % 60
-        var parts: [String] = []
-        if days > 0 { parts.append("\(days) d") }
-        if hours > 0 { parts.append("\(hours) h") }
-        if remainingMinutes > 0 { parts.append("\(remainingMinutes) min") }
-        return (minutes > 0 ? "+" : minusSign) + parts.joined(separator: " ")
+        func padded(_ value: Int) -> String { value < 10 ? "0\(value)" : "\(value)" }
+        return (minutes > 0 ? "+" : minusSign)
+            + "\(padded(days))d \(padded(hours))h \(padded(remainingMinutes))m"
     }
 }

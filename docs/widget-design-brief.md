@@ -38,4 +38,12 @@ smaller AM/PM rather than switching formats automatically.
 ## Already decided
 
 - The widget does not show the device's local time (the home screen has a
-  clock). Noted 2026-11-04, not yet applied to the MVP; see backlog item 36.
+  clock). Noted 2026-11-04; applied in item 36b. (The designs draw a
+  `LONDON · Local time` cell; the explicit instruction won — easy to flip in
+  `SavedCitiesWidgetSupport.cities` if the designs are the intent.)
+- Clock format follows the device's 12/24-hour setting; the designs' `20:38`
+  is what a 24-hour device shows, a 12-hour device gets `8:38 PM` with the
+  meridiem small, and the numeral size reserves room for it.
+- Short names: a curated table of recognisable three-letter forms
+  (`short-names.json`: LON, LAX, TYO, SÃO, NYC…), the first three letters
+  for everything else (`KAT`, `POR`), a code as itself (`ET`).

@@ -76,9 +76,10 @@ extension FavouriteDestination {
     /// What starring the target of `12pm in <typedZone>` would store, or `nil`
     /// when that sentence does not convert (unknown or ambiguous zone).
     ///
-    /// Used by the DEBUG `-favourites` seed and by the fixture catalog, so both
-    /// produce exactly the label a real tap on the star would.
-    static func resolvingTypedZone(_ typedZone: String) -> FavouriteDestination? {
+    /// Used by the DEBUG `-favourites` seed, the fixture catalog and the
+    /// widget preview screen, so all produce exactly the label a real tap on
+    /// the star would. Public for the preview; not a general lookup API.
+    public static func resolvingTypedZone(_ typedZone: String) -> FavouriteDestination? {
         let anyFixedInstant = Date(timeIntervalSince1970: 1_768_478_400)
         let utc = TimeZone(secondsFromGMT: 0)!
         guard case let .result(result) = InputParser()

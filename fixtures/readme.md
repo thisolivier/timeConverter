@@ -24,10 +24,13 @@ cores are tested against.
                     name?,                    // place
                     code?, expandedName? } ], // code
     expected: { readout,                       // "Today 3:42 PM", "Sun 18 Jan, 5:42 PM"
-                offsetDescription?,            // "+19 h", "−45 min" (U+2212); absent at zero
+                offsetDescription?,            // "+00d 19h 00m", "−00d 00h 45m" (U+2212, every part, zero-padded); absent at zero
                 rows: [ { isLocal, placeName, clockDigits, meridiem,
+                          twentyFourHourDigits, // "17:00", zero-padded (widgets on a 24-hour device)
+                          shortPlaceName,      // "LON", "LAX", a code as itself (widgets' tightest cells)
                           zoneLine,            // item-21 line + " · next day"/" · previous day" vs the local row
-                          offsetPhrase } ] }   // "" on the local row
+                          offsetPhrase,        // "" on the local row
+                          shortOffsetPhrase } ] } // "8h behind"; "" on the local row
 } ] }
 ```
 

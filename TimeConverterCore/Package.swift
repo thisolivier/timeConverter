@@ -51,7 +51,10 @@ let package = Package(
                 .process("Resources/fallback-cities.json"),
                 // The iOS-origin zone-name snapshot (`ZoneNameTable`). Also
                 // read, from this same path, by the Android core's build.
-                .process("Resources/zone-names.json")
+                .process("Resources/zone-names.json"),
+                // The widgets' three-letter place names (item 36b); also
+                // read by the Android core's build.
+                .process("Resources/short-names.json")
             ]
         ),
         .target(

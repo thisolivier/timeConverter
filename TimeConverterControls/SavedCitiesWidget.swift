@@ -2,12 +2,10 @@ import SwiftUI
 import TimeConverterCore
 import WidgetKit
 
-/// The saved-cities home-screen widget (backlog item 36): the Clocks tab's
-/// rows at a glance — the local clock and up to five favourites, each in the
-/// converter's own digits and zone line.
-///
-/// One size for the MVP, `.systemLarge`, which is the first size that fits a
-/// readable list. Tapping anywhere opens the app.
+/// The saved-cities home-screen widget (backlog items 36 and 36b): the
+/// saved places at a glance, in the converter's own digits, laid out by
+/// `WidgetLayoutPlan` from the 2026-11-04 designs — small, medium and large,
+/// the layout following the city count. Tapping anywhere opens the app.
 ///
 /// ## Where the data comes from
 ///
@@ -29,16 +27,13 @@ struct SavedCitiesWidget: Widget {
         }
         .configurationDisplayName("Saved cities")
         .description("Your starred places, on the clock.")
-        .supportedFamilies([.systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
 struct SavedCitiesEntry: TimelineEntry {
     let date: Date
-    /// Local row first, then favourites, already capped for the size.
-    let rows: [WorldClockRow]
-    /// False when nothing is starred, so the view can say what to do.
-    let hasFavourites: Bool
+    let content: SavedCitiesWidgetContent
 }
 
 struct SavedCitiesTimelineProvider: TimelineProvider {
@@ -74,8 +69,20 @@ struct SavedCitiesTimelineProvider: TimelineProvider {
         let display = WorldClock.readings(favourites: favourites, offset: 0, now: date, localZone: .current)
         return SavedCitiesEntry(
             date: date,
-            rows: SavedCitiesWidgetSupport.rows(for: display),
-            hasFavourites: !favourites.isEmpty
+            content: SavedCitiesWidgetContent(
+                cities: SavedCitiesWidgetSupport.cities(for: display),
+                usesTwentyFourHourClock: Self.deviceUsesTwentyFourHourClock
+            )
         )
+    }
+
+    /// The device's own clock setting, which the brief asks the widgets to
+    /// follow (a 12-hour device gets a small `AM`/`PM`; a 24-hour one gets
+    /// `20:38`). The app itself still speaks 12-hour everywhere.
+    static var deviceUsesTwentyFourHourClock: Bool {
+        switch Locale.current.hourCycle {
+        case .zeroToTwentyThree, .oneToTwentyFour: return true
+        default: return false
+        }
     }
 }

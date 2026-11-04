@@ -138,6 +138,17 @@ struct ZoneReading: Equatable, Sendable {
     /// `8:00 PM` — the design sets the meridiem in caps.
     var uppercasedTime: String { formattedTime.uppercased() }
 
+    /// `17:00` from `5:00 pm`, `00:05` from `12:05 am` — zero-padded, for the
+    /// widgets on a 24-hour device (item 36b). Derived from the canonical
+    /// form rather than kept beside it, so there is one clock to keep right.
+    var twentyFourHourDigits: String {
+        let parts = clockDigits.split(separator: ":")
+        guard parts.count == 2, let twelveHour = Int(parts[0]) else { return clockDigits }
+        let isAfternoon = uppercasedMeridiem == "PM"
+        let hour = (twelveHour % 12) + (isAfternoon ? 12 : 0)
+        return (hour < 10 ? "0" : "") + "\(hour):\(parts[1])"
+    }
+
     /// `4:00` from `4:00 pm`: the part the design sets at poster scale.
     var clockDigits: String {
         String(formattedTime.split(separator: " ").first ?? "")

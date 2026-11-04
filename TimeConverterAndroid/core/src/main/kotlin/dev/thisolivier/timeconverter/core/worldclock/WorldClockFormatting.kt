@@ -31,17 +31,14 @@ object WorldClockFormatting {
         }
 
     /** `+5 h`, `−45 min`, `+3 d 2 h`, `+1 d 15 min`; null at zero. Zero parts are dropped. */
+    /** `+00d 04h 00m`, `−01d 12h 30m`; null at zero. Every part present and zero-padded so the label keeps one width while the dial turns (2026-11-04). */
     fun offsetDescription(minutes: Int): String? {
         if (minutes == 0) return null
         val magnitude = abs(minutes)
         val days = magnitude / 1440
         val hours = (magnitude % 1440) / 60
         val remainingMinutes = magnitude % 60
-        val parts = buildList {
-            if (days > 0) add("$days d")
-            if (hours > 0) add("$hours h")
-            if (remainingMinutes > 0) add("$remainingMinutes min")
-        }
-        return (if (minutes > 0) "+" else MINUS_SIGN) + parts.joinToString(" ")
+        fun padded(value: Int) = if (value < 10) "0$value" else "$value"
+        return (if (minutes > 0) "+" else MINUS_SIGN) + "${padded(days)}d ${padded(hours)}h ${padded(remainingMinutes)}m"
     }
 }

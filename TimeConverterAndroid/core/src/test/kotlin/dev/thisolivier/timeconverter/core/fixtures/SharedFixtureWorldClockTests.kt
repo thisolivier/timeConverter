@@ -85,6 +85,8 @@ class SharedFixtureWorldClockTests {
                 zoneLine = row.zoneLine,
                 offsetPhrase = row.offsetPhrase,
                 shortOffsetPhrase = row.shortOffsetPhrase,
+                shortPlaceName = row.shortPlaceName,
+                twentyFourHourDigits = row.twentyFourHourDigits,
             )
         },
     )

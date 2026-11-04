@@ -20,16 +20,16 @@ struct SavedCitiesWidgetSupportTests {
         #expect(dates.last! .timeIntervalSince(FixedDates.winterMidday) == 60 * 60)
     }
 
-    @Test func rowsAreLocalPlusAtMostFiveFavourites() throws {
+    @Test func citiesAreTheSavedPlacesWithoutLocalAtMostSix() throws {
         let favourites = ["London", "Tokyo", "ET", "Paris", "Sydney", "Mumbai", "Lima"]
             .compactMap(FavouriteDestination.resolvingTypedZone)
         #expect(favourites.count == 7)
         let display = WorldClock.readings(
             favourites: favourites, offset: 0, now: FixedDates.winterMidday, localZone: FixedZones.device
         )
-        let rows = SavedCitiesWidgetSupport.rows(for: display)
-        #expect(rows.count == 6)
-        #expect(rows.first?.isLocal == true)
-        #expect(rows.map(\.placeName).dropFirst() == ["London", "Tokyo", "ET (Eastern Time)", "Paris", "Sydney"])
+        let cities = SavedCitiesWidgetSupport.cities(for: display)
+        #expect(cities.count == 6)
+        #expect(cities.allSatisfy { !$0.isLocal })
+        #expect(cities.map(\.placeName) == ["London", "Tokyo", "ET (Eastern Time)", "Paris", "Sydney", "Mumbai"])
     }
 }
