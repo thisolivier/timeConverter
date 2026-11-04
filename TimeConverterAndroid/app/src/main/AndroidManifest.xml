@@ -36,18 +36,52 @@
                 android:value="false" />
         </service>
 
-        <!-- The saved-cities home-screen widget (backlog 36); see
-             SavedCitiesWidgetProvider for why it is RemoteViews + TextClock. -->
+        <!-- The saved-cities home-screen widgets (backlog 36, 36b): one provider,
+             three sizes (2×2, 4×2, 4×4), each its own receiver; see
+             SavedCitiesWidgetProvider for why it is RemoteViews + TextClock.
+             TIME_SET (also sent on a 12/24-hour switch), TIMEZONE_CHANGED and
+             LOCALE_CHANGED are exempt from the implicit-broadcast limits. -->
         <receiver
-            android:name=".SavedCitiesWidgetProvider"
+            android:name=".SavedCitiesSmallWidgetProvider"
             android:exported="true"
-            android:label="@string/app_name">
+            android:label="@string/widget_empty_title">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_saved_cities_info" />
+                android:resource="@xml/widget_saved_cities_small_info" />
+        </receiver>
+        <receiver
+            android:name=".SavedCitiesMediumWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_empty_title">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_saved_cities_medium_info" />
+        </receiver>
+        <receiver
+            android:name=".SavedCitiesLargeWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_empty_title">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_saved_cities_large_info" />
         </receiver>
     </application>
 

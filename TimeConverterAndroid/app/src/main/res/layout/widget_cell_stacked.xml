@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A grid cell, and the small widget's single city: label, time, caption,
+     stacked and left-aligned, centred in the cell's height. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cell"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_vertical|start">
+
+    <TextView
+        android:id="@+id/cell_label"
+        style="@style/WidgetLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <include layout="@layout/widget_time_row" />
+
+    <TextView
+        android:id="@+id/cell_caption"
+        style="@style/WidgetCaption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>

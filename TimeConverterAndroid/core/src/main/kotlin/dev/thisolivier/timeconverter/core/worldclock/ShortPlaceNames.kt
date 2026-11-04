@@ -5,10 +5,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * The widgets' three-letter place names (item 36b), read from the Swift
- * core's `/short-names.json` on this module's classpath. Port of Swift
- * `ShortPlaceNames`: a curated form when listed, a code as itself, otherwise
- * the first three letters of the compact name, uppercased.
+ * The widgets' 3–4-letter place names (item 36b), read from the Swift core's
+ * `/short-names.json` on this module's classpath — every tz city and
+ * gazetteer name has one. Port of Swift `ShortPlaceNames`: the listed form, a
+ * code as itself, otherwise the first three letters of the compact name.
  */
 object ShortPlaceNames {
     const val RESOURCE_PATH = "/short-names.json"

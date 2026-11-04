@@ -146,30 +146,71 @@ own resolution, chips included — whose `Add` saves what the star would.
   (opens the sheet with that typed), from `run-android.sh --favourites /
   --tab / --offset-minutes / --add-place`.
 
-## Saved-cities home-screen widget (backlog 36)
+## Saved-cities home-screen widgets (backlog 36, 36b)
 
-The Clocks tab at a glance: the local clock and up to five favourites, in the
-poster's colours, one size to start (4×3 cells, resizable). Tapping opens the
-app. The Android twin of the iOS `.systemLarge` widget in
-`TimeConverterControls/`.
+The saved places at a glance, in the poster's colours, in three sizes whose
+layout follows the number of cities — the Android twin of the iOS widgets in
+`TimeConverterControls/` (2026-11-04 designs, `docs/widget-design-brief.md`).
+The local clock is left out (the home screen has one); at most six cities;
+tapping opens the app.
 
+| Size | Cells | Nominal dp | 1 city | 2–3 | 4 | 5–6 |
+|---|---|---|---|---|---|---|
+| Small | 2×2 | 150 × 150 | hero | code rows (`LON 11:38`) | 2×2 codes | 2×3 codes |
+| Medium | 4×2 | 320 × 150 | hero, caption beside a rule | 2–3 columns, short captions | 2×2, short captions | 3×2, names only |
+| Large | 4×4 | 320 × 330 | hero over a hairline | full-width rows, caption at right | 2×2, captions | 2×3, short captions |
+
+Five cities let the last cell span what is left of its row.
+
+- **One provider, three receivers.** `SavedCitiesWidgetProvider` (abstract)
+  holds everything; `SavedCitiesSmall/Medium/LargeWidgetProvider` are thin
+  subclasses that only name their family, each with its own
+  `res/xml/widget_saved_cities_{small,medium,large}_info.xml` (target cells,
+  pre-12 `minWidth`/`minHeight`, resizable, 30-minute `updatePeriodMillis`).
+  `requestUpdate` redraws all three. The MVP's single 4×3 receiver is gone,
+  so a widget placed from builds 26–29 has to be added again.
+- **The layout is core's, the sizes are the app's.** `WidgetLayoutPlan`
+  (`:core`, shared with Swift) picks columns, rows, codes vs names and
+  full/short/no captions — the brief's compression order.
+  `SavedCitiesWidgetSizing` (pure, JVM-tested) picks the face, the paddings
+  and the dp sizes: a designed size per face, scaled to the size the launcher
+  reports (`OPTION_APPWIDGET_MIN_WIDTH` / `MAX_HEIGHT`, 0.8–1.4×), and one
+  numeral size per face, capped so the widest time (`12:38 AM`, or `20:38`
+  on a 24-hour device; measured with the real face via `Paint`) fits the
+  narrowest cell across and down. `SavedCitiesWidgetRenderer` builds the
+  `RemoteViews`: weighted rows of cell slots (`widget_cell_slot_{1,2,3}`)
+  with hairlines (`widget_hairline_{horizontal,vertical}`, ink at 60%),
+  holding a cell layout (`widget_cell_stacked`, `_code_row`, `_wide_row`) or
+  a hero (`widget_hero_{small,medium,large}`), all sharing
+  `widget_time_row`. Styles in `values/widget_styles.xml`: labels monospace
+  bold uppercase letter-spaced, numerals `sans-serif-condensed` bold,
+  captions monospace in quiet ink. Text sizes are dp, not sp, so the fit
+  holds whatever the font-scale setting.
 - **`RemoteViews` + `TextClock`, not Glance.** A clock widget wants to tick
   every minute without waking the app; `TextClock` does that by itself given
   a zone (`setTimeZone` is remotable), where Glance has no clock view and
-  would need a throttled minute schedule. Two `TextClock`s per row (digits,
-  meridiem) in `widget_saved_cities_row.xml`; the 24-hour formats follow the
-  system setting.
-- **Everything else is `WorldClock.readings`** — place name, zone line with
-  its day marker, offset phrase — rendered at update time, exactly the Clocks
-  tab's strings. `SavedCitiesWidgetSupport.rows` (core, shared cap with iOS)
-  picks local + 5.
-- **Refresh**: `FavouritesModel.forContext` redraws every placed widget on
-  each change (`SavedCitiesWidgetProvider.requestUpdate`), and
-  `updatePeriodMillis` is the 30-minute floor for the day markers. The widget
-  reads the same `favourites` preferences file as the activity.
-- **Not yet on-screen QA'd headlessly**: placing a widget needs the launcher
-  UI, which `run-android.sh` does not drive. The APK carries the receiver and
-  layouts; check it on the phone after the first install.
+  would need a throttled minute schedule. Each time is two `TextClock`s:
+  digits (`h:mm` / `HH:mm`) and a smaller AM/PM (`a` / empty), following the
+  device setting.
+- **Refresh**: `FavouritesModel.forContext` calls `requestUpdate` on each
+  change; resizing re-renders (`onAppWidgetOptionsChanged`); `TIME_SET`
+  (also sent on a 12/24-hour switch), `TIMEZONE_CHANGED` and
+  `LOCALE_CHANGED` redraw every size (they re-pick the numeral size and the
+  offset phrases); `updatePeriodMillis` is the 30-minute floor for the rest.
+- **Headless QA**: the DEBUG-only `WidgetPreviewActivity` (`src/debug`,
+  absent from release) inflates the same `RemoteViews` for every family × 0–6
+  cities × 12/24 h at the nominal dp sizes in a scroll view. Extras narrow
+  it: `family` (`small`/`medium`/`large`), `clock` (`12`/`24`), `counts`
+  (`1,3,6`).
+
+  ```bash
+  adb shell am start -S -n dev.thisolivier.timeconverter/.WidgetPreviewActivity --es family medium --es clock 12
+  adb exec-out screencap -p > medium-12h.png
+  adb shell input swipe 540 2100 540 300 800     # next page
+  ```
+
+  Placing a real widget still needs the launcher UI, which the scripts do
+  not drive; check placement and resizing on the phone.
 
 ## Quick Settings tile (backlog 29)
 
@@ -257,9 +298,12 @@ without `--input`.
 - `app/.../ConvertTimeLaunch.kt`, `ConvertTimeTileService.kt`,
   `QuickSettingsTileOnboarding.kt` — the Quick Settings tile, the shared
   launch intent and launcher shortcut, the one-time add-tile prompt.
-- `app/.../SavedCitiesWidgetProvider.kt` + `res/layout/widget_saved_cities*.xml`,
-  `res/xml/widget_saved_cities_info.xml`, `res/values[-night]/colors.xml` —
-  the home-screen widget (section above).
+- `app/.../SavedCitiesWidgetProvider.kt` (base + the three size receivers),
+  `SavedCitiesWidgetRenderer.kt`, `SavedCitiesWidgetSizing.kt`, plus
+  `res/layout/widget_*.xml`, `res/xml/widget_saved_cities_*_info.xml`,
+  `res/values/widget_styles.xml`, `res/values[-night]/colors.xml` — the
+  home-screen widgets; `src/debug/.../WidgetPreviewActivity.kt` — their
+  DEBUG preview sheet (section above).
 
 ## Not yet / still interim
 

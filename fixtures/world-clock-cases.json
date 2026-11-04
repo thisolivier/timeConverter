@@ -11,7 +11,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           }
@@ -37,7 +37,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
@@ -70,7 +70,7 @@
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
             "shortOffsetPhrase" : "17h ahead",
-            "shortPlaceName" : "TYO",
+            "shortPlaceName" : "TOK",
             "twentyFourHourDigits" : "08:42",
             "zoneLine" : "Japan Standard Time (Tokyo) · next day"
           }
@@ -112,7 +112,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · next day"
           },
@@ -145,7 +145,7 @@
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
             "shortOffsetPhrase" : "17h ahead",
-            "shortPlaceName" : "TYO",
+            "shortPlaceName" : "TOK",
             "twentyFourHourDigits" : "08:42",
             "zoneLine" : "Japan Standard Time (Tokyo) · +2 days"
           }
@@ -187,7 +187,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "10:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · next day"
           },
@@ -220,7 +220,7 @@
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
             "shortOffsetPhrase" : "17h ahead",
-            "shortPlaceName" : "TYO",
+            "shortPlaceName" : "TOK",
             "twentyFourHourDigits" : "03:42",
             "zoneLine" : "Japan Standard Time (Tokyo) · +2 days"
           }
@@ -262,7 +262,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "14:57",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
@@ -295,7 +295,7 @@
             "offsetPhrase" : "17 hours ahead",
             "placeName" : "Tokyo",
             "shortOffsetPhrase" : "17h ahead",
-            "shortPlaceName" : "TYO",
+            "shortPlaceName" : "TOK",
             "twentyFourHourDigits" : "07:57",
             "zoneLine" : "Japan Standard Time (Tokyo) · next day"
           }
@@ -337,7 +337,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "17:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · +3 days"
           },
@@ -379,7 +379,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver) · previous day"
           },
@@ -419,7 +419,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
@@ -430,7 +430,7 @@
             "offsetPhrase" : "13.5 hours ahead",
             "placeName" : "Kolkata",
             "shortOffsetPhrase" : "13.5h ahead",
-            "shortPlaceName" : "CCU",
+            "shortPlaceName" : "KOL",
             "twentyFourHourDigits" : "05:12",
             "zoneLine" : "India Standard Time (Kolkata, Mumbai) · next day"
           },
@@ -441,7 +441,7 @@
             "offsetPhrase" : "13.75 hours ahead",
             "placeName" : "Kathmandu",
             "shortOffsetPhrase" : "13.75h ahead",
-            "shortPlaceName" : "KAT",
+            "shortPlaceName" : "KATH",
             "twentyFourHourDigits" : "05:27",
             "zoneLine" : "Nepal Time (Kathmandu) · next day"
           }
@@ -559,7 +559,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
@@ -635,7 +635,7 @@
             "offsetPhrase" : "",
             "placeName" : "Los Angeles (local)",
             "shortOffsetPhrase" : "",
-            "shortPlaceName" : "LAX",
+            "shortPlaceName" : "LA",
             "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
@@ -646,7 +646,7 @@
             "offsetPhrase" : "Same time",
             "placeName" : "Portland, Oregon",
             "shortOffsetPhrase" : "Same time",
-            "shortPlaceName" : "POR",
+            "shortPlaceName" : "PORT",
             "twentyFourHourDigits" : "15:42",
             "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
           },
@@ -657,7 +657,7 @@
             "offsetPhrase" : "9 hours ahead",
             "placeName" : "Salzburg",
             "shortOffsetPhrase" : "9h ahead",
-            "shortPlaceName" : "SAL",
+            "shortPlaceName" : "SALZ",
             "twentyFourHourDigits" : "00:42",
             "zoneLine" : "Central European Time (Vienna) · next day"
           }

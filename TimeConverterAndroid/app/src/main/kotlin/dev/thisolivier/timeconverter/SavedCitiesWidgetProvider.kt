@@ -1,24 +1,27 @@
 package dev.thisolivier.timeconverter
 
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.view.View
+import android.os.Bundle
 import android.widget.RemoteViews
 import dev.thisolivier.timeconverter.core.worldclock.FavouritesStore
 import dev.thisolivier.timeconverter.core.worldclock.SavedCitiesWidgetSupport
+import dev.thisolivier.timeconverter.core.worldclock.WidgetLayoutPlan.Family
 import dev.thisolivier.timeconverter.core.worldclock.WorldClock
 import dev.thisolivier.timeconverter.core.worldclock.WorldClockRow
 import java.time.Instant
 import java.time.ZoneId
 
 /**
- * The saved-cities home-screen widget (backlog item 36): the Clocks tab's rows
- * at a glance — the local clock and up to five favourites. One size for the
- * MVP (4×3 cells, resizable), the Android twin of the iOS `.systemLarge`.
+ * The saved-cities home-screen widgets (backlog items 36, 36b): the saved
+ * places at a glance, in three sizes — small 2×2, medium 4×2, large 4×4 —
+ * whose layout follows the number of cities (`WidgetLayoutPlan`, core). One
+ * provider; each size is a thin subclass with its own `appwidget-provider`
+ * XML, because Android picks sizes per receiver. The local clock is left out:
+ * the home screen already has one.
  *
  * ## Why `RemoteViews` and `TextClock`, not Glance
  *
@@ -29,63 +32,83 @@ import java.time.ZoneId
  * throttles. Classic `AppWidgetProvider` + `RemoteViews` is less code and
  * keeps the time honest.
  *
- * Everything that is *not* the current time — the place name, the zone line
- * with its day marker, the offset phrase — comes from `WorldClock.readings`,
- * the same strings the Clocks tab shows, rendered at update time. Those change
- * rarely (a favourite starred or removed, a zone crossing midnight, a DST
- * change), so the widget is redrawn when the favourites change
- * (`FavouritesModel` → [requestUpdate]) and otherwise on the 30-minute
- * `updatePeriodMillis` floor, which is the right cadence for a day marker.
+ * Everything that is *not* the current time — names, offset phrases, and the
+ * numeral size (which depends on the 12/24-hour setting and the widget's
+ * size) — is drawn at update time by [SavedCitiesWidgetRenderer]. The widget
+ * redraws when the favourites change (`FavouritesModel` → [requestUpdate]),
+ * when it is resized, when the clock, zone or locale settings change, and
+ * otherwise on the 30-minute `updatePeriodMillis` floor.
  */
-class SavedCitiesWidgetProvider : AppWidgetProvider() {
+abstract class SavedCitiesWidgetProvider(private val family: Family) : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        val views = buildViews(context)
-        for (appWidgetId in appWidgetIds) appWidgetManager.updateAppWidget(appWidgetId, views)
+        updateWidgets(context, appWidgetManager, family, appWidgetIds)
+    }
+
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle,
+    ) {
+        updateWidgets(context, appWidgetManager, family, intArrayOf(appWidgetId))
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        // A 12/24-hour switch arrives as TIME_SET; a zone change moves every offset phrase.
+        if (intent.action in SETTINGS_ACTIONS) requestUpdate(context)
     }
 
     companion object {
-        /** Redraws every placed widget now — called by the app whenever the favourites change. */
+        private val SETTINGS_ACTIONS = setOf(
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+            Intent.ACTION_LOCALE_CHANGED,
+        )
+
+        private val providers = listOf(
+            Family.Small to SavedCitiesSmallWidgetProvider::class.java,
+            Family.Medium to SavedCitiesMediumWidgetProvider::class.java,
+            Family.Large to SavedCitiesLargeWidgetProvider::class.java,
+        )
+
+        /** Redraws every placed widget of every size now — called by the app whenever the favourites change. */
         fun requestUpdate(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
-            val ids = manager.getAppWidgetIds(ComponentName(context, SavedCitiesWidgetProvider::class.java))
-            if (ids.isEmpty()) return
-            manager.updateAppWidget(ids, buildViews(context))
-        }
-
-        /** The whole widget: one row per clock, an explanatory line when nothing is starred, tap opens the app. */
-        fun buildViews(context: Context): RemoteViews {
-            val favourites = FavouritesStore(FavouritesModel.backingForContext(context)).favourites
-            val display = WorldClock.readings(favourites, 0, Instant.now(), ZoneId.systemDefault())
-            val rows = SavedCitiesWidgetSupport.rows(display)
-            val views = RemoteViews(context.packageName, R.layout.widget_saved_cities)
-            views.removeAllViews(R.id.widget_rows)
-            rows.forEachIndexed { index, row ->
-                if (index > 0) views.addView(R.id.widget_rows, RemoteViews(context.packageName, R.layout.widget_saved_cities_divider))
-                views.addView(R.id.widget_rows, rowViews(context, row))
+            for ((family, providerClass) in providers) {
+                val appWidgetIds = manager.getAppWidgetIds(ComponentName(context, providerClass))
+                if (appWidgetIds.isNotEmpty()) updateWidgets(context, manager, family, appWidgetIds)
             }
-            views.setViewVisibility(R.id.widget_empty, if (favourites.isEmpty()) View.VISIBLE else View.GONE)
-            val openApp = PendingIntent.getActivity(
-                context,
-                0,
-                Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-            views.setOnClickPendingIntent(R.id.widget_root, openApp)
-            return views
         }
 
-        /** One clock. The two `TextClock`s (digits, meridiem) tick on their own in the row's zone. */
-        private fun rowViews(context: Context, row: WorldClockRow): RemoteViews {
-            val zoneIdentifier = row.favourite?.timeZoneIdentifier ?: ZoneId.systemDefault().id
-            return RemoteViews(context.packageName, R.layout.widget_saved_cities_row).apply {
-                setTextViewText(R.id.row_place_name, row.placeName)
-                setTextViewText(R.id.row_zone_line, row.zoneLine)
-                setViewVisibility(R.id.row_zone_line, if (row.zoneLine.isEmpty()) View.GONE else View.VISIBLE)
-                setTextViewText(R.id.row_offset_phrase, row.offsetPhrase)
-                setViewVisibility(R.id.row_offset_phrase, if (row.offsetPhrase.isEmpty()) View.GONE else View.VISIBLE)
-                setString(R.id.row_clock_digits, "setTimeZone", zoneIdentifier)
-                setString(R.id.row_clock_meridiem, "setTimeZone", zoneIdentifier)
+        /** The saved places as the widget shows them: the stored order, local left out, at most six. */
+        fun savedCities(context: Context): List<WorldClockRow> {
+            val favourites = FavouritesStore(FavouritesModel.backingForContext(context)).favourites
+            return SavedCitiesWidgetSupport.cities(WorldClock.readings(favourites, 0, Instant.now(), ZoneId.systemDefault()))
+        }
+
+        private fun updateWidgets(context: Context, manager: AppWidgetManager, family: Family, appWidgetIds: IntArray) {
+            val cities = savedCities(context)
+            for (appWidgetId in appWidgetIds) {
+                val options = manager.getAppWidgetOptions(appWidgetId)
+                // Portrait: the narrowest width and the tallest height the launcher reported.
+                val widgetSize = SavedCitiesWidgetSizing.launcherSize(
+                    family,
+                    portraitWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                    portraitHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT),
+                )
+                val views: RemoteViews = SavedCitiesWidgetRenderer.views(context, family, cities, widgetSize)
+                manager.updateAppWidget(appWidgetId, views)
             }
         }
     }
 }
+
+/** 2×2: one hero city, code rows, or a grid of codes. */
+class SavedCitiesSmallWidgetProvider : SavedCitiesWidgetProvider(Family.Small)
+
+/** 4×2: a hero with its caption beside a rule, or up to three columns. */
+class SavedCitiesMediumWidgetProvider : SavedCitiesWidgetProvider(Family.Medium)
+
+/** 4×4: a hero, generous full-width rows, or a grid with captions. */
+class SavedCitiesLargeWidgetProvider : SavedCitiesWidgetProvider(Family.Large)

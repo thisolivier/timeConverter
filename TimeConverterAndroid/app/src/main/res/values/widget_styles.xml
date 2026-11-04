@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The saved-cities widget's three kinds of text (item 36b). Sizes are set
+     per face in code (SavedCitiesWidgetSizing); these carry the faces. -->
+<resources>
+    <!-- City names and codes: monospace, uppercase, letter-spaced, ink. -->
+    <style name="WidgetLabel">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.16</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textColor">@color/widget_ink</item>
+    </style>
+
+    <!-- The time: condensed bold, tight line box so rows can be packed. -->
+    <style name="WidgetNumeral">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textColor">@color/widget_ink</item>
+    </style>
+
+    <!-- Offset captions and the empty-state line: monospace, quiet ink. -->
+    <style name="WidgetCaption">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:textColor">@color/widget_quiet_ink</item>
+    </style>
+</resources>

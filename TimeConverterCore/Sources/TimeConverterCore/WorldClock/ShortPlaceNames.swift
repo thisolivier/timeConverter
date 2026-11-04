@@ -1,9 +1,12 @@
 import Foundation
 
-/// The widgets' tightest cells have room for three letters (item 36b):
-/// `LON`, `LAX`, `TYO`. The recognisable forms are editorial data in
-/// `short-names.json`, shared with the Kotlin core; everything else is cut to
-/// its first three letters, and a code label is its own short form.
+/// The widgets' tightest cells have room for three or four letters (item
+/// 36b): `LON`, `TOK`, `NYC`, `KATH`. Every place a favourite can carry —
+/// every tz city and gazetteer name — has a hand-correctable shortening in
+/// `short-names.json` (shared with the Kotlin core; shortened names people
+/// write casually, not airport codes; a famous initialism may be two letters,
+/// `LA`, `SF`). A name somehow missing is cut to its first three letters, and
+/// a code label is its own short form.
 enum ShortPlaceNames {
     static let resourceName = "short-names"
     static let resourceExtension = "json"

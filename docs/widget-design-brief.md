@@ -44,6 +44,9 @@ smaller AM/PM rather than switching formats automatically.
 - Clock format follows the device's 12/24-hour setting; the designs' `20:38`
   is what a 24-hour device shows, a 12-hour device gets `8:38 PM` with the
   meridiem small, and the numeral size reserves room for it.
-- Short names: a curated table of recognisable three-letter forms
-  (`short-names.json`: LON, LAX, TYO, SÃO, NYC…), the first three letters
-  for everything else (`KAT`, `POR`), a code as itself (`ET`).
+- Short names (Olivier, 2026-11-04): 3- or 4-letter shortened place names,
+  not airport codes, defined for every name a favourite can carry — all
+  3,600-odd tz cities and gazetteer names — in one Haiku batch and stored in
+  `short-names.json` for hand correction (LON, TOK, NYC, SÃO, KATH, PORT; a
+  famous initialism may be two letters: LA, SF, HK, KL). Collisions are
+  accepted: a widget only ever shows the user's own favourites.

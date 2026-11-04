@@ -24,8 +24,9 @@ would be a macOS extension of its own, and is not on the backlog.
   `WorldClock.readings`, the same digits and offset phrases as the app.
   **The city count chooses the layout, the family chooses what a cell can
   carry**: `WidgetLayoutPlan` (core, shared with Android) decides columns,
-  rows, full name or three-letter code (`shortPlaceName`: `LON`, `LAX`,
-  `TYO`, from `short-names.json`), full / short / no caption; one city is a
+  rows, full name or short name (`shortPlaceName`: `LON`, `TOK`, `NYC`,
+  `KATH` — 3–4 letters for every place, from `short-names.json`), full /
+  short / no caption; one city is a
   hero; five leave the last cell spanning its row; seven or more show six.
   `SavedCitiesWidgetFace` owns the point sizes (`WidgetTypeSizes`): every
   cell in a face shares one numeral size chosen for the widest time at that

@@ -5,5 +5,6 @@
     <string name="convert_a_time">Convert a time</string>
     <!-- The saved-cities home-screen widget (backlog 36). -->
     <string name="widget_description">Your starred places, on the clock.</string>
-    <string name="widget_empty">Star a place on the Convert tab and it appears here.</string>
+    <string name="widget_empty_title">Saved cities</string>
+    <string name="widget_empty">Star a place in Time Converter and it appears here.</string>
 </resources>

@@ -37,10 +37,11 @@ class WidgetLayoutPlanTests {
 
     @Test
     fun `short names are curated, cut or the code`() {
-        assertEquals("LAX", ShortPlaceNames.shortName(ZoneLabel.Place("Los Angeles", false), "Los Angeles"))
-        assertEquals("KAT", ShortPlaceNames.shortName(ZoneLabel.Place("Kathmandu", false), "Kathmandu"))
-        assertEquals("POR", ShortPlaceNames.shortName(ZoneLabel.Place("Portland, Oregon", false), "Portland"))
+        assertEquals("LA", ShortPlaceNames.shortName(ZoneLabel.Place("Los Angeles", false), "Los Angeles"))
+        assertEquals("KATH", ShortPlaceNames.shortName(ZoneLabel.Place("Kathmandu", false), "Kathmandu"))
+        assertEquals("PORT", ShortPlaceNames.shortName(ZoneLabel.Place("Portland, Oregon", false), "Portland"))
         assertEquals("ET", ShortPlaceNames.shortName(ZoneLabel.Abbreviation("ET", "Eastern Time"), "ET"))
-        assertTrue(ShortPlaceNames.bundledNames.size > 50, "short-names.json missing from the classpath?")
+        assertEquals("ATL", ShortPlaceNames.shortName(ZoneLabel.Place("Atlantis", false), "Atlantis"))
+        assertTrue(ShortPlaceNames.bundledNames.size > 3000, "short-names.json missing from the classpath?")
     }
 }

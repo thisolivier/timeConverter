@@ -1,30 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The saved-cities widget (item 36): poster paper, one row per clock.
-     Only RemoteViews-compatible views: LinearLayout, TextView, TextClock,
-     FrameLayout for the hairlines. Rows are added at update time. -->
+<!-- The saved-cities widget (item 36b): poster paper holding one face. The
+     face is built at update time from rows (widget_grid_row), cell slots and
+     cells; the empty block shows when nothing is starred, and is what the
+     launcher draws before the first update. Only RemoteViews-compatible
+     classes: LinearLayout, FrameLayout, TextView, TextClock. Padding is set
+     per family from SavedCitiesWidgetSizing.outerPadding. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:paddingHorizontal="14dp"
-    android:paddingVertical="8dp">
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
 
     <LinearLayout
-        android:id="@+id/widget_rows"
+        android:id="@+id/widget_face"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical" />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone" />
 
-    <TextView
+    <LinearLayout
         android:id="@+id/widget_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:fontFamily="monospace"
-        android:text="@string/widget_empty"
-        android:textColor="@color/widget_quiet_ink"
-        android:textSize="11sp"
-        android:visibility="gone" />
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/widget_empty_title"
+            style="@style/WidgetLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/widget_empty_title"
+            android:textSize="10dp" />
+
+        <TextView
+            android:id="@+id/widget_empty_line"
+            style="@style/WidgetCaption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:maxLines="4"
+            android:text="@string/widget_empty"
+            android:textSize="12dp" />
+    </LinearLayout>
 </LinearLayout>

@@ -33,14 +33,15 @@ struct WidgetLayoutPlanTests {
     }
 
     @Test func shortNamesAreCuratedCutOrTheCode() throws {
-        #expect(ShortPlaceNames.bundledNames.count > 50)
+        #expect(ShortPlaceNames.bundledNames.count > 3000)
         let favourites = try ["Los Angeles", "Kathmandu", "Portland Oregon", "ET", "Sao Paulo"].map {
             try #require(FavouriteDestination.resolvingTypedZone($0))
         }
         let display = WorldClock.readings(
             favourites: favourites, offset: 0, now: FixedDates.winterMidday, localZone: FixedZones.device
         )
-        #expect(display.rows.map(\.shortPlaceName) == ["LAX", "LAX", "KAT", "POR", "ET", "SÃO"])
+        #expect(display.rows.map(\.shortPlaceName) == ["LA", "LA", "KATH", "PORT", "ET", "SÃO"])
+        #expect(ShortPlaceNames.shortName(for: .place(name: "Atlantis", isDeviceLocal: false), compactPlaceName: "Atlantis") == "ATL")
     }
 
     @Test func twentyFourHourDigitsAreZeroPadded() throws {
@@ -51,5 +52,22 @@ struct WidgetLayoutPlanTests {
         )
         #expect(display.rows.map(\.twentyFourHourDigits) == ["04:00", "21:00", "12:00"])
         #expect(display.rows.map(\.clockDigits) == ["4:00", "9:00", "12:00"])
+    }
+
+    /// Every name a favourite can carry has a hand-written short form, so the
+    /// first-three-letters fallback is only ever for data that drifted.
+    @Test func everyPlaceNameHasAShortForm() {
+        let table = ShortPlaceNames.bundledNames
+        var missing: [String] = []
+        for identifier in TimeZone.knownTimeZoneIdentifiers where TimeZoneDatabaseCityResolver.isCityBearing(identifier) {
+            let city = ZoneDisplayName.forIdentifier(identifier)
+            if table[city.lowercased()] == nil { missing.append(city) }
+        }
+        for (name, _) in OfflineFallbackGazetteer.bundledEntries {
+            let display = OfflineFallbackGazetteer.bundledDisplayNames[name] ?? ZoneTokenDisplay.placeName(forToken: name)
+            let compact = String(display.prefix { $0 != "," })
+            if table[compact.lowercased()] == nil { missing.append(compact) }
+        }
+        #expect(missing.isEmpty, "no short form for: \(missing.prefix(20))")
     }
 }

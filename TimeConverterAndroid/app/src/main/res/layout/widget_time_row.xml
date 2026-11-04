@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The ticking time: digits and a smaller AM/PM, each a TextClock given the
+     cell's zone at update time. The formats are set in code (device setting,
+     or forced by the DEBUG preview); the 24-hour meridiem is empty. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/time_row"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:baselineAligned="true">
+
+    <TextClock
+        android:id="@+id/clock_digits"
+        style="@style/WidgetNumeral"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:format12Hour="h:mm"
+        android:format24Hour="HH:mm" />
+
+    <TextClock
+        android:id="@+id/clock_meridiem"
+        style="@style/WidgetNumeral"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="3dp"
+        android:format12Hour="a"
+        android:format24Hour="" />
+</LinearLayout>

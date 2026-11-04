@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DEBUG only: merged into the debug build's manifest, absent from release. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Every saved-cities widget face, inflated in-process for headless
+             screenshots (item 36b). See WidgetPreviewActivity. -->
+        <activity
+            android:name=".WidgetPreviewActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+    </application>
+</manifest>
