@@ -166,11 +166,26 @@ chain stops at the **first resolver with ≥1 candidate**.
    / `Knoxville`, `kentucky` → `Louisville` / `Bowling Green`). Every other
    P4 (CST, Portugal, Antarctica) keeps the identifier city as both label and
    replacement.
+   **Amended 2026-11-04 (item 34c)**: **a gazetteer place echoes, labels and
+   is starred under its own name.** `Porto` had echoed as `Lisbon` and
+   `Portland Oregon` as `Los Angeles`, so a favourite made from either lost
+   the user's word and collapsed into the zone city's entry. The gazetteer
+   resolver now sets the candidate's display name to the typed place,
+   re-cased (`porto` → `Porto`, `rio de janeiro` → `Rio de Janeiro`, joining
+   particles after the first word stay lowercase) or to an explicit `display`
+   in the file where casing is not enough (`dc` → `DC`, `portland oregon` →
+   `Portland, Oregon`). The zone actually used stays visible: the zone line
+   is built from the identifier (`Western European Time (Lisbon)`, `Pacific
+   Time (Los Angeles, Vancouver)`) and the detail line names both identifiers.
+   City-, country- and abbreviation-resolved tokens are unchanged.
 
 Outcomes per token:
 - **1 candidate** (including a country's canonical zone) → resolved; the echoed
-  interpretation always names the zone actually used, so the Lisbon-not-Azores
-  choice is visible.
+  interpretation always makes the zone actually used visible, so the
+  Lisbon-not-Azores choice is visible. A city- or country-resolved token echoes
+  as the zone's city (`Portugal` → `Lisbon`); a gazetteer place keeps its own
+  name in the echo and on the result band, and names the zone on the zone line
+  (item 34c).
 - **>1 candidate** → prompt (disambiguation picker). Applies to ambiguous
   abbreviations (CST, IST) and no-canonical-clock countries.
 - **0 candidates** from every resolver → unknown-token prompt.
@@ -202,7 +217,8 @@ item 4 renders them.
   representative cities, not the bare identifier city — `12pm ET in London` →
   `12:00 pm Eastern Time (New York, Toronto) …`. Alias and abbreviation
   resolver entries carry a display name and one or two representative cities.
-  City- and country-resolved tokens echo as before (`London`, `Lisbon`).
+  City- and country-resolved tokens echo as before (`London`, `Lisbon`); a
+  gazetteer place echoes as itself (`Porto`, item 34c).
 - DST edges on transition days: a nonexistent local time resolves forward to the
   next valid instant; an ambiguous (repeated) time takes the earlier instant.
   The displayed UTC offsets make the choice visible; no prompt.

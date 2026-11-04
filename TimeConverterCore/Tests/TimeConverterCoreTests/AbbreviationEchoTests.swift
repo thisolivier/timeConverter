@@ -55,8 +55,9 @@ struct AbbreviationEchoTests {
         ("9:30 am New York to Lisbon", "9:30 am New York (UTC-5) → 2:30 pm Lisbon (UTC+0)"),
         ("23:15 Portugal to Japan", "11:15 pm Lisbon (UTC+0) → 8:15 am Tokyo (UTC+9) +1d"),
         // `porto` resolves through the offline gazetteer, which carries no
-        // abbreviation metadata — it echoes as the zone actually used.
-        ("23:15 London to Porto", "11:15 pm London (UTC+0) → 11:15 pm Lisbon (UTC+0)"),
+        // abbreviation metadata — it echoes under its own name (item 34c);
+        // the zone actually used, Lisbon, is on the zone and detail lines.
+        ("23:15 London to Porto", "11:15 pm London (UTC+0) → 11:15 pm Porto (UTC+0)"),
     ])
     func cityAndCountryTokensEchoAsBefore(input: String, expectedLine: String) {
         #expect(echoLine(for: input) == expectedLine)

@@ -204,4 +204,78 @@ struct GazetteerCoverageTests {
             #expect(!name.contains("  "))
         }
     }
+
+    // MARK: Item 34c — a gazetteer place keeps its own name
+
+    /// The echo and the result band name the place the user typed, not the
+    /// city of the zone it maps to; the zone stays on the zone line.
+    @Test(arguments: [
+        ("porto", "Porto"),
+        ("rio de janeiro", "Rio de Janeiro"),
+        ("st john's antigua", "St John's, Antigua"),
+        ("portland oregon", "Portland, Oregon"),
+        ("washington dc", "Washington, DC"),
+        ("dc", "DC"),
+        ("us virgin islands", "US Virgin Islands"),
+        ("isle of wight", "Isle of Wight"),
+        ("mar del plata", "Mar del Plata"),
+        ("tonga", "Tonga"),
+    ])
+    func placesEchoUnderTheirOwnName(token: String, expectedDisplayName: String) throws {
+        guard case let .resolved(zone) = ZoneResolverChain.standard.resolve(token) else {
+            Issue.record("\(token) should resolve to one zone")
+            return
+        }
+        #expect(zone.matchSource == .offlineFallbackList)
+        #expect(zone.displayName == expectedDisplayName)
+        #expect(zone.zoneLabel == .place(name: expectedDisplayName, isDeviceLocal: false))
+    }
+
+    @Test func zoneLineStillNamesTheZoneActuallyUsed() throws {
+        let state = ConverterPresenter(parser: parser)
+            .displayState(for: "9am in Portland Oregon", now: FixedDates.winterMidday)
+        guard case let .converted(display) = state else {
+            Issue.record("expected a conversion")
+            return
+        }
+        #expect(display.targetPlaceLabel == "In Portland, Oregon")
+        #expect(display.targetZoneLine == "Pacific Time (Los Angeles, Vancouver)")
+        #expect(display.detailLine.hasSuffix("America/Los_Angeles"))
+    }
+
+    /// Starring a gazetteer place keeps the user's word, so a favourite made
+    /// from `Portland Oregon` is not the same entry as one made from `Los
+    /// Angeles` and the world clock labels it as typed.
+    @Test func starringAGazetteerPlaceKeepsItsName() throws {
+        let portland = try #require(FavouriteDestination.resolvingTypedZone("Portland Oregon"))
+        #expect(portland.timeZoneIdentifier == "America/Los_Angeles")
+        #expect(portland.label == .place(name: "Portland, Oregon", isDeviceLocal: false))
+        let losAngeles = try #require(FavouriteDestination.resolvingTypedZone("Los Angeles"))
+        #expect(portland != losAngeles)
+        #expect(portland.resolvedZone?.displayName == "Portland, Oregon")
+    }
+
+    /// Every explicit `display` belongs to a real entry and differs from what
+    /// plain re-casing would give — otherwise it is dead data.
+    @Test func explicitDisplayNamesEarnTheirPlace() {
+        for (name, display) in OfflineFallbackGazetteer.bundledDisplayNames {
+            #expect(entries[name] != nil, "display for unknown entry \(name)")
+            #expect(display != ZoneTokenDisplay.placeName(forToken: name), "redundant display for \(name)")
+        }
+    }
+
+    @Test(arguments: [
+        ("porto", "Porto"),
+        ("rio de janeiro", "Rio de Janeiro"),
+        ("st john's", "St John's"),
+        ("stratford upon avon", "Stratford upon Avon"),
+        ("the hague", "The Hague"),
+        ("trinidad and tobago", "Trinidad and Tobago"),
+        ("washington d.c.", "Washington D.C."),
+        ("la paz", "La Paz"),
+        ("mar del plata", "Mar del Plata"),
+    ])
+    func placeNameCasing(token: String, expected: String) {
+        #expect(ZoneTokenDisplay.placeName(forToken: token) == expected)
+    }
 }

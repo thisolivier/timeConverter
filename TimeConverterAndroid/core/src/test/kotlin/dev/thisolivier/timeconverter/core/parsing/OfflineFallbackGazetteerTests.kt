@@ -64,6 +64,36 @@ class OfflineFallbackGazetteerTests {
         }
     }
 
+    /** Item 34c: a gazetteer place echoes under its own name; the zone it maps to stays on the zone line. */
+    @Test
+    fun `a place keeps its own name and an explicit display wins over re-casing`() {
+        val rows = listOf(
+            "porto" to "Porto", "rio de janeiro" to "Rio de Janeiro", "st john's antigua" to "St John's, Antigua",
+            "portland oregon" to "Portland, Oregon", "washington dc" to "Washington, DC", "dc" to "DC",
+            "us virgin islands" to "US Virgin Islands", "isle of wight" to "Isle of Wight", "mar del plata" to "Mar del Plata", "tonga" to "Tonga",
+        )
+        for ((token, expected) in rows) {
+            val resolved = assertIs<ZoneResolution.Resolved>(ZoneResolverChain.standard.resolve(token), token).zone
+            assertEquals(ZoneMatchSource.OfflineFallbackList, resolved.matchSource, token)
+            assertEquals(expected, resolved.displayName, token)
+        }
+        for ((name, display) in OfflineFallbackGazetteer.bundledDisplayNames) {
+            assertTrue(name in entries, "display for unknown entry $name")
+            assertTrue(display != ZoneTokenDisplay.placeName(name), "redundant display for $name")
+        }
+    }
+
+    @Test
+    fun `place-name casing keeps joining particles lowercase after the first word`() {
+        val rows = listOf(
+            "porto" to "Porto", "rio de janeiro" to "Rio de Janeiro", "st john's" to "St John's",
+            "stratford upon avon" to "Stratford upon Avon", "the hague" to "The Hague",
+            "trinidad and tobago" to "Trinidad and Tobago", "washington d.c." to "Washington D.C.",
+            "la paz" to "La Paz", "mar del plata" to "Mar del Plata",
+        )
+        for ((token, expected) in rows) assertEquals(expected, ZoneTokenDisplay.placeName(token), token)
+    }
+
     @Test
     fun `a malformed file degrades to an empty table`() {
         assertTrue(OfflineFallbackGazetteer.decodeEntries("not json").isEmpty())

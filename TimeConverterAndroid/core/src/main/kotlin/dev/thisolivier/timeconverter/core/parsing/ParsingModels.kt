@@ -55,6 +55,8 @@ data class ZoneCandidate(
     val abbreviationDisplay: AbbreviationDisplay? = null,
     /** Set only by the gazetteer, for a split name that carries per-zone labels. */
     val placeChoice: PlaceChoice? = null,
+    /** Set only by the gazetteer (item 34c): the typed place in its own name (`Porto`, `Portland, Oregon`), not the zone's city. */
+    val placeDisplayName: String? = null,
 ) {
     /** `America/New_York` → `New York` — what pickers and chips show, because a chip writes it back. */
     val representativeCityName: String get() = ZoneDisplayName.forIdentifier(timeZoneIdentifier)
@@ -65,8 +67,8 @@ data class ZoneCandidate(
     /** What tapping that row writes into the sentence. */
     val pickerTypedForm: String get() = placeChoice?.typedForm ?: representativeCityName
 
-    /** Expanded for abbreviations, the plain city otherwise. */
-    val echoDisplayName: String get() = abbreviationDisplay?.name ?: representativeCityName
+    /** Expanded for abbreviations, the typed place for a gazetteer hit (item 34c), the identifier's city otherwise. */
+    val echoDisplayName: String get() = abbreviationDisplay?.name ?: placeDisplayName ?: representativeCityName
 }
 
 /** The only two things parsing can produce. Port of Swift `ParseOutcome`. */
@@ -85,6 +87,24 @@ object ZoneTokenDisplay {
         if (!token.contains(' ')) return token.uppercase()
         return token.split(' ').joinToString(" ") { FoundationCapitalization.capitalized(it) }
     }
+
+    /**
+     * A gazetteer place name re-cased for display (item 34c): `porto` → `Porto`,
+     * `rio de janeiro` → `Rio de Janeiro`, `st john's` → `St John's`. Every word
+     * is capitalised except a joining particle after the first, which stays as
+     * written. Port of Swift `ZoneTokenDisplay.placeName(forToken:)`.
+     */
+    fun placeName(token: String): String =
+        token.split(' ').mapIndexed { index, word ->
+            if (index > 0 && word in LOWERCASE_PARTICLES) word else FoundationCapitalization.capitalized(word)
+        }.joinToString(" ")
+
+    /** Mirrored verbatim from the Swift core. */
+    private val LOWERCASE_PARTICLES = setOf(
+        "de", "da", "do", "del", "della", "di", "du", "des", "la", "le", "las", "los",
+        "sur", "en", "am", "an", "im", "upon", "on", "of", "the", "y", "e", "al", "el",
+        "und", "and",
+    )
 }
 
 /**

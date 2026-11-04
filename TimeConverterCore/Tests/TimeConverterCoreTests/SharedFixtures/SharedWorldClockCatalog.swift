@@ -52,5 +52,7 @@ enum SharedWorldClockCatalog {
               note: "At zero the real instant is read directly, so the second 1:30 AM shows London 6:30 AM, not 5:30."),
         Entry(id: "code-labelled-favourites", favouriteZones: ["ET", "JST", "east coast"],
               note: "Code labels keep the code and its expansion; the zone line is the curated cities only."),
+        Entry(id: "gazetteer-labelled-favourites", favouriteZones: ["Portland Oregon", "Salzburg"],
+              note: "A gazetteer place is starred under its own name (item 34c); the zone line names the zone it maps to."),
     ]
 }

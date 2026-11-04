@@ -66,4 +66,27 @@ enum ZoneTokenDisplay {
             .map { $0.capitalized }
             .joined(separator: " ")
     }
+
+    /// A gazetteer place name re-cased for display (item 34c): `porto` →
+    /// `Porto`, `rio de janeiro` → `Rio de Janeiro`, `st john's` → `St
+    /// John's`. Every word is capitalised except a joining particle after the
+    /// first (`de`, `of`, `upon`, `am`…), which stays lowercase as it is
+    /// written. Names that need more than casing — `DC`, `Portland, Oregon`
+    /// — carry an explicit `display` in the gazetteer file instead.
+    static func placeName(forToken token: String) -> String {
+        token
+            .split(separator: " ")
+            .enumerated()
+            .map { index, word in
+                index > 0 && lowercaseParticles.contains(String(word)) ? String(word) : word.capitalized
+            }
+            .joined(separator: " ")
+    }
+
+    /// Mirrored verbatim in the Kotlin core's `ZoneTokenDisplay`.
+    static let lowercaseParticles: Set<String> = [
+        "de", "da", "do", "del", "della", "di", "du", "des", "la", "le", "las", "los",
+        "sur", "en", "am", "an", "im", "upon", "on", "of", "the", "y", "e", "al", "el",
+        "und", "and",
+    ]
 }

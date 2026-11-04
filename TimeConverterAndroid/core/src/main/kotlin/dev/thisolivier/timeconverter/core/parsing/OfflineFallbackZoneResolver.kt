@@ -17,13 +17,16 @@ class OfflineFallbackZoneResolver(
      * Angeles`. Parallel to the entry's identifiers; absent for single-zone names.
      */
     val choicesByPlaceName: Map<String, List<PlaceChoice>> = OfflineFallbackGazetteer.bundledChoices,
+    /** Names whose display form is more than a re-casing of the token (item 34c): `dc` → `DC`, `portland oregon` → `Portland, Oregon`. */
+    val displayNamesByPlaceName: Map<String, String> = OfflineFallbackGazetteer.bundledDisplayNames,
 ) : ZoneResolver {
     override val matchSource = ZoneMatchSource.OfflineFallbackList
 
     override fun candidates(normalizedZoneToken: String): List<ZoneCandidate> {
         val choices = choicesByPlaceName[normalizedZoneToken].orEmpty()
+        val displayName = displayNamesByPlaceName[normalizedZoneToken] ?: ZoneTokenDisplay.placeName(normalizedZoneToken)
         return identifiersByPlaceName[normalizedZoneToken].orEmpty().mapIndexed { index, identifier ->
-            ZoneCandidate(identifier, matchSource, placeChoice = choices.getOrNull(index))
+            ZoneCandidate(identifier, matchSource, placeChoice = choices.getOrNull(index), placeDisplayName = displayName)
         }
     }
 
@@ -51,6 +54,7 @@ object OfflineFallbackGazetteer {
     /** Decoded once, on first use. */
     val bundledEntries: Map<String, List<String>> by lazy { bundledText?.let(::decodeEntries) ?: emptyMap() }
     val bundledChoices: Map<String, List<PlaceChoice>> by lazy { bundledText?.let(::decodeChoices) ?: emptyMap() }
+    val bundledDisplayNames: Map<String, String> by lazy { bundledText?.let(::decodeDisplayNames) ?: emptyMap() }
 
     /** Lowercased names; an entry with no identifiers is skipped; a repeated name keeps the last entry, as in Swift. */
     fun decodeEntries(text: String): Map<String, List<String>> {
@@ -71,6 +75,16 @@ object OfflineFallbackGazetteer {
         return choicesByPlaceName
     }
 
+    /** Only entries that carry an explicit `display`. */
+    fun decodeDisplayNames(text: String): Map<String, String> {
+        val displayNamesByPlaceName = LinkedHashMap<String, String>()
+        for (entry in decodeFile(text)?.entries.orEmpty()) {
+            val display = entry.display
+            if (!display.isNullOrEmpty()) displayNamesByPlaceName[entry.name.lowercase()] = display
+        }
+        return displayNamesByPlaceName
+    }
+
     private fun decodeFile(text: String): GazetteerFile? = try {
         json.decodeFromString<GazetteerFile>(text)
     } catch (_: IllegalArgumentException) {
@@ -80,7 +94,13 @@ object OfflineFallbackGazetteer {
     @Serializable
     data class GazetteerFile(val version: Int, val entries: List<Entry>) {
         @Serializable
-        data class Entry(val name: String, val timeZoneIdentifiers: List<String>, val choices: List<Choice>? = null) {
+        data class Entry(
+            val name: String,
+            val timeZoneIdentifiers: List<String>,
+            val choices: List<Choice>? = null,
+            /** How the echo names this place when re-casing `name` is not enough (`DC`, `Portland, Oregon`). */
+            val display: String? = null,
+        ) {
             /** `label` is what the chip says (`Portland, Oregon`); `typed` is what it writes back (`Portland Oregon`). */
             @Serializable
             data class Choice(val label: String, val typed: String)

@@ -91,17 +91,24 @@ struct ZoneCandidate: Equatable, Sendable {
     /// per-zone labels. Nil everywhere else, where the identifier's city is
     /// the right chip.
     let placeChoice: PlaceChoice?
+    /// Set only by the gazetteer (item 34c): the place the user typed, in its
+    /// own name — `Porto`, `Portland, Oregon` — rather than the city of the
+    /// zone it maps to. Nil for every other resolver, whose token *is* the
+    /// zone's city or a code.
+    let placeDisplayName: String?
 
     init(
         timeZoneIdentifier: String,
         matchSource: ZoneMatchSource,
         abbreviationDisplay: AbbreviationDisplay? = nil,
-        placeChoice: PlaceChoice? = nil
+        placeChoice: PlaceChoice? = nil,
+        placeDisplayName: String? = nil
     ) {
         self.timeZoneIdentifier = timeZoneIdentifier
         self.matchSource = matchSource
         self.abbreviationDisplay = abbreviationDisplay
         self.placeChoice = placeChoice
+        self.placeDisplayName = placeDisplayName
     }
 
     /// City-style name derived from the identifier (`America/New_York` → `New
@@ -123,10 +130,12 @@ struct ZoneCandidate: Equatable, Sendable {
         placeChoice?.typedForm ?? representativeCityName
     }
 
-    /// Name for the echo line: expanded for abbreviations, the plain city
-    /// otherwise.
+    /// Name for the echo line and the result band: expanded for
+    /// abbreviations, the typed place for a gazetteer hit (item 34c), the
+    /// identifier's city otherwise. The zone actually used stays visible on
+    /// the zone line and the detail line, which are built from the identifier.
     var echoDisplayName: String {
-        abbreviationDisplay?.name ?? representativeCityName
+        abbreviationDisplay?.name ?? placeDisplayName ?? representativeCityName
     }
 }
 

@@ -23,24 +23,34 @@ struct OfflineFallbackZoneResolver: ZoneResolver {
     /// for the single-zone majority, which never show a picker.
     let choicesByPlaceName: [String: [PlaceChoice]]
 
+    /// Names whose display form is more than a re-casing of the typed token
+    /// (item 34c): `dc` → `DC`, `portland oregon` → `Portland, Oregon`. The
+    /// rest are shown through `ZoneTokenDisplay.placeName(forToken:)`.
+    let displayNamesByPlaceName: [String: String]
+
     /// Defaults to the bundled file. The parameters exist so tests (and a
     /// future "downloaded gazetteer" path) can supply their own entries.
     init(
         identifiersByPlaceName: [String: [String]] = OfflineFallbackGazetteer.bundledEntries,
-        choicesByPlaceName: [String: [PlaceChoice]] = OfflineFallbackGazetteer.bundledChoices
+        choicesByPlaceName: [String: [PlaceChoice]] = OfflineFallbackGazetteer.bundledChoices,
+        displayNamesByPlaceName: [String: String] = OfflineFallbackGazetteer.bundledDisplayNames
     ) {
         self.identifiersByPlaceName = identifiersByPlaceName
         self.choicesByPlaceName = choicesByPlaceName
+        self.displayNamesByPlaceName = displayNamesByPlaceName
     }
 
     func candidates(for normalizedZoneToken: String) -> [ZoneCandidate] {
         guard let identifiers = identifiersByPlaceName[normalizedZoneToken] else { return [] }
         let choices = choicesByPlaceName[normalizedZoneToken] ?? []
+        let displayName = displayNamesByPlaceName[normalizedZoneToken]
+            ?? ZoneTokenDisplay.placeName(forToken: normalizedZoneToken)
         return identifiers.enumerated().map { index, identifier in
             ZoneCandidate(
                 timeZoneIdentifier: identifier,
                 matchSource: matchSource,
-                placeChoice: index < choices.count ? choices[index] : nil
+                placeChoice: index < choices.count ? choices[index] : nil,
+                placeDisplayName: displayName
             )
         }
     }
@@ -65,6 +75,7 @@ enum OfflineFallbackGazetteer {
     /// Decoded once, on first use.
     static let bundledEntries: [String: [String]] = decodeEntries(at: bundledFileURL)
     static let bundledChoices: [String: [PlaceChoice]] = decodeChoices(at: bundledFileURL)
+    static let bundledDisplayNames: [String: String] = decodeDisplayNames(at: bundledFileURL)
 
     /// `Bundle.module` — the resource bundle SwiftPM generates for this target
     /// — and nothing else.
@@ -103,6 +114,16 @@ enum OfflineFallbackGazetteer {
         return choicesByPlaceName
     }
 
+    /// Only entries that carry an explicit `display`.
+    static func decodeDisplayNames(at fileURL: URL?) -> [String: String] {
+        var displayNamesByPlaceName: [String: String] = [:]
+        for entry in decodeFile(at: fileURL)?.entries ?? [] {
+            guard let display = entry.display, !display.isEmpty else { continue }
+            displayNamesByPlaceName[entry.name.lowercased()] = display
+        }
+        return displayNamesByPlaceName
+    }
+
     private static func decodeFile(at fileURL: URL?) -> GazetteerFile? {
         guard let fileURL, let fileData = try? Data(contentsOf: fileURL) else { return nil }
         return try? JSONDecoder().decode(GazetteerFile.self, from: fileData)
@@ -117,6 +138,9 @@ enum OfflineFallbackGazetteer {
             let timeZoneIdentifiers: [String]
             /// Parallel to `timeZoneIdentifiers`, present only on split names.
             let choices: [Choice]?
+            /// How the echo and the result band name this place when plain
+            /// re-casing of `name` is not enough (`DC`, `Portland, Oregon`).
+            let display: String?
 
             struct Choice: Decodable {
                 /// What the chip and the prompt say: `Portland, Oregon`.

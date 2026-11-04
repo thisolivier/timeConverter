@@ -49,11 +49,12 @@ struct ZoneLineTests {
             "In Lisbon",
             "Western European Time (Lisbon)"
         ),
-        // Target named through the offline fallback gazetteer: Porto has no
-        // zone of its own, so the band honestly says Lisbon.
+        // Target named through the offline fallback gazetteer: the header
+        // keeps the user's word (item 34c) and the zone line says which zone
+        // Porto was treated as.
         (
             "8pm London in Porto",
-            "In Lisbon",
+            "In Porto",
             "Western European Time (Lisbon)"
         ),
         // Target named as a DST-neutral alias code.

@@ -57,9 +57,9 @@ struct OfflineFallbackGazetteerTests {
         )
         #expect(request.targetZone.timeZone.identifier == "Europe/Lisbon")
         #expect(request.targetZone.matchSource == .offlineFallbackList)
-        // Display name comes from the resolved zone, not the typed token, so
-        // the user can see Porto was treated as Lisbon time.
-        #expect(request.targetZone.displayName == "Lisbon")
+        // Display name is the typed place (item 34c); the zone actually used
+        // stays visible on the zone line, `Western European Time (Lisbon)`.
+        #expect(request.targetZone.displayName == "Porto")
     }
 
     @Test func manchesterResolvesThroughTheRealBundledFile() throws {

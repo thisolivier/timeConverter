@@ -527,6 +527,54 @@
       "note" : "Code labels keep the code and its expansion; the zone line is the curated cities only.",
       "now" : "2026-01-15T23:42:00Z",
       "offsetSeconds" : 0
+    },
+    {
+      "expected" : {
+        "readout" : "Today 3:42 PM",
+        "rows" : [
+          {
+            "clockDigits" : "3:42",
+            "isLocal" : true,
+            "meridiem" : "PM",
+            "offsetPhrase" : "",
+            "placeName" : "Los Angeles (local)",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "3:42",
+            "isLocal" : false,
+            "meridiem" : "PM",
+            "offsetPhrase" : "Same time",
+            "placeName" : "Portland, Oregon",
+            "zoneLine" : "Pacific Time (Los Angeles, Vancouver)"
+          },
+          {
+            "clockDigits" : "12:42",
+            "isLocal" : false,
+            "meridiem" : "AM",
+            "offsetPhrase" : "9 hours ahead",
+            "placeName" : "Salzburg",
+            "zoneLine" : "Central European Time (Vienna) · next day"
+          }
+        ]
+      },
+      "favourites" : [
+        {
+          "labelKind" : "place",
+          "name" : "Portland, Oregon",
+          "timeZoneIdentifier" : "America/Los_Angeles"
+        },
+        {
+          "labelKind" : "place",
+          "name" : "Salzburg",
+          "timeZoneIdentifier" : "Europe/Vienna"
+        }
+      ],
+      "id" : "gazetteer-labelled-favourites",
+      "localZone" : "America/Los_Angeles",
+      "note" : "A gazetteer place is starred under its own name (item 34c); the zone line names the zone it maps to.",
+      "now" : "2026-01-15T23:42:00Z",
+      "offsetSeconds" : 0
     }
   ],
   "generatedBy" : "TimeConverterCore SharedWorldClockFixtureTests (Swift)",

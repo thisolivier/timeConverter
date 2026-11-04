@@ -98,7 +98,7 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
 | `FoundationAbbreviationZoneResolver.swift` | Step 2 + the curated expanded-name table. |
 | `TimeZoneDatabaseCityResolver.swift` | Step 3 + the legacy-identifier guard. |
 | `CountryZoneResolver.swift`, `CountryZoneTable.swift` | Step 4 + its table. |
-| `OfflineFallbackZoneResolver.swift`, `../Resources/fallback-cities.json` | Step 5 + its bundled data, reached through `Bundle.module`: ~3,100 editorial place names (items 26 and 34), integrity-checked by `GazetteerCoverageTests`. |
+| `OfflineFallbackZoneResolver.swift`, `../Resources/fallback-cities.json` | Step 5 + its bundled data, reached through `Bundle.module`: ~3,200 editorial place names (items 26 and 34), split names with per-zone `choices` (34b), explicit `display` names (34c), integrity-checked by `GazetteerCoverageTests`. |
 | `WallClockResolver.swift` | Wall-clock time → instant, applying the DST policy explicitly. |
 | `ConversionEngine.swift` | `ConversionRequest` → display-ready `ConversionResult`. |
 | `Formatting.swift` | Deterministic time, zone-name, UTC-offset and calendar helpers. |
@@ -215,12 +215,25 @@ ZoneSuggestionEngine  (P5 only, off to one side) unknown token → bounded edit
   `ZoneCandidate`, the parser copies label and typed form onto `ZoneChoice`,
   and the presenter writes `typedForm` while labelling with
   `representativeCity` — every other candidate leaves both equal to the
-  identifier's city, so CST and Antarctica chips are untouched. After the tap
-  the echo still names the zone used (`Los Angeles`), as for every gazetteer
-  place.
-- **Echo always names the zone actually used**, derived from the resolved
-  identifier rather than the typed token: `porto` echoes as Lisbon. That is what
-  makes the canonical-zone and alias choices visible.
+  identifier's city, so CST and Antarctica chips are untouched.
+- **A gazetteer place keeps its own name** (item 34c, 2026-11-04). `Porto`
+  used to echo as `Lisbon` and `Portland Oregon` as `Los Angeles`, so a
+  starred favourite lost the user's word and collapsed into the zone city's
+  entry. The gazetteer resolver now sets `ZoneCandidate.placeDisplayName` —
+  the typed token re-cased by `ZoneTokenDisplay.placeName(forToken:)`
+  (`rio de janeiro` → `Rio de Janeiro`; joining particles after the first
+  word stay lowercase), or the entry's explicit `display` where casing is not
+  enough (`dc` → `DC`, `portland oregon` → `Portland, Oregon`, written by the
+  split chips' labels). `echoDisplayName` prefers it, so the echo, the result
+  band header and the favourite label all read as typed. Nothing else
+  changes: the zone line is built from the identifier (`Western European Time
+  (Lisbon)`), the detail line names both identifiers, and city, country and
+  abbreviation tokens still echo as before. `GazetteerCoverageTests` pins the
+  casing rule and rejects a `display` that plain casing would already give.
+- **Echo always makes the zone actually used visible.** A city or country
+  token echoes as the resolved identifier's city (`portugal` echoes as
+  Lisbon); a gazetteer place echoes as itself and names the zone on the zone
+  line. That is what makes the canonical-zone and alias choices visible.
 - **Abbreviations echo expanded** (spec amendment 2026-10-21). A token resolved
   through step 1 or step 2 carries an `AbbreviationDisplay` — a colloquial name
   and at most two representative cities — so `12pm ET in London` echoes as

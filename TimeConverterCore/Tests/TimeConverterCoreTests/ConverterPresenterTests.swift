@@ -68,8 +68,8 @@ struct ConverterPresenterTests {
         #expect(display.echoLine.hasSuffix("-1d"))
     }
 
-    /// Porto echoes as Lisbon — the detail line names the zone actually used,
-    /// which is the whole point of echoing back.
+    /// Porto is labelled Porto (item 34c) but the detail line names the zone
+    /// actually used, which is the whole point of echoing back.
     @Test func detailLineNamesTheResolvedZonesNotTheTypedTokens() throws {
         let state = presenter.displayState(for: "23:15 UK to Porto", now: FixedDates.winterMidday)
         guard case let .converted(display) = state else {
