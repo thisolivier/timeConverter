@@ -18,13 +18,13 @@ import WidgetKit
 /// is foregrounded. A control whose intent lives in only one of the two is the
 /// usual reason a Control Center button appears to do nothing.
 ///
-/// `@main` directly on the `ControlWidget`: `ControlWidget` supplies its own
-/// `main()`, so a single-control extension needs no `WidgetBundle`.
+/// Listed in `TimeConverterWidgetBundle`, which is the extension's `@main`
+/// since the saved-cities widget joined it (item 36). Until then `@main` sat
+/// on this type directly — `ControlWidget` supplies its own `main()`.
 ///
 /// `kind` is this control's permanent identity — the string the system stores
 /// when the user adds the button to Control Center. Changing it orphans every
 /// button already placed, so it never changes.
-@main
 struct ConvertATimeControl: ControlWidget {
     static let kind = "dev.thisolivier.timeconverter.controls.convert"
 

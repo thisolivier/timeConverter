@@ -21,12 +21,18 @@ class SharedPreferencesBacking(private val preferences: SharedPreferences) : Key
  * The core [FavouritesStore] with its list mirrored into Compose state, so the
  * star and the Clocks tab redraw when a favourite is added or removed anywhere
  * (the job `@Observable` does on iOS). One per activity.
+ *
+ * [onChange] is the app's hook beyond Compose: `forContext` uses it to redraw
+ * the home-screen widget (item 36), which reads the same preferences file.
  */
-class FavouritesModel(backing: KeyValueBacking) {
+class FavouritesModel(backing: KeyValueBacking, private val onChange: (List<FavouriteDestination>) -> Unit = {}) {
     var favourites by mutableStateOf<List<FavouriteDestination>>(emptyList())
         private set
 
-    private val store = FavouritesStore(backing) { favourites = it }
+    private val store = FavouritesStore(backing) {
+        favourites = it
+        onChange(it)
+    }
 
     init {
         favourites = store.favourites
@@ -42,8 +48,15 @@ class FavouritesModel(backing: KeyValueBacking) {
     companion object {
         private const val PREFERENCES_NAME = "favourites"
 
-        fun forContext(context: Context): FavouritesModel = FavouritesModel(
+        /** The one preferences file, for the activity's model and for the widget's read. */
+        fun backingForContext(context: Context): KeyValueBacking =
             SharedPreferencesBacking(context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE))
-        )
+
+        fun forContext(context: Context): FavouritesModel {
+            val applicationContext = context.applicationContext
+            return FavouritesModel(backingForContext(applicationContext)) {
+                SavedCitiesWidgetProvider.requestUpdate(applicationContext)
+            }
+        }
     }
 }

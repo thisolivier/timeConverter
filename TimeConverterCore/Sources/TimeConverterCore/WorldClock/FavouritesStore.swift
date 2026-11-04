@@ -9,6 +9,10 @@ import Observation
 /// favourite is added or removed anywhere.
 ///
 /// No reorder in the MVP (delete and re-star to move one); no iCloud sync.
+///
+/// An optional `FavouritesMirror` (item 36) receives a copy after every save
+/// and once at init, for the home-screen widget, which runs in another
+/// process and cannot read these defaults.
 @MainActor
 @Observable
 public final class FavouritesStore {
@@ -20,10 +24,13 @@ public final class FavouritesStore {
     public private(set) var favourites: [FavouriteDestination]
 
     @ObservationIgnored private let defaults: UserDefaults
+    @ObservationIgnored private let mirror: FavouritesMirror?
 
-    public init(defaults: UserDefaults) {
+    public init(defaults: UserDefaults, mirror: FavouritesMirror? = nil) {
         self.defaults = defaults
+        self.mirror = mirror
         self.favourites = Self.load(from: defaults)
+        mirror?.publish(favourites)
     }
 
     public func isFavourite(identifier: String, label: ZoneLabel) -> Bool {
@@ -69,6 +76,7 @@ public final class FavouritesStore {
     private func save() {
         guard let data = try? JSONEncoder().encode(favourites) else { return }
         defaults.set(data, forKey: Self.defaultsKey)
+        mirror?.publish(favourites)
     }
 
     /// Unreadable data degrades to no favourites rather than a crash.

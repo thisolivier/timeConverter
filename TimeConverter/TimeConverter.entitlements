@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Keychain sharing with the widget extension (item 36): the favourites
+	     snapshot the saved-cities widget reads. Listed first so it is the
+	     default group for items written without one. The same group, in the
+	     same position, is in TimeConverterControls/TimeConverterControls.entitlements.
+	     Needs no portal capability: the team's profiles carry
+	     keychain-access-groups = TEAMID.*. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)dev.thisolivier.timeconverter</string>
+	</array>
+</dict>
+</plist>

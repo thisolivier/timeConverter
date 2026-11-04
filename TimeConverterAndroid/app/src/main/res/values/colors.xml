@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The poster palette for the widget's XML layouts (PosterColors.light);
+     values-night/colors.xml carries the dark pairing. Compose reads
+     PosterColors directly and does not use these. -->
+<resources>
+    <color name="widget_paper">#EBD3A9</color>
+    <color name="widget_ink">#141210</color>
+    <color name="widget_quiet_ink">#8C141210</color>
+    <color name="widget_hairline">#26141210</color>
+</resources>

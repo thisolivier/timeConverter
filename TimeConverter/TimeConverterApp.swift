@@ -5,7 +5,9 @@ import TimeConverterCore
 ///
 /// The app owns the one `FavouritesStore`, over the standard `UserDefaults`,
 /// and hands it down through the environment: the star on the Convert tab and
-/// the rows on the Clocks tab are two views of the same list.
+/// the rows on the Clocks tab are two views of the same list. The store also
+/// mirrors that list out for the home-screen widget (`SavedCitiesWidgetMirror`,
+/// item 36), which runs in another process.
 ///
 /// It used to also start the Mac menu bar here — `MenuBarPresence` loaded a
 /// macOS-SDK bundle out of `Contents/PlugIns` when the app was running under
@@ -26,7 +28,7 @@ struct TimeConverterApp: App {
     /// The DEBUG `-favourites` seed replaces the stored list before anything
     /// draws, so a screenshot run starts from a known set. Ignored in Release.
     private static func makeFavouritesStore() -> FavouritesStore {
-        let store = FavouritesStore(defaults: .standard)
+        let store = FavouritesStore(defaults: .standard, mirror: SavedCitiesWidgetMirror())
         if let seededFavourites = LaunchArguments.seededFavourites {
             store.replaceAll(with: seededFavourites)
         }

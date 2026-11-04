@@ -24,6 +24,10 @@ fonts and background, rust tint on the selection and the dial's pointer.
 - **Persistence** is the app-owned `FavouritesStore` on `UserDefaults.standard`,
   from the environment. Swipe to delete removes by favourite, not by index.
   No reorder in the MVP (delete and re-star).
+- **The home-screen widget is a mirror** (item 36). The store publishes its
+  list through `SavedCitiesWidgetMirror` — into the shared keychain item the
+  widget extension reads, then a `reloadTimelines(ofKind:)` so the widget
+  redraws at once. The widget itself lives in `TimeConverterControls/`.
 
 ## Components
 
@@ -34,6 +38,7 @@ fonts and background, rust tint on the selection and the dial's pointer.
 | `ClockOffsetControls.swift` | Readout and signed offset (`Now` at zero) over the dial. |
 | `ClockOffsetDial.swift` | The endless tick strip in a `Canvas`: drag to turn, tap to reset, VoiceOver adjustable by one tick. |
 | `ClockOffset.swift` | The offset value and its rules: settled + in-progress minutes, snapping, twelve hours per track width, reset, launch start. |
+| `SavedCitiesWidgetMirror.swift` | The app's `FavouritesMirror`: keychain write + WidgetKit reload. The only WidgetKit import in the app. |
 
 The tab container is `RootTabView.swift` one level up, which also brings the
 Convert tab forward whenever a launcher posts a request.

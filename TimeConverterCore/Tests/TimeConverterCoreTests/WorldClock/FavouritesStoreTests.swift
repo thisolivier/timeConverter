@@ -84,4 +84,24 @@ struct FavouritesStoreTests {
         let data = try JSONEncoder().encode([Self.london, Self.easternTime])
         #expect(try JSONDecoder().decode([FavouriteDestination].self, from: data) == [Self.london, Self.easternTime])
     }
+
+    // MARK: Item 36 — the widget's mirror
+
+    /// Records every publish, so the test can see the store copy its list out
+    /// at init and after each change.
+    private final class RecordingMirror: FavouritesMirror, @unchecked Sendable {
+        var published: [[FavouriteDestination]] = []
+        func publish(_ favourites: [FavouriteDestination]) { published.append(favourites) }
+    }
+
+    @Test func theMirrorReceivesTheListAtInitAndAfterEveryChange() {
+        defer { removeSuite() }
+        FavouritesStore(defaults: defaults).toggle(Self.london)
+        let mirror = RecordingMirror()
+        let store = FavouritesStore(defaults: defaults, mirror: mirror)
+        #expect(mirror.published == [[Self.london]])
+        store.toggle(Self.easternTime)
+        store.remove(Self.london)
+        #expect(mirror.published == [[Self.london], [Self.london, Self.easternTime], [Self.easternTime]])
+    }
 }

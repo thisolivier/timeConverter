@@ -29,13 +29,22 @@ the rest of the package; `now` and `localZone` are always parameters.
   `DateFormatter`, for the same locale-independence as `Parsing/Formatting.swift`.
 - **The store takes its `UserDefaults`.** The app injects `.standard`; tests use
   a throwaway suite. One JSON array under `favouriteDestinations`.
+- **The store can mirror itself** (item 36). An optional `FavouritesMirror`
+  gets a copy after every save and once at init, for the home-screen widget,
+  which runs in another process. `KeychainFavouritesMirror` is the shipped
+  mirror: one keychain item both the app and the widget extension can open
+  without a portal step (an App Group is the proper home, pending; see the
+  type comment). The package never imports WidgetKit — the app's mirror adds
+  the reload nudge.
 
 ## Components
 
 | File | Purpose |
 |---|---|
 | `FavouriteDestination.swift` | The stored value; rebuilds the `ResolvedZone` the engine needs (a code label recovers its curated cities from the resolver chain); `resolvingTypedZone` for the DEBUG seed and the fixture catalog. |
-| `FavouritesStore.swift` | `@Observable` list over injected defaults: `toggle`, `remove`, `remove(atOffsets:)`, `isFavourite`, `replaceAll`. |
+| `FavouritesStore.swift` | `@Observable` list over injected defaults: `toggle`, `remove`, `remove(atOffsets:)`, `isFavourite`, `replaceAll`; publishes to an optional mirror. |
+| `FavouritesMirror.swift` | `FavouritesMirror` and `KeychainFavouritesMirror` (write after save, `read()` for the widget). |
+| `SavedCitiesWidgetSupport.swift` | The widget's `kind`, the row cap (local + 5) and the minute-boundary entry dates — the testable part of the widget. |
 | `WorldClock.swift` | `readings(favourites:offset:now:localZone:)` and the shifted-wall-clock resolution. |
 | `WorldClockDisplay.swift` | `WorldClockDisplay` (readout, signed offset, rows) and `WorldClockRow`. |
 | `WorldClockFormatting.swift` | The readout and the signed offset strings. |

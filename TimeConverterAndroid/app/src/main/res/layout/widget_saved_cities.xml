@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The saved-cities widget (item 36): poster paper, one row per clock.
+     Only RemoteViews-compatible views: LinearLayout, TextView, TextClock,
+     FrameLayout for the hairlines. Rows are added at update time. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="8dp">
+
+    <LinearLayout
+        android:id="@+id/widget_rows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+
+    <TextView
+        android:id="@+id/widget_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="monospace"
+        android:text="@string/widget_empty"
+        android:textColor="@color/widget_quiet_ink"
+        android:textSize="11sp"
+        android:visibility="gone" />
+</LinearLayout>

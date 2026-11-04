@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Poster paper with the launcher's widget corner radius (API 31+ rounds
+     widgets itself; this keeps the fill inside that radius on older launchers). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/widget_paper" />
+    <corners android:radius="16dp" />
+</shape>

@@ -3,4 +3,7 @@
     <string name="app_name">Time Converter</string>
     <!-- Tile, add-tile prompt and launcher shortcut. Tile labels cap at 18 characters. -->
     <string name="convert_a_time">Convert a time</string>
+    <!-- The saved-cities home-screen widget (backlog 36). -->
+    <string name="widget_description">Your starred places, on the clock.</string>
+    <string name="widget_empty">Star a place on the Convert tab and it appears here.</string>
 </resources>

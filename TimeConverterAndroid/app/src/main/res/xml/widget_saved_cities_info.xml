@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The saved-cities widget (item 36). One size to start: 4×3 cells, which
+     fits the local row and five favourites; vertically resizable so a taller
+     placement shows the same rows with more air. updatePeriodMillis is the
+     30-minute floor — the ticking time is TextClock's own, this refresh only
+     renews the day markers and offset phrases. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="180dp"
+    android:minResizeHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="3"
+    android:resizeMode="vertical|horizontal"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_saved_cities"
+    android:previewLayout="@layout/widget_saved_cities"
+    android:description="@string/widget_description"
+    android:widgetCategory="home_screen" />

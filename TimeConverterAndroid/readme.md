@@ -137,6 +137,31 @@ The design-free MVP of `docs/favourites-world-clock-spec.md`, mirroring iOS.
   `clockOffsetMinutes` (signed; `m960` also works), from `run-android.sh
   --favourites / --tab / --offset-minutes`.
 
+## Saved-cities home-screen widget (backlog 36)
+
+The Clocks tab at a glance: the local clock and up to five favourites, in the
+poster's colours, one size to start (4×3 cells, resizable). Tapping opens the
+app. The Android twin of the iOS `.systemLarge` widget in
+`TimeConverterControls/`.
+
+- **`RemoteViews` + `TextClock`, not Glance.** A clock widget wants to tick
+  every minute without waking the app; `TextClock` does that by itself given
+  a zone (`setTimeZone` is remotable), where Glance has no clock view and
+  would need a throttled minute schedule. Two `TextClock`s per row (digits,
+  meridiem) in `widget_saved_cities_row.xml`; the 24-hour formats follow the
+  system setting.
+- **Everything else is `WorldClock.readings`** — place name, zone line with
+  its day marker, offset phrase — rendered at update time, exactly the Clocks
+  tab's strings. `SavedCitiesWidgetSupport.rows` (core, shared cap with iOS)
+  picks local + 5.
+- **Refresh**: `FavouritesModel.forContext` redraws every placed widget on
+  each change (`SavedCitiesWidgetProvider.requestUpdate`), and
+  `updatePeriodMillis` is the 30-minute floor for the day markers. The widget
+  reads the same `favourites` preferences file as the activity.
+- **Not yet on-screen QA'd headlessly**: placing a widget needs the launcher
+  UI, which `run-android.sh` does not drive. The APK carries the receiver and
+  layouts; check it on the phone after the first install.
+
 ## Quick Settings tile (backlog 29)
 
 The twin of the iOS Control Center control (item 11): a **Convert a time**
@@ -223,6 +248,9 @@ without `--input`.
 - `app/.../ConvertTimeLaunch.kt`, `ConvertTimeTileService.kt`,
   `QuickSettingsTileOnboarding.kt` — the Quick Settings tile, the shared
   launch intent and launcher shortcut, the one-time add-tile prompt.
+- `app/.../SavedCitiesWidgetProvider.kt` + `res/layout/widget_saved_cities*.xml`,
+  `res/xml/widget_saved_cities_info.xml`, `res/values[-night]/colors.xml` —
+  the home-screen widget (section above).
 
 ## Not yet / still interim
 

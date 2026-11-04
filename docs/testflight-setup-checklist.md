@@ -205,6 +205,28 @@ developer.apple.com, team **CNHB9B5GX6**.
 
 Steps 1 and 4 end with files on disk, so they are not purely browser work.
 
+### App Group for the saved-cities widget (item 36) — still to do
+
+The widget ships on **keychain sharing**, which needed no portal step. The
+proper home for app-and-extension data is an App Group, and registering one
+is browser work the App Store Connect API does not expose (checked 2026-11-04:
+no `appGroups` resource; `bundleIdCapabilities` is write-only and cannot
+mint a group). When convenient:
+
+1. [ ] **Identifiers → App Groups → +**: `group.dev.thisolivier.timeconverter`.
+2. [ ] **Identifiers → App IDs → `dev.thisolivier.timeconverter`** → enable
+       *App Groups*, tick the group. Same for
+       `dev.thisolivier.timeconverter.controls`.
+3. [ ] **Profiles**: both iOS profiles (`TimeConverter App Store`,
+       `TimeConverter Controls App Store`) are now *Invalid* — edit each,
+       save (no changes needed), download, and install over the old files in
+       `~/Library/MobileDevice/Provisioning Profiles/` and
+       `~/sites/navidromClient/spike/.signing/`. The Mac profile is untouched.
+4. [ ] Then in the repo: add `com.apple.security.application-groups` =
+       `[group.dev.thisolivier.timeconverter]` to both entitlements files,
+       replace `KeychainFavouritesMirror`'s keychain calls with
+       `UserDefaults(suiteName:)`, drop `keychain-access-groups`.
+
 ### What the macOS lane adds to the build itself
 
 - **App Sandbox is mandatory** for the Mac App Store, enforced mechanically at
