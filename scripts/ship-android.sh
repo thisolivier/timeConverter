@@ -117,7 +117,11 @@ rm -f "$BUILT_APK"
 (cd "$ANDROID_PROJECT_DIR" && ./gradlew :app:assembleRelease --console=plain -q) || fail "assembleRelease"
 [[ -f "$BUILT_APK" ]] || fail "assembleRelease (no APK at $BUILT_APK)"
 
-BADGING="$("$ANDROID_BUILD_TOOLS/aapt2" dump badging "$BUILT_APK" | head -1)"
+# `sed -n 1p` rather than `head -1`: head closes the pipe after one line and
+# aapt2, which prints a long badging dump, then dies of SIGPIPE — exit 141
+# under pipefail. First seen at build 29, once the widget's resources made
+# the dump long enough to overrun the pipe buffer.
+BADGING="$("$ANDROID_BUILD_TOOLS/aapt2" dump badging "$BUILT_APK" | sed -n 1p)"
 echo "$BADGING"
 [[ "$BADGING" == *"versionCode='$NEW_BUILD_NUMBER'"* && "$BADGING" == *"versionName='$VERSION_NAME'"* ]] \
   || fail "release build (expected versionCode $NEW_BUILD_NUMBER / versionName $VERSION_NAME)"
