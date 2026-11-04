@@ -22,6 +22,12 @@ public enum LaunchRequest: Equatable, Sendable {
     /// — clearing it there would be destroying work, where clearing it on a
     /// Control Center press is obeying the button.
     case summonWithoutReset
+
+    /// "Show me my saved places." A tap on the saved-cities widget
+    /// (`timeconverter://saved`, item 36b). Not a request to type, so the
+    /// field is left alone and nothing takes focus; the tab container
+    /// honours it and the Convert tab never sees it.
+    case openSavedTab
 }
 
 extension LaunchRequest {
@@ -38,7 +44,14 @@ extension LaunchRequest {
         switch self {
         case .startFreshConversion: ""
         case .summonWithoutReset: nil
+        case .openSavedTab: nil
         }
+    }
+
+    /// True for the one request that is about the Saved tab rather than the
+    /// field: the tab container consumes it, `ContentView` ignores it.
+    public var opensSavedTab: Bool {
+        self == .openSavedTab
     }
 }
 

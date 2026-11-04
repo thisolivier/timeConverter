@@ -55,10 +55,18 @@ struct LaunchRequestTests {
     /// matching runtime guard, so a new case that forgets to decide shows up
     /// here rather than as a wiped field in the app.
     @Test func everyRequestHasADecidedAnswer() {
-        let allRequests: [LaunchRequest] = [.startFreshConversion, .summonWithoutReset]
-        #expect(allRequests.count == 2, "a new LaunchRequest case needs its own test above")
-        #expect(Set(allRequests.map { $0.inputToStartFrom ?? "«unchanged»" }).count
-            == allRequests.count)
+        let allRequests: [LaunchRequest] = [.startFreshConversion, .summonWithoutReset, .openSavedTab]
+        #expect(allRequests.count == 3, "a new LaunchRequest case needs its own test above")
+        let answers = allRequests.map { "\($0.inputToStartFrom ?? "«unchanged»")|\($0.opensSavedTab)" }
+        #expect(Set(answers).count == allRequests.count)
+    }
+
+    /// The widget's tap (item 36b) is about the Saved tab, not the field.
+    @Test func openingTheSavedTabKeepsWhatWasTypedAndIsNotAConvertRequest() {
+        #expect(LaunchRequest.openSavedTab.inputToStartFrom == nil)
+        #expect(LaunchRequest.openSavedTab.opensSavedTab)
+        #expect(!LaunchRequest.startFreshConversion.opensSavedTab)
+        #expect(!LaunchRequest.summonWithoutReset.opensSavedTab)
     }
 }
 
@@ -72,6 +80,12 @@ struct LaunchURLRouterTests {
     func launchURLsRouteToAFreshConversion(urlString: String) throws {
         let url = try #require(URL(string: urlString))
         #expect(LaunchURLRouter.request(for: url) == .startFreshConversion)
+    }
+
+    @Test(arguments: ["timeconverter://saved", "timeconverter:///saved", "TimeConverter://Saved"])
+    func savedURLsRouteToTheSavedTab(urlString: String) throws {
+        let url = try #require(URL(string: urlString))
+        #expect(LaunchURLRouter.request(for: url) == .openSavedTab)
     }
 
     /// An unknown action must route nowhere rather than be guessed at: honouring

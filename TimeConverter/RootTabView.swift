@@ -11,7 +11,10 @@ import TimeConverterUI
 /// a time", so whenever a request arrives — App Shortcut, Control Center, the
 /// QA URL — the Convert tab is brought forward. `ContentView` still drains the
 /// mailbox and takes focus exactly as before; it also focuses on appearing,
-/// which is what lands the cursor when the switch happens from Clocks.
+/// which is what lands the cursor when the switch happens from Saved. The one
+/// exception is the saved-cities widget's tap (`timeconverter://saved`, item
+/// 36b): that request is about the Saved tab, so it is consumed here, the
+/// Saved tab comes forward, and the field is neither cleared nor focused.
 struct RootTabView: View {
     @State private var selectedTab: AppTab = LaunchArguments.opensOnSavedTab ? .saved : .convert
     private let launchRequests = LaunchRequestInbox.shared
@@ -34,8 +37,8 @@ struct RootTabView: View {
             }
         }
         .tint(PosterPalette.accent)
-        .onAppear { bringConvertForwardIfALaunchIsPending() }
-        .onChange(of: launchRequests.pendingRequest) { bringConvertForwardIfALaunchIsPending() }
+        .onAppear { honourPendingTabRequest() }
+        .onChange(of: launchRequests.pendingRequest) { honourPendingTabRequest() }
         // Here rather than in `ContentView`: a hidden tab is not guaranteed
         // to receive the URL, and the root always is.
         .onOpenURL { url in
@@ -44,9 +47,14 @@ struct RootTabView: View {
         }
     }
 
-    private func bringConvertForwardIfALaunchIsPending() {
-        guard launchRequests.pendingRequest != nil else { return }
-        selectedTab = .convert
+    private func honourPendingTabRequest() {
+        guard let pendingRequest = launchRequests.pendingRequest else { return }
+        if pendingRequest.opensSavedTab {
+            _ = launchRequests.takePendingRequest()
+            selectedTab = .saved
+        } else {
+            selectedTab = .convert
+        }
     }
 }
 

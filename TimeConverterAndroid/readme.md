@@ -298,6 +298,9 @@ without `--input`.
 - `app/.../ConvertTimeLaunch.kt`, `ConvertTimeTileService.kt`,
   `QuickSettingsTileOnboarding.kt` — the Quick Settings tile, the shared
   launch intent and launcher shortcut, the one-time add-tile prompt.
+- `app/.../OpenSavedTabLaunch.kt` — the widget tap's intent: open on the
+  Saved tab, field untouched, keyboard down (`MainActivity` →
+  `RootScreen.savedTabRequestCount`).
 - `app/.../SavedCitiesWidgetProvider.kt` (base + the three size receivers),
   `SavedCitiesWidgetRenderer.kt`, `SavedCitiesWidgetSizing.kt`, plus
   `res/layout/widget_*.xml`, `res/xml/widget_saved_cities_*_info.xml`,

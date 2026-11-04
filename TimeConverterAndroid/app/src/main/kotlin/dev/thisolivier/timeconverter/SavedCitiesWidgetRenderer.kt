@@ -204,12 +204,8 @@ object SavedCitiesWidgetRenderer {
         )
     }
 
-    private fun openAppIntent(context: Context): PendingIntent = PendingIntent.getActivity(
-        context,
-        0,
-        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-    )
+    /** A tap opens the Saved tab, not the converter (Olivier, 2026-11-04). */
+    private fun openAppIntent(context: Context): PendingIntent = OpenSavedTabLaunch.pendingIntent(context)
 
     private fun pixels(context: Context, dp: Float): Int = (dp * context.resources.displayMetrics.density).toInt()
 }

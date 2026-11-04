@@ -33,7 +33,8 @@ would be a macOS extension of its own, and is not on the backlog.
   layout's narrowest column, so numerals never resize with the clock. The
   face follows the device's 12/24-hour setting (`Locale.hourCycle`): a 24-hour
   device gets `20:38`, a 12-hour one `8:38` with a small `PM`. Tapping opens
-  the app.
+  the app **on the Saved tab** (`timeconverter://saved` → `LaunchRequest
+  .openSavedTab`, consumed by `RootTabView`; the field is left alone).
 - **The face is also compiled into the app** (`project.yml`) for the DEBUG
   `-widgetPreview 1` screen, which draws every family × count × clock
   setting at widget size and writes each to `Documents/widget-previews/` as a

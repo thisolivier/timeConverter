@@ -258,6 +258,9 @@ struct ContentView: View {
     /// (`InputFocusPolicy`). What is left is the `@FocusState` write, which only
     /// a running app can prove.
     private func honourPendingLaunchRequest() {
+        // The widget's "open Saved" request belongs to `RootTabView`; taking
+        // it here would focus the field on the wrong tab.
+        guard let pendingRequest = launchRequests.pendingRequest, !pendingRequest.opensSavedTab else { return }
         guard let request = launchRequests.takePendingRequest() else { return }
         if let replacementInput = request.inputToStartFrom {
             freeformInput = replacementInput

@@ -31,8 +31,10 @@ enum class AppTab { Convert, Saved }
  * keeps the typed text and the dial position. Focus rules:
  * - a "Convert a time" launch (tile, shortcut: [launchRequestCount]) brings
  *   Convert forward, and `ConverterScreen` focuses on the new arrival;
- * - an arrival (return from the background) while Clocks is up is marked
- *   handled, so a later switch to Convert never raises the keyboard.
+ * - an arrival (return from the background) while Saved is up is marked
+ *   handled, so a later switch to Convert never raises the keyboard;
+ * - a widget tap ([savedTabRequestCount], item 36b) brings Saved forward and
+ *   is likewise marked handled, so the keyboard stays down.
  */
 @Composable
 fun RootScreen(
@@ -41,14 +43,22 @@ fun RootScreen(
     favouritesModel: FavouritesModel,
     arrivalCount: Int,
     launchRequestCount: Int,
+    savedTabRequestCount: Int = 0,
 ) {
     val converterModel = remember { ConverterScreenModel(initialInput) }
-    var selectedTab by remember { mutableStateOf(if (debugLaunchOptions.opensOnSavedTab) AppTab.Saved else AppTab.Convert) }
+    var selectedTab by remember {
+        mutableStateOf(if (debugLaunchOptions.opensOnSavedTab || savedTabRequestCount > 0) AppTab.Saved else AppTab.Convert)
+    }
     var clockOffset by remember { mutableStateOf(ClockOffset.launching(debugLaunchOptions.clockOffsetMinutes)) }
     var handledLaunchRequestCount by remember { mutableIntStateOf(0) }
+    var handledSavedTabRequestCount by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(arrivalCount, launchRequestCount) {
-        if (launchRequestCount != handledLaunchRequestCount) {
+    LaunchedEffect(arrivalCount, launchRequestCount, savedTabRequestCount) {
+        if (savedTabRequestCount != handledSavedTabRequestCount) {
+            handledSavedTabRequestCount = savedTabRequestCount
+            selectedTab = AppTab.Saved
+            converterModel.handledArrivalCount = arrivalCount
+        } else if (launchRequestCount != handledLaunchRequestCount) {
             handledLaunchRequestCount = launchRequestCount
             selectedTab = AppTab.Convert
         } else if (selectedTab == AppTab.Saved) {

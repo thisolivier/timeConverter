@@ -26,11 +26,15 @@ public enum LaunchURLRouter {
 
     /// The action word that means "open ready to type".
     static let startFreshConversionAction = "convert"
+    /// The action word that means "show my saved places" — what the
+    /// saved-cities widget opens (item 36b).
+    static let openSavedTabAction = "saved"
 
     public static func request(for url: URL) -> LaunchRequest? {
         guard url.scheme?.lowercased() == scheme else { return nil }
         switch soleAction(in: url) {
         case startFreshConversionAction: return .startFreshConversion
+        case openSavedTabAction: return .openSavedTab
         default: return nil
         }
     }

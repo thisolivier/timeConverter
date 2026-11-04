@@ -31,6 +31,8 @@ class MainActivity : ComponentActivity() {
     private val arrivalCount = mutableIntStateOf(0)
     /** Ticks for each "Convert a time" launch reaching a live activity: Convert comes forward. */
     private val launchRequestCount = mutableIntStateOf(0)
+    /** Ticks for each widget tap (`OpenSavedTabLaunch`): Saved comes forward, the field is left alone. */
+    private val savedTabRequestCount = mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +41,7 @@ class MainActivity : ComponentActivity() {
         val debugLaunchOptions = DebugLaunchOptions.read(this, intent)
         val favouritesModel = FavouritesModel.forContext(this)
         if (savedInstanceState == null) debugLaunchOptions.seededFavourites?.let(favouritesModel::replaceAll)
+        if (OpenSavedTabLaunch.asksForSavedTab(intent)) savedTabRequestCount.intValue += 1
         setContent {
             RootScreen(
                 initialInput = initialInput,
@@ -46,6 +49,7 @@ class MainActivity : ComponentActivity() {
                 favouritesModel = favouritesModel,
                 arrivalCount = arrivalCount.intValue,
                 launchRequestCount = launchRequestCount.intValue,
+                savedTabRequestCount = savedTabRequestCount.intValue,
             )
         }
         ConvertTimeLaunch.publishLauncherShortcut(this)
@@ -69,5 +73,6 @@ class MainActivity : ComponentActivity() {
             launchRequestCount.intValue += 1
             arrivalCount.intValue += 1
         }
+        if (OpenSavedTabLaunch.asksForSavedTab(intent)) savedTabRequestCount.intValue += 1
     }
 }
